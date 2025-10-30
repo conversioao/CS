@@ -29,7 +29,7 @@ const ModelsSection = () => {
   return (
     <section id="modelos" className="py-20 px-4">
       <div className="container mx-auto max-w-6xl">
-        <div className="text-center mb-16">
+        <div className="text-center mb-16 animate-fade-in">
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
             Modelos Especializados
           </h2>
@@ -42,10 +42,10 @@ const ModelsSection = () => {
           {models.map((model, index) => (
             <Card 
               key={index}
-              className="p-6 bg-card border-border hover:border-primary/50 transition-all duration-300 hover:scale-105 relative"
+              className="p-6 bg-card border-border hover:border-primary/50 transition-all duration-300 hover-lift hover-glow relative stagger-item"
             >
               {model.popular && (
-                <Badge className="absolute top-4 right-4 gradient-primary">Popular</Badge>
+                <Badge className="absolute top-4 right-4 gradient-primary animate-custom-pulse">Popular</Badge>
               )}
               <h3 className="text-xl font-bold mb-2 mt-2">{model.name}</h3>
               <p className="text-muted-foreground text-sm">{model.description}</p>

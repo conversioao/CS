@@ -1,5 +1,5 @@
 import Navbar from "@/components/Navbar";
-import HeroSection from "@/components/HeroSection";
+import HeroCarousel from "@/components/HeroCarousel";
 import FeaturesSection from "@/components/FeaturesSection";
 import TransformationShowcase from "@/components/TransformationShowcase";
 import ProcessSection from "@/components/ProcessSection";
@@ -8,7 +8,6 @@ import ResultsGallery from "@/components/ResultsGallery";
 import UseCasesSection from "@/components/UseCasesSection";
 import BenefitsSection from "@/components/BenefitsSection";
 import PhoenixSection from "@/components/PhoenixSection";
-import DemoSection from "@/components/DemoSection";
 import ModelsSection from "@/components/ModelsSection";
 import CommunityGallery from "@/components/CommunityGallery";
 import CTASection from "@/components/CTASection";
@@ -20,7 +19,7 @@ const Index = () => {
   return (
     <div className="min-h-screen">
       <Navbar />
-      <HeroSection />
+      <HeroCarousel />
       <StatsSection />
       <TransformationShowcase />
       <FeaturesSection />
@@ -29,7 +28,6 @@ const Index = () => {
       <UseCasesSection />
       <BenefitsSection />
       <PhoenixSection />
-      <DemoSection />
       <ModelsSection />
       <CommunityGallery />
       <CTASection />

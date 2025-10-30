@@ -1,4 +1,4 @@
-import { Sparkles, Home, Grid3x3, Image, Users, CreditCard, User, Menu, X } from "lucide-react";
+import { Sparkles, Home, Grid3x3, Image, Users, CreditCard, User, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useState } from "react";
@@ -12,6 +12,13 @@ import {
 
 const DashboardNav = () => {
   const [isOpen, setIsOpen] = useState(false);
+  
+  // Dados simulados do usuário
+  const userData = {
+    name: "Usuário Demo",
+    credits: 250,
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=demo",
+  };
 
   const navLinks = [
     { to: "/dashboard", icon: Home, label: "Home" },
@@ -46,9 +53,20 @@ const DashboardNav = () => {
                 </Link>
               );
             })}
-            <Link to="/credits">
-              <Button className="gradient-primary text-sm">Upgrade Plan</Button>
-            </Link>
+            
+            <div className="flex items-center gap-3 ml-4 pl-4 border-l border-border">
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-full animate-custom-pulse">
+                <CreditCard className="w-4 h-4 text-primary" />
+                <span className="text-sm font-bold">{userData.credits}</span>
+              </div>
+              
+              <Link to="/account">
+                <Button variant="ghost" size="sm" className="gap-2 hover-lift">
+                  <img src={userData.avatar} alt="Avatar" className="w-6 h-6 rounded-full" />
+                  <span className="text-sm">{userData.name.split(' ')[0]}</span>
+                </Button>
+              </Link>
+            </div>
           </div>
 
           {/* Mobile Navigation */}
@@ -82,8 +100,21 @@ const DashboardNav = () => {
                     );
                   })}
                   <Link to="/credits" onClick={() => setIsOpen(false)} className="mt-4">
-                    <Button className="w-full gradient-primary">Upgrade Plan</Button>
+                    <Button className="w-full gradient-primary">Comprar Créditos</Button>
                   </Link>
+                  
+                  <div className="mt-4 pt-4 border-t border-border">
+                    <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                      <img src={userData.avatar} alt="Avatar" className="w-10 h-10 rounded-full" />
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">{userData.name}</p>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <CreditCard className="w-3 h-3" />
+                          {userData.credits} créditos
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </SheetContent>
             </Sheet>

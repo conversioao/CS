@@ -25,11 +25,11 @@ const Navbar = () => {
             <a href="#precos" className="text-muted-foreground hover:text-foreground transition-colors">
               Preços
             </a>
-            <Link to="/dashboard">
+            <Link to="/auth">
               <Button variant="ghost">Entrar</Button>
             </Link>
-            <Link to="/dashboard">
-              <Button className="gradient-primary">Ir para Dashboard</Button>
+            <Link to="/auth">
+              <Button className="gradient-primary">Começar Grátis</Button>
             </Link>
           </div>
         </div>

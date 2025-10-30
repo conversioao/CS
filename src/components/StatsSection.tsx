@@ -39,13 +39,9 @@ const StatsSection = () => {
             return (
               <div 
                 key={index}
-                className="stat-card text-center opacity-0"
-                style={{ 
-                  animation: `fadeInUp 0.6s ease-out forwards`,
-                  animationDelay: `${index * 0.1}s` 
-                }}
+                className="text-center stagger-item hover-lift"
               >
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4 group-hover:scale-110 transition-transform">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4 transition-transform hover:scale-110 hover-glow">
                   <Icon className="w-8 h-8 text-primary" />
                 </div>
                 <div className="text-4xl md:text-5xl font-bold gradient-text mb-2">

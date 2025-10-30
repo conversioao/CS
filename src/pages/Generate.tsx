@@ -41,7 +41,7 @@ const Generate = () => {
   const [description, setDescription] = useState("");
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
-  const [useTextOnly, setUseTextOnly] = useState(false);
+  const [generationType, setGenerationType] = useState<"image" | "text">("image");
   const [isLoading, setIsLoading] = useState(false);
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
   const [history, setHistory] = useState<GeneratedImage[]>([]);
@@ -96,16 +96,16 @@ const Generate = () => {
 
 
   const handleGenerate = async () => {
-    if (!useTextOnly && !uploadedImage) {
+    if (generationType === "image" && !uploadedImage) {
       toast({
         title: "Imagem necessária",
-        description: "Por favor, faça o upload de uma imagem ou ative o modo texto",
+        description: "Por favor, faça o upload de uma imagem",
         variant: "destructive",
       });
       return;
     }
 
-    if (useTextOnly && !description) {
+    if (generationType === "text" && !description) {
       toast({
         title: "Descrição necessária",
         description: "Por favor, adicione uma descrição para gerar a imagem",
@@ -120,7 +120,7 @@ const Generate = () => {
     try {
       let imgbbUrl = '';
       
-      if (!useTextOnly && uploadedImage) {
+      if (generationType === "image" && uploadedImage) {
         toast({
           title: "Enviando imagem...",
           description: "Fazendo upload da sua imagem",
@@ -140,9 +140,11 @@ const Generate = () => {
         modelo: modelo,
         quantidade: quantity.toString(),
         proporcao: aspectRatio,
+        tipo: generationType === "text" ? "texto" : "modelo",
+        descricao: description || "",
       };
 
-      if (useTextOnly) {
+      if (generationType === "text") {
         payload.text_prompt = description;
       } else {
         payload.image_url = imgbbUrl;
@@ -539,19 +541,35 @@ const Generate = () => {
           <div className="space-y-4">
             <Card className="p-4 sm:p-6 bg-card/50 backdrop-blur-xl shadow-lg">
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                  <Label htmlFor="text-only-mode" className="font-semibold text-sm">Modo Texto (sem imagem)</Label>
-                  <input
-                    type="checkbox"
-                    id="text-only-mode"
-                    checked={useTextOnly}
-                    onChange={(e) => setUseTextOnly(e.target.checked)}
-                    disabled={isLoading}
-                    className="w-4 h-4 rounded border-input bg-background accent-primary"
-                  />
+                <div className="flex items-center gap-2 p-4 bg-muted/30 rounded-lg">
+                  <Label className="font-semibold flex-1">Tipo de Geração</Label>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant={generationType === "image" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setGenerationType("image")}
+                      disabled={isLoading}
+                      className="transition-all"
+                    >
+                      <Image className="w-4 h-4 mr-2" />
+                      Imagem
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={generationType === "text" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setGenerationType("text")}
+                      disabled={isLoading}
+                      className="transition-all"
+                    >
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Texto
+                    </Button>
+                  </div>
                 </div>
 
-                {!useTextOnly && (
+                {generationType === "image" && (
                   <div className="space-y-2">
                     <Label htmlFor="image-upload" className="font-semibold">Imagem Base</Label>
                   <Input
@@ -602,11 +620,11 @@ const Generate = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="description" className="font-semibold">
-                    {useTextOnly ? "Descrição da Imagem *" : "Descrição (Opcional)"}
+                    {generationType === "text" ? "Descrição da Imagem *" : "Descrição (Opcional)"}
                   </Label>
                   <Textarea
                     id="description"
-                    placeholder={useTextOnly 
+                    placeholder={generationType === "text"
                       ? "Descreva a imagem que deseja criar em detalhes..." 
                       : "Descreva o que você quer gerar..."
                     }
@@ -635,15 +653,35 @@ const Generate = () => {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <Label className="font-semibold">Quantidade</Label>
-                    <Input
-                      type="number"
-                      min="1"
-                      max="10"
-                      value={quantity}
-                      onChange={(e) => setQuantity(Math.min(10, Math.max(1, parseInt(e.target.value) || 1)))}
-                      disabled={isLoading}
-                      className="text-center"
-                    />
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        min="1"
+                        max="10"
+                        value={quantity}
+                        onChange={(e) => setQuantity(Math.min(10, Math.max(1, parseInt(e.target.value) || 1)))}
+                        disabled={isLoading}
+                        className="text-center font-bold text-lg transition-all hover:border-primary/50"
+                      />
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col">
+                        <button
+                          type="button"
+                          onClick={() => setQuantity(prev => Math.min(10, prev + 1))}
+                          disabled={isLoading || quantity >= 10}
+                          className="text-muted-foreground hover:text-primary transition-colors"
+                        >
+                          ▲
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setQuantity(prev => Math.max(1, prev - 1))}
+                          disabled={isLoading || quantity <= 1}
+                          className="text-muted-foreground hover:text-primary transition-colors"
+                        >
+                          ▼
+                        </button>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="space-y-2">
@@ -665,10 +703,10 @@ const Generate = () => {
             </Card>
 
             <Button 
-              className="w-full h-11 sm:h-12 font-semibold text-sm sm:text-base" 
+              className="w-full h-11 sm:h-12 font-semibold text-sm sm:text-base gradient-primary glow-effect hover:scale-[1.02] transition-transform" 
               size="lg"
               onClick={handleGenerate}
-              disabled={isLoading || (!useTextOnly && !uploadedImage) || (useTextOnly && !description)}
+              disabled={isLoading || (generationType === "image" && !uploadedImage) || (generationType === "text" && !description)}
             >
               {isLoading ? (
                 <>
