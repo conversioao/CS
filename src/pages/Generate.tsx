@@ -150,7 +150,7 @@ const Generate = () => {
         payload.image_url = imgbbUrl;
       }
 
-      const response = await fetch('https://n8n.conversio.ao/webhook-test/Gerar_Modelos', {
+      const response = await fetch('https://n8n.conversio.ao/webhook/Gerar_Modelos', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
