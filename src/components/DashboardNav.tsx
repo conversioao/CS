@@ -1,7 +1,8 @@
-import { Sparkles, Home, Grid3x3, Image, Users, CreditCard, User, Menu } from "lucide-react";
+import { Home, Grid3x3, Image, Users, CreditCard, User, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useState } from "react";
+import logo from "@/assets/logo.png";
 import {
   Sheet,
   SheetContent,
@@ -33,9 +34,8 @@ const DashboardNav = () => {
     <nav className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-lg border-b border-border">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <Link to="/" className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
-            <span className="text-lg sm:text-xl font-bold gradient-text">Conversio Studio</span>
+          <Link to="/" className="flex items-center">
+            <img src={logo} alt="Conversio Studio" className="h-8 sm:h-10 w-auto" />
           </Link>
           
           {/* Desktop Navigation */}
@@ -79,9 +79,8 @@ const DashboardNav = () => {
               </SheetTrigger>
               <SheetContent side="right" className="w-[280px] sm:w-[320px]">
                 <SheetHeader className="mb-6">
-                  <SheetTitle className="flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-primary" />
-                    <span className="gradient-text">Menu</span>
+                  <SheetTitle className="flex items-center justify-center">
+                    <img src={logo} alt="Conversio Studio" className="h-8 w-auto" />
                   </SheetTitle>
                 </SheetHeader>
                 <div className="flex flex-col gap-3">

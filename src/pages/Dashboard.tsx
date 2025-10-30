@@ -14,7 +14,7 @@ const Dashboard = () => {
       <DashboardNav />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-12 relative z-10">
         <div className="mb-8 mt-4">
-          <h1 className="text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent">
+          <h1 className="text-3xl md:text-4xl font-bold mb-2 text-white">
             Bem-vindo ao Conversio Studio
           </h1>
           <p className="text-muted-foreground text-sm md:text-base">

@@ -4,9 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Sparkles, Mail, Lock, User } from "lucide-react";
+import { Mail, Lock, User } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import logo from "@/assets/logo.png";
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -53,9 +54,8 @@ const Auth = () => {
 
       <div className="w-full max-w-md relative z-10">
         <div className="text-center mb-8 animate-fade-in">
-          <Link to="/" className="inline-flex items-center gap-2 mb-6">
-            <Sparkles className="w-8 h-8 text-primary" />
-            <span className="text-2xl font-bold gradient-text">Conversio Studio</span>
+          <Link to="/" className="inline-flex justify-center mb-6">
+            <img src={logo} alt="Conversio Studio" className="h-12 w-auto" />
           </Link>
           <h1 className="text-3xl font-bold mb-2">Bem-vindo</h1>
           <p className="text-muted-foreground">Crie anúncios incríveis com IA</p>
