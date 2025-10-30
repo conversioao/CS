@@ -1,0 +1,121 @@
+import DashboardNav from "@/components/DashboardNav";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Sparkles, Palette, Zap, Camera, Rocket, Crown } from "lucide-react";
+import { Link } from "react-router-dom";
+import modelUgc from "@/assets/model-ugc.jpg";
+import modelSocialBoost from "@/assets/model-socialboost.jpg";
+import modelFashion from "@/assets/model-fashion.jpg";
+import modelVfx from "@/assets/model-vfx.jpg";
+
+const models = [
+  {
+    icon: Sparkles,
+    title: "Advision UGC",
+    description: "Modelo principal para criação de conteúdo autêntico gerado pelo usuário. Especializado em anúncios realistas e envolventes.",
+    tags: ["UGC", "Autêntico", "Realista"],
+    badge: "Mais Popular",
+    color: "from-blue-500 to-purple-500",
+    image: modelUgc
+  },
+  {
+    icon: Zap,
+    title: "SocialBost",
+    description: "Otimizado para redes sociais. Cria conteúdo viral e engajador para maximizar o alcance das suas campanhas.",
+    tags: ["Viral", "Engajamento", "Social Media"],
+    color: "from-pink-500 to-purple-500",
+    image: modelSocialBoost
+  },
+  {
+    icon: Palette,
+    title: "FashionFit",
+    description: "Especializado em moda e vestuário. Cria looks modernos e tendências fashion com precisão profissional.",
+    tags: ["Moda", "Tendências", "Editorial"],
+    color: "from-rose-500 to-pink-500",
+    image: modelFashion
+  },
+  {
+    icon: Rocket,
+    title: "Advision VFX",
+    description: "Efeitos visuais avançados e criações cinematográficas. Ideal para campanhas premium e conteúdo de alto impacto.",
+    tags: ["VFX", "Cinematográfico", "Premium"],
+    color: "from-cyan-500 to-blue-500",
+    image: modelVfx
+  }
+];
+
+const Models = () => {
+  return (
+    <div className="min-h-screen bg-background">
+      <DashboardNav />
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">
+            Modelos de IA
+          </h1>
+          <p className="text-muted-foreground text-lg">
+            Escolha o modelo ideal para cada tipo de criação
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6">
+          {models.map((model, index) => {
+            const Icon = model.icon;
+            return (
+              <div
+                key={index}
+                className="group bg-secondary/20 border border-border rounded-xl overflow-hidden hover:border-primary/50 transition-all duration-300 relative"
+              >
+                {model.badge && (
+                  <Badge className="absolute top-4 right-4 bg-primary z-10">
+                    {model.badge}
+                  </Badge>
+                )}
+                
+                <div className="relative h-48 overflow-hidden">
+                  <img 
+                    src={model.image} 
+                    alt={model.title}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
+                  <div className={`absolute bottom-4 left-4 w-12 h-12 rounded-xl bg-gradient-to-br ${model.color} flex items-center justify-center shadow-lg`}>
+                    <Icon className="w-6 h-6 text-white" />
+                  </div>
+                </div>
+                
+                <div className="p-6">
+                  <h3 className="text-xl font-semibold mb-3">{model.title}</h3>
+                  
+                  <p className="text-sm text-muted-foreground mb-4">
+                    {model.description}
+                  </p>
+                  
+                  <div className="flex flex-wrap gap-2 mb-6">
+                    {model.tags.map((tag, tagIndex) => (
+                      <Badge key={tagIndex} variant="secondary">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                  
+                  <Link to={`/generate?model=${encodeURIComponent(model.title)}`}>
+                    <Button 
+                      variant={model.badge ? "default" : "outline"} 
+                      className={model.badge ? "w-full gradient-primary" : "w-full"}
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      Usar Modelo
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default Models;
