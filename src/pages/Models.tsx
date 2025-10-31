@@ -3,10 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, Palette, Zap, Camera, Rocket, Crown } from "lucide-react";
 import { Link } from "react-router-dom";
-import modelPersona from "@/assets/model-persona.jpg";
-import modelPulse from "@/assets/model-pulse.jpg";
-import modelStyleAI from "@/assets/model-styleai.jpg";
-import modelVision from "@/assets/model-vision.jpg";
+import modelPersona from "@/assets/model-persona-cover.jpg";
+import modelPulse from "@/assets/model-pulse-cover.jpg";
+import modelStyleAI from "@/assets/model-styleai-cover.jpg";
+import modelVision from "@/assets/model-vision-cover.jpg";
 
 const models = [
   {
