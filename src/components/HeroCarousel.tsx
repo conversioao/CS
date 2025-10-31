@@ -2,25 +2,27 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import heroPersona from "@/assets/hero-persona.jpg";
+import heroPulse from "@/assets/hero-pulse.jpg";
+import heroStyle from "@/assets/hero-style.jpg";
+import heroVision from "@/assets/hero-vision.jpg";
 
 const slides = [
   {
-    image: "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=1200&q=80&fit=crop&crop=center",
-    title: "Transforme Produtos",
-    subtitle: "em Anúncios Profissionais",
-    description: "IA avançada para criar campanhas que convertem em segundos",
+    image: heroPersona,
+    alt: "Conversio Studio - Persona: Anúncios autênticos com pessoas reais"
   },
   {
-    image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=1200&q=80&fit=crop&crop=center",
-    title: "Do Simples",
-    subtitle: "ao Extraordinário",
-    description: "Eleve suas imagens de produto com tecnologia de ponta",
+    image: heroPulse,
+    alt: "Conversio Studio - Pulse: Conteúdo vibrante para redes sociais"
   },
   {
-    image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&q=80&fit=crop&crop=center",
-    title: "Anúncios Que",
-    subtitle: "Chamam Atenção",
-    description: "Criação automática com resultados profissionais garantidos",
+    image: heroStyle,
+    alt: "Conversio Studio - StyleAI: Experimentação digital profissional"
+  },
+  {
+    image: heroVision,
+    alt: "Conversio Studio - Vision: Efeitos visuais cinematográficos"
   },
 ];
 
@@ -63,148 +65,61 @@ const HeroCarousel = () => {
   };
 
   return (
-    <section className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-background via-background to-primary/5">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 min-h-screen flex items-center">
-        <div className="w-full grid lg:grid-cols-2 gap-8 lg:gap-12 items-center py-20 lg:py-0">
-          {/* Conteúdo de Texto - Esquerda */}
-          <div className="relative z-20 space-y-6 lg:space-y-8">
-            {slides.map((slide, index) => (
-              <div
-                key={index}
-                className={`transition-all duration-700 ${
-                  index === currentSlide
-                    ? "opacity-100 translate-x-0"
-                    : "opacity-0 absolute inset-0 translate-x-[-100px] pointer-events-none"
-                }`}
-              >
-                {/* Título Animado */}
-                <div className="space-y-2">
-                  <h1 
-                    className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight transition-all duration-700 delay-100 ${
-                      index === currentSlide && !isTransitioning
-                        ? "opacity-100 translate-y-0"
-                        : "opacity-0 translate-y-10"
-                    }`}
-                  >
-                    {slide.title}
-                  </h1>
-                  <h2 
-                    className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold gradient-text leading-tight transition-all duration-700 delay-200 ${
-                      index === currentSlide && !isTransitioning
-                        ? "opacity-100 translate-y-0"
-                        : "opacity-0 translate-y-10"
-                    }`}
-                  >
-                    {slide.subtitle}
-                  </h2>
-                </div>
-
-                {/* Descrição */}
-                <p 
-                  className={`text-lg sm:text-xl md:text-2xl text-gray-300 max-w-xl transition-all duration-700 delay-300 ${
-                    index === currentSlide && !isTransitioning
-                      ? "opacity-100 translate-y-0"
-                      : "opacity-0 translate-y-10"
-                  }`}
-                >
-                  {slide.description}
-                </p>
-
-                {/* Botões CTA */}
-                <div 
-                  className={`flex flex-col sm:flex-row gap-4 pt-4 transition-all duration-700 delay-400 ${
-                    index === currentSlide && !isTransitioning
-                      ? "opacity-100 translate-y-0"
-                      : "opacity-0 translate-y-10"
-                  }`}
-                >
-                  <Link to="/auth">
-                    <Button size="lg" className="gradient-primary text-lg px-8 py-6 glow-effect hover-lift w-full sm:w-auto">
-                      Começar Agora
-                    </Button>
-                  </Link>
-                  <Link to="/models">
-                    <Button 
-                      size="lg" 
-                      variant="outline" 
-                      className="text-lg px-8 py-6 border-white/30 text-white hover:bg-white/10 hover-lift w-full sm:w-auto"
-                    >
-                      Explorar Modelos
-                    </Button>
-                  </Link>
-                </div>
-
-                {/* Linha Decorativa Animada */}
-                <div 
-                  className={`h-1 bg-gradient-to-r from-primary via-accent to-transparent rounded-full transition-all duration-1000 delay-500 ${
-                    index === currentSlide && !isTransitioning
-                      ? "opacity-100 w-64"
-                      : "opacity-0 w-0"
-                  }`}
-                />
-              </div>
-            ))}
+    <section className="relative min-h-screen w-full overflow-hidden">
+      {/* Slider de Fundo com Imagens Completas */}
+      <div className="absolute inset-0">
+        {slides.map((slide, index) => (
+          <div
+            key={index}
+            className={`absolute inset-0 transition-all duration-1000 ${
+              index === currentSlide
+                ? "opacity-100 scale-100"
+                : "opacity-0 scale-110"
+            }`}
+          >
+            <img
+              src={slide.image}
+              alt={slide.alt}
+              className="w-full h-full object-cover"
+            />
+            {/* Overlay escuro para melhorar legibilidade */}
+            <div className="absolute inset-0 bg-black/40" />
+            
+            {/* Gradientes decorativos */}
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/30 via-transparent to-accent/30 mix-blend-overlay" />
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/80" />
           </div>
+        ))}
+      </div>
 
-          {/* Imagem - Direita */}
-          <div className="relative lg:h-[600px] h-[400px]">
-            {slides.map((slide, index) => (
-              <div
-                key={index}
-                className={`absolute inset-0 transition-all duration-1000 ${
-                  index === currentSlide
-                    ? "opacity-100 scale-100 rotate-0"
-                    : index < currentSlide
-                    ? "opacity-0 scale-90 -rotate-12"
-                    : "opacity-0 scale-90 rotate-12"
-                }`}
-              >
-                {/* Container com forma especial */}
-                <div className="relative w-full h-full">
-                  {/* Efeito de brilho de fundo */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-accent/20 to-transparent rounded-[3rem] blur-3xl animate-pulse" />
-                  
-                  {/* Imagem com formato especial */}
-                  <div 
-                    className="relative w-full h-full rounded-[3rem] overflow-hidden shadow-2xl transform transition-transform duration-1000 hover:scale-105"
-                    style={{
-                      clipPath: "polygon(10% 0%, 100% 0%, 100% 85%, 90% 100%, 0% 100%, 0% 15%)",
-                    }}
-                  >
-                    <img
-                      src={slide.image}
-                      alt={slide.title}
-                      className="w-full h-full object-cover"
-                    />
-                    
-                    {/* Overlay com gradiente */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-accent/20 mix-blend-overlay" />
-                    
-                    {/* Borda animada */}
-                    <div 
-                      className={`absolute inset-0 border-4 border-primary/0 transition-all duration-1000 rounded-[3rem] ${
-                        index === currentSlide ? "border-primary/30" : ""
-                      }`}
-                      style={{
-                        clipPath: "polygon(10% 0%, 100% 0%, 100% 85%, 90% 100%, 0% 100%, 0% 15%)",
-                      }}
-                    />
-                  </div>
+      {/* Elementos decorativos futuristas */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-20 left-10 w-2 h-20 bg-gradient-to-b from-primary to-transparent opacity-60 animate-pulse" />
+        <div className="absolute top-40 right-20 w-2 h-32 bg-gradient-to-b from-accent to-transparent opacity-60 animate-pulse delay-300" />
+        <div className="absolute bottom-40 left-1/4 w-32 h-2 bg-gradient-to-r from-primary to-transparent opacity-60 animate-pulse delay-700" />
+      </div>
 
-                  {/* Elementos decorativos flutuantes */}
-                  <div 
-                    className={`absolute -top-4 -right-4 w-24 h-24 bg-primary/20 rounded-full blur-2xl transition-all duration-1000 ${
-                      index === currentSlide ? "opacity-100 scale-100" : "opacity-0 scale-0"
-                    }`}
-                  />
-                  <div 
-                    className={`absolute -bottom-8 -left-8 w-32 h-32 bg-accent/20 rounded-full blur-2xl transition-all duration-1000 delay-200 ${
-                      index === currentSlide ? "opacity-100 scale-100" : "opacity-0 scale-0"
-                    }`}
-                  />
-                </div>
-              </div>
-            ))}
+      {/* Conteúdo */}
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 min-h-screen flex items-center relative z-10">
+        <div className="w-full flex flex-col justify-center items-center text-center py-20">
+          <div className="max-w-5xl">
+            {/* Botões CTA */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8 animate-fade-in" style={{ animationDelay: "0.6s" }}>
+              <Link to="/auth">
+                <Button size="lg" className="gradient-primary text-lg px-10 py-7 glow-effect hover-lift w-full sm:w-auto text-white font-semibold shadow-2xl">
+                  Começar Agora
+                </Button>
+              </Link>
+              <Link to="/models">
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="text-lg px-10 py-7 border-2 border-white/40 text-white hover:bg-white/20 hover-lift w-full sm:w-auto backdrop-blur-sm font-semibold"
+                >
+                  Ver Modelos
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </div>
