@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 const plans = [
   {
     name: "Starter",
-    price: "R$ 29,90",
+    price: "14.950 Kzs",
     credits: "100 créditos",
     features: [
       "100 créditos de geração",
@@ -18,7 +18,7 @@ const plans = [
   },
   {
     name: "Pro",
-    price: "R$ 99,90",
+    price: "49.950 Kzs",
     credits: "500 créditos",
     features: [
       "500 créditos de geração",
@@ -31,7 +31,7 @@ const plans = [
   },
   {
     name: "Studio",
-    price: "R$ 249,90",
+    price: "124.950 Kzs",
     credits: "1500 créditos",
     features: [
       "1500 créditos de geração",

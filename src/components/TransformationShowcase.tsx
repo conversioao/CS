@@ -1,4 +1,5 @@
 import { ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 import modelPersona from "@/assets/model-persona.jpg";
 import modelPulse from "@/assets/model-pulse.jpg";
 import modelStyleAI from "@/assets/model-styleai.jpg";
@@ -10,25 +11,29 @@ const TransformationShowcase = () => {
       image: modelPersona,
       name: "Conversio Studio — Persona",
       description: "Cria anúncios autênticos com pessoas verdadeiras e produtos reais.",
-      gradient: "from-purple-500/20 to-pink-500/20"
+      gradient: "from-purple-500/20 to-pink-500/20",
+      slug: "persona"
     },
     {
       image: modelPulse,
       name: "Conversio Studio — Pulse",
       description: "Transforma o teu conteúdo em anúncios vibrantes e cheios de vida.",
-      gradient: "from-pink-500/20 to-red-500/20"
+      gradient: "from-pink-500/20 to-red-500/20",
+      slug: "pulse"
     },
     {
       image: modelStyleAI,
       name: "Conversio Studio — StyleAI",
       description: "Experimenta digitalmente as tuas roupas com realismo profissional.",
-      gradient: "from-blue-500/20 to-purple-500/20"
+      gradient: "from-blue-500/20 to-purple-500/20",
+      slug: "styleai"
     },
     {
       image: modelVision,
       name: "Conversio Studio — Vision",
       description: "Cria anúncios com efeitos visuais dignos de cinema.",
-      gradient: "from-green-500/20 to-blue-500/20"
+      gradient: "from-green-500/20 to-blue-500/20",
+      slug: "vision"
     }
   ];
 
@@ -49,9 +54,10 @@ const TransformationShowcase = () => {
 
         <div className="grid md:grid-cols-2 gap-8">
           {models.map((model, index) => (
-            <div 
+            <Link
+              to={`/model/${model.slug}`}
               key={index}
-              className="group relative opacity-0 hover-lift"
+              className="group relative opacity-0 hover-lift block"
               style={{ 
                 animation: `fadeInUp 0.8s ease-out forwards`,
                 animationDelay: `${index * 0.15}s` 
@@ -93,7 +99,7 @@ const TransformationShowcase = () => {
                 <div className="absolute top-4 right-4 w-12 h-12 border-2 border-primary/30 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 <div className="absolute top-6 right-6 w-8 h-8 border-2 border-accent/30 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700 delay-100" />
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>

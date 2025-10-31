@@ -3,44 +3,44 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, Palette, Zap, Camera, Rocket, Crown } from "lucide-react";
 import { Link } from "react-router-dom";
-import modelUgc from "@/assets/model-ugc.jpg";
-import modelSocialBoost from "@/assets/model-socialboost.jpg";
-import modelFashion from "@/assets/model-fashion.jpg";
-import modelVfx from "@/assets/model-vfx.jpg";
+import modelPersona from "@/assets/model-persona.jpg";
+import modelPulse from "@/assets/model-pulse.jpg";
+import modelStyleAI from "@/assets/model-styleai.jpg";
+import modelVision from "@/assets/model-vision.jpg";
 
 const models = [
   {
     icon: Sparkles,
-    title: "Advision UGC",
-    description: "Modelo principal para criação de conteúdo autêntico gerado pelo usuário. Especializado em anúncios realistas e envolventes.",
+    title: "Conversio Studio — Persona",
+    description: "Cria anúncios autênticos com pessoas verdadeiras e produtos reais.",
     tags: ["UGC", "Autêntico", "Realista"],
     badge: "Mais Popular",
-    color: "from-blue-500 to-purple-500",
-    image: modelUgc
+    color: "from-purple-500 to-pink-500",
+    image: modelPersona
   },
   {
     icon: Zap,
-    title: "SocialBost",
-    description: "Otimizado para redes sociais. Cria conteúdo viral e engajador para maximizar o alcance das suas campanhas.",
+    title: "Conversio Studio — Pulse",
+    description: "Transforma o teu conteúdo em anúncios vibrantes e cheios de vida.",
     tags: ["Viral", "Engajamento", "Social Media"],
-    color: "from-pink-500 to-purple-500",
-    image: modelSocialBoost
+    color: "from-pink-500 to-red-500",
+    image: modelPulse
   },
   {
     icon: Palette,
-    title: "FashionFit",
-    description: "Especializado em moda e vestuário. Cria looks modernos e tendências fashion com precisão profissional.",
+    title: "Conversio Studio — StyleAI",
+    description: "Experimenta digitalmente as tuas roupas com realismo profissional.",
     tags: ["Moda", "Tendências", "Editorial"],
-    color: "from-rose-500 to-pink-500",
-    image: modelFashion
+    color: "from-blue-500 to-purple-500",
+    image: modelStyleAI
   },
   {
     icon: Rocket,
-    title: "Advision VFX",
-    description: "Efeitos visuais avançados e criações cinematográficas. Ideal para campanhas premium e conteúdo de alto impacto.",
+    title: "Conversio Studio — Vision",
+    description: "Cria anúncios com efeitos visuais dignos de cinema.",
     tags: ["VFX", "Cinematográfico", "Premium"],
-    color: "from-cyan-500 to-blue-500",
-    image: modelVfx
+    color: "from-green-500 to-blue-500",
+    image: modelVision
   }
 ];
 
@@ -58,7 +58,7 @@ const Models = () => {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {models.map((model, index) => {
             const Icon = model.icon;
             return (
@@ -72,7 +72,7 @@ const Models = () => {
                   </Badge>
                 )}
                 
-                <div className="relative h-48 overflow-hidden">
+                <div className="relative aspect-square overflow-hidden">
                   <img 
                     src={model.image} 
                     alt={model.title}

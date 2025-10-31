@@ -13,6 +13,7 @@ import CombineImage from "./pages/CombineImage";
 import GenerateMusic from "./pages/GenerateMusic";
 import Templates from "./pages/Templates";
 import Models from "./pages/Models";
+import ModelDetail from "./pages/ModelDetail";
 import Gallery from "./pages/Gallery";
 import Community from "./pages/Community";
 import Credits from "./pages/Credits";
@@ -38,6 +39,7 @@ const App = () => (
           <Route path="/generate-music" element={<GenerateMusic />} />
           <Route path="/templates" element={<Templates />} />
           <Route path="/models" element={<Models />} />
+          <Route path="/model/:slug" element={<ModelDetail />} />
           <Route path="/gallery" element={<Gallery />} />
           <Route path="/community" element={<Community />} />
           <Route path="/credits" element={<Credits />} />

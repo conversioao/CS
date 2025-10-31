@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 const plans = [
   {
     name: "Starter",
-    price: "R$ 29,90",
+    price: "14.950 Kzs",
     credits: "100 créditos",
     features: [
       "100 créditos de geração",
@@ -21,11 +21,11 @@ const plans = [
       "Válido por 30 dias"
     ],
     popular: false,
-    value: 29.90
+    value: 14950
   },
   {
     name: "Pro",
-    price: "R$ 99,90",
+    price: "49.950 Kzs",
     credits: "500 créditos",
     features: [
       "500 créditos de geração",
@@ -35,11 +35,11 @@ const plans = [
       "Válido por 60 dias"
     ],
     popular: true,
-    value: 99.90
+    value: 49950
   },
   {
     name: "Studio",
-    price: "R$ 249,90",
+    price: "124.950 Kzs",
     credits: "1500 créditos",
     features: [
       "1500 créditos de geração",
@@ -49,7 +49,7 @@ const plans = [
       "Válido por 90 dias"
     ],
     popular: false,
-    value: 249.90
+    value: 124950
   }
 ];
 

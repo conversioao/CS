@@ -1,6 +1,4 @@
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import heroPersona from "@/assets/hero-persona.jpg";
 import heroPulse from "@/assets/hero-pulse.jpg";
@@ -99,30 +97,6 @@ const HeroCarousel = () => {
         <div className="absolute bottom-40 left-1/4 w-32 h-2 bg-gradient-to-r from-primary to-transparent opacity-60 animate-pulse delay-700" />
       </div>
 
-      {/* Conteúdo */}
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 min-h-screen flex items-center relative z-10">
-        <div className="w-full flex flex-col justify-center items-center text-center py-20">
-          <div className="max-w-5xl">
-            {/* Botões CTA */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8 animate-fade-in" style={{ animationDelay: "0.6s" }}>
-              <Link to="/auth">
-                <Button size="lg" className="gradient-primary text-lg px-10 py-7 glow-effect hover-lift w-full sm:w-auto text-white font-semibold shadow-2xl">
-                  Começar Agora
-                </Button>
-              </Link>
-              <Link to="/models">
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="text-lg px-10 py-7 border-2 border-white/40 text-white hover:bg-white/20 hover-lift w-full sm:w-auto backdrop-blur-sm font-semibold"
-                >
-                  Ver Modelos
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Controles de Navegação */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 flex items-center gap-6">
