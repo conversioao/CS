@@ -13,18 +13,22 @@ import { useSession } from "@/contexts/SessionContext";
 import { cn } from "@/lib/utils";
 
 const Dashboard = () => {
-  const { user, profile } = useSession();
+  const { user, profile, loading } = useSession();
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
 
   const isVerified = profile?.status === 'verified';
 
   useEffect(() => {
+    // Don't do anything until the session has loaded
+    if (loading) return;
+
     const isNewUser = localStorage.getItem('isNewUser');
-    if (isNewUser === 'true') {
+    // Show the welcome/tutorial flow ONLY if the user is new AND verified.
+    if (isNewUser === 'true' && isVerified) {
       setShowWelcomeModal(true);
     }
-  }, []);
+  }, [isVerified, loading]);
 
   const handleCloseModal = () => {
     setShowWelcomeModal(false);
@@ -33,13 +37,17 @@ const Dashboard = () => {
 
   const handleFinishTutorial = () => {
     setShowTutorial(false);
+    // Clear the flag so the tutorial doesn't show again.
     localStorage.removeItem('isNewUser');
   };
 
   return (
     <>
-      {showWelcomeModal && <WelcomeModal isOpen={showWelcomeModal} onClose={handleCloseModal} />}
+      {/* The Welcome Modal and Tutorial will only appear for newly verified users */}
+      {showWelcomeModal && <WelcomeModal isOpen={showWelcomeModal} onClose={handleCloseModal} isVerified={isVerified} />}
       {showTutorial && <DashboardTutorial onFinish={handleFinishTutorial} />}
+      
+      {/* The Verification Modal will only appear for unverified users */}
       {user && !isVerified && <VerificationModal isOpen={!isVerified} userId={user.id} />}
 
       <div className="min-h-screen bg-background flex">
