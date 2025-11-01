@@ -20,7 +20,6 @@ import Credits from "./pages/Credits";
 import Account from "./pages/Account";
 import Onboarding from "./pages/Onboarding";
 import NotFound from "./pages/NotFound";
-import ChatCriativo from "./pages/ChatCriativo";
 
 const queryClient = new QueryClient();
 
@@ -47,7 +46,6 @@ const App = () => (
           <Route path="/community" element={<Community />} />
           <Route path="/credits" element={<Credits />} />
           <Route path="/account" element={<Account />} />
-          <Route path="/chat-criativo" element={<ChatCriativo />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

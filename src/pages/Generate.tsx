@@ -251,7 +251,7 @@ const Generate = () => {
             </div>
           </div>
 
-          <div className="grid lg:grid-cols-[1fr,420px] gap-4 sm:gap-6">
+          <div className="flex flex-col gap-6">
             <div className="space-y-6">
               <div className="bg-card/50 backdrop-blur-xl rounded-xl shadow-lg p-4 sm:p-6 min-h-[400px] sm:min-h-[600px] flex flex-col relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-40 h-40 bg-primary/5 rounded-full blur-2xl" />
@@ -304,7 +304,7 @@ const Generate = () => {
                 ) : (
                   <div className="flex flex-col items-center justify-center gap-4 text-center flex-1 relative z-10">
                     <div className="w-20 h-20 rounded-lg bg-muted/50 backdrop-blur-sm flex items-center justify-center"><Image className="w-10 h-10 text-muted-foreground" /></div>
-                    <div className="space-y-2"><h3 className="text-xl font-bold">Pronto para criar?</h3><p className="text-muted-foreground max-w-md text-sm">Configure as opções ao lado e clique em "Gerar Imagem" para começar</p></div>
+                    <div className="space-y-2"><h3 className="text-xl font-bold">Pronto para criar?</h3><p className="text-muted-foreground max-w-md text-sm">Configure as opções abaixo e clique em "Gerar Imagem" para começar</p></div>
                   </div>
                 )}
               </div>
@@ -313,7 +313,7 @@ const Generate = () => {
                 <div className="bg-card/50 backdrop-blur-xl rounded-xl shadow-lg p-6">
                   <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><Sparkles className="w-5 h-5 text-primary" />Histórico de Gerações</h3>
                   <ScrollArea className="h-[300px] pr-4">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                       {history.map((image, index) => (
                         <Dialog key={image.id}>
                           <DialogTrigger asChild>

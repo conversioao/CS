@@ -1,4 +1,4 @@
-import { ImagePlus, Video, Wand2, Layers, Music, Bot } from "lucide-react";
+import { ImagePlus, Video, Wand2, Layers, Music } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
@@ -17,13 +17,6 @@ const tools = [
     icon: Video,
     link: "/generate-video",
     color: "from-purple-500 to-pink-500",
-  },
-  {
-    title: "ChatCriativo",
-    description: "Seu assistente de IA para conteúdo.",
-    icon: Bot,
-    link: "/chat-criativo",
-    color: "from-green-500 to-teal-500",
   },
   {
     title: "Editar Imagem",
