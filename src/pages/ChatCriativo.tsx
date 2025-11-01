@@ -87,19 +87,48 @@ const ChatCriativo = () => {
     setIsLoading(true);
     setWizardStep(4); // Etapa de carregamento
     try {
-      const response = await fetch('https://n8n.conversio.ao/webhook-test/chatcriativo', {
+      const dataToSend = { ...campaignData };
+
+      if (dataToSend.imageUrl && dataToSend.imageUrl.startsWith('data:image')) {
+        toast({ title: "Processando imagem...", description: "A carregar a imagem do produto para análise." });
+
+        const response = await fetch(dataToSend.imageUrl);
+        const blob = await response.blob();
+        const file = new File([blob], "product-image.png", { type: blob.type });
+
+        const formData = new FormData();
+        formData.append('image', file);
+
+        const imgbbResponse = await fetch('https://api.imgbb.com/1/upload?key=8360d0dc6e3b2243b4dc8a45b4040974', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!imgbbResponse.ok) {
+          throw new Error('Erro ao fazer upload da imagem para o ImgBB.');
+        }
+
+        const imgbbData = await imgbbResponse.json();
+        if (!imgbbData.data || !imgbbData.data.url) {
+            throw new Error('Resposta inválida do ImgBB.');
+        }
+        
+        dataToSend.imageUrl = imgbbData.data.url;
+      }
+
+      const webhookResponse = await fetch('https://n8n.conversio.ao/webhook-test/chatcriativo', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(campaignData),
+        body: JSON.stringify(dataToSend),
       });
 
-      if (!response.ok) {
+      if (!webhookResponse.ok) {
         throw new Error('A resposta do servidor não foi bem-sucedida.');
       }
 
-      const campaignPlan: CampaignPlan = await response.json();
+      const campaignPlan: CampaignPlan = await webhookResponse.json();
       
       if (!campaignPlan.plano_7_dias || !campaignPlan.descricao_curta_imagem) {
         throw new Error('A resposta do webhook está mal formatada.');
