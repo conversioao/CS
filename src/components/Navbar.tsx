@@ -24,10 +24,10 @@ const Navbar = () => {
             <a href="#precos" className="text-muted-foreground hover:text-foreground transition-colors">
               Preços
             </a>
-            <Link to="/login">
+            <Link to="/auth">
               <Button variant="ghost">Entrar</Button>
             </Link>
-            <Link to="/register">
+            <Link to="/auth">
               <Button className="gradient-primary">Começar Grátis</Button>
             </Link>
           </div>
