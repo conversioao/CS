@@ -4,14 +4,20 @@ import RecentCreations from "@/components/RecentCreations";
 import WelcomeModal from "@/components/WelcomeModal";
 import DashboardTutorial from "@/components/DashboardTutorial";
 import DashboardSidebar from "@/components/DashboardSidebar";
+import VerificationModal from "@/components/VerificationModal";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Sparkles } from "lucide-react";
+import { useSession } from "@/contexts/SessionContext";
+import { cn } from "@/lib/utils";
 
 const Dashboard = () => {
+  const { user, profile } = useSession();
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
+
+  const isVerified = profile?.status === 'verified';
 
   useEffect(() => {
     const isNewUser = localStorage.getItem('isNewUser');
@@ -34,6 +40,7 @@ const Dashboard = () => {
     <>
       {showWelcomeModal && <WelcomeModal isOpen={showWelcomeModal} onClose={handleCloseModal} />}
       {showTutorial && <DashboardTutorial onFinish={handleFinishTutorial} />}
+      {user && !isVerified && <VerificationModal isOpen={!isVerified} userId={user.id} />}
 
       <div className="min-h-screen bg-background flex">
         <div className="hidden lg:block">
@@ -52,21 +59,21 @@ const Dashboard = () => {
             <div className="mb-12 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <h1 className="text-4xl font-bold mb-2">
-                  Olá, <span className="gradient-text">Usuário</span>
+                  Olá, <span className="gradient-text">{profile?.full_name?.split(' ')[0] || 'Usuário'}</span>
                 </h1>
                 <p className="text-muted-foreground text-lg">
                   Vamos criar algo incrível hoje!
                 </p>
               </div>
               <Link to="/generate">
-                <Button size="lg" className="gradient-primary glow-effect">
+                <Button size="lg" className="gradient-primary glow-effect" disabled={!isVerified}>
                   <Sparkles className="w-5 h-5 mr-2" />
                   Nova Criação
                 </Button>
               </Link>
             </div>
 
-            <div className="space-y-12">
+            <div className={cn("space-y-12", !isVerified && "opacity-20 pointer-events-none")}>
               <ToolsSection />
               <RecentCreations />
             </div>

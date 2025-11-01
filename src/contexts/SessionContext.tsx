@@ -10,6 +10,7 @@ export interface Profile {
   plan_expires_at: string;
   account_type: 'user' | 'affiliate';
   referral_code: string | null;
+  status: string;
 }
 
 interface SessionContextValue {

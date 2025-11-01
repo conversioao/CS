@@ -54,12 +54,11 @@ const Register = () => {
 
       if (data.user) {
         toast.success('Conta criada com sucesso!', {
-          description: 'Por favor, verifique o código enviado para o seu WhatsApp.',
+          description: 'Vamos configurar o seu espaço criativo.',
         });
         
-        // Armazenar o ID do usuário para verificação
-        localStorage.setItem('pendingUserId', data.user.id);
-        navigate('/verify');
+        localStorage.setItem('isNewUser', 'true');
+        navigate('/onboarding');
       } else {
         throw new Error('Falha ao criar conta. Tente novamente.');
       }
