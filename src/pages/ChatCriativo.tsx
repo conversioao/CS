@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Bot, Sparkles, Upload, Loader2, ArrowRight, History, Copy } from "lucide-react";
+import { Bot, Sparkles, Upload, Loader2, ArrowRight, History, Copy, FileText, BrainCircuit, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 type ChatStep = "start" | "image" | "name" | "audience" | "platform" | "style" | "loading" | "result";
@@ -99,6 +99,17 @@ const ChatCriativo = () => {
     }
   };
 
+  const handleStartOver = () => {
+    setStep("start");
+    setProductImage(null);
+    setProductImageUrl("");
+    setProductName("");
+    setTargetAudience("");
+    setSocialMedia("");
+    setAdStyle("");
+    setChatResult(null);
+  };
+
   const renderStep = () => {
     switch (step) {
       case "start":
@@ -185,33 +196,45 @@ const ChatCriativo = () => {
         };
         return (
           <div>
-            <h2 className="text-2xl font-bold mb-4">Aqui está o seu criativo!</h2>
+            <div className="grid md:grid-cols-[150px,1fr] gap-6 mb-6">
+              <img src={productImageUrl} alt={productName} className="rounded-lg object-cover w-full h-auto" />
+              <div>
+                <h2 className="text-2xl font-bold mb-2">Criativo para "{productName}"</h2>
+                <p className="text-muted-foreground">Aqui estão as sugestões da IA para o seu anúncio.</p>
+              </div>
+            </div>
             <div className="space-y-4">
               <Card>
-                <CardHeader><CardTitle className="text-lg">Copy para {socialMedia}</CardTitle></CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground whitespace-pre-wrap">{chatResult.copy}</p>
-                  <Button variant="ghost" size="sm" onClick={() => copyToClipboard(chatResult.copy)}><Copy className="w-4 h-4 mr-2" />Copiar</Button>
-                </CardContent>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2"><Copy className="w-4 h-4 text-primary" />Copy para {socialMedia}</CardTitle>
+                  <Button variant="ghost" size="icon" onClick={() => copyToClipboard(chatResult.copy)}><Copy className="w-4 h-4" /></Button>
+                </CardHeader>
+                <CardContent><p className="text-muted-foreground whitespace-pre-wrap">{chatResult.copy}</p></CardContent>
               </Card>
               <Card>
-                <CardHeader><CardTitle className="text-lg">Descrição para Geração de Imagem</CardTitle></CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">{chatResult.description}</p>
-                  <Button variant="ghost" size="sm" onClick={() => copyToClipboard(chatResult.description)}><Copy className="w-4 h-4 mr-2" />Copiar</Button>
-                </CardContent>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2"><FileText className="w-4 h-4 text-primary" />Descrição para Geração</CardTitle>
+                  <Button variant="ghost" size="icon" onClick={() => copyToClipboard(chatResult.description)}><Copy className="w-4 h-4" /></Button>
+                </CardHeader>
+                <CardContent><p className="text-muted-foreground">{chatResult.description}</p></CardContent>
               </Card>
               <Card>
-                <CardHeader><CardTitle className="text-lg">Modelo Sugerido</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-sm font-medium flex items-center gap-2"><BrainCircuit className="w-4 h-4 text-primary" />Modelo Sugerido</CardTitle></CardHeader>
                 <CardContent><p className="font-semibold text-primary">{chatResult.model}</p></CardContent>
               </Card>
             </div>
-            <Link to={`/generate?model=${encodeURIComponent(chatResult.model)}&description=${encodeURIComponent(chatResult.description)}&imageUrl=${encodeURIComponent(productImageUrl)}`}>
-              <Button size="lg" className="mt-6 w-full gradient-primary">
-                <Sparkles className="w-5 h-5 mr-2" />
-                Gerar Imagem com este Criativo
+            <div className="flex flex-col sm:flex-row gap-2 mt-6">
+              <Button size="lg" variant="outline" onClick={handleStartOver} className="w-full">
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Começar de Novo
               </Button>
-            </Link>
+              <Link to={`/generate?model=${encodeURIComponent(chatResult.model)}&description=${encodeURIComponent(chatResult.description)}&imageUrl=${encodeURIComponent(productImageUrl)}`} className="w-full">
+                <Button size="lg" className="w-full gradient-primary">
+                  <Sparkles className="w-5 h-5 mr-2" />
+                  Gerar Imagem
+                </Button>
+              </Link>
+            </div>
           </div>
         );
       default: return null;
