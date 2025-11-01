@@ -1,5 +1,6 @@
-import { ImagePlus, Video, Wand2, Layers, Music } from "lucide-react";
+import { ImagePlus, Video, Wand2, Layers, Music, Bot } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
 
 const tools = [
   {
@@ -13,6 +14,13 @@ const tools = [
     description: "Produza vídeos únicos",
     icon: Video,
     link: "/generate-video",
+  },
+  {
+    title: "ChatCriativo",
+    description: "Converse com a IA para criar",
+    icon: Bot,
+    link: "/chat-criativo",
+    premium: true,
   },
   {
     title: "Editar Imagem",
@@ -47,6 +55,9 @@ const ToolsSection = () => {
           
           const toolContent = (
             <div className={`group relative flex flex-col items-center text-center p-4 transition-all duration-300 w-40 ${tool.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
+              {tool.premium && (
+                <Badge className="absolute -top-2 -right-2 bg-primary">PRO</Badge>
+              )}
               <div 
                 className="relative mb-4"
               >

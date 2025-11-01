@@ -2,15 +2,12 @@ import { CreditCard, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useState } from "react";
-import logo from "@/assets/logo.png";
 import {
   Sheet,
   SheetContent,
-  SheetHeader,
-  SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import DashboardSidebar from "./DashboardSidebar"; // We can reuse the links logic if needed
+import DashboardSidebar from "./DashboardSidebar";
 
 const DashboardHeader = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -21,17 +18,8 @@ const DashboardHeader = () => {
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=demo",
   };
 
-  const navLinks = [
-    { to: "/dashboard", label: "Home" },
-    { to: "/models", label: "Modelos" },
-    { to: "/gallery", label: "Galeria" },
-    { to: "/community", label: "Comunidade" },
-    { to: "/credits", label: "Créditos" },
-    { to: "/account", label: "Conta" },
-  ];
-
   return (
-    <header className="sticky top-0 z-30 bg-background/30 backdrop-blur-lg border-b border-border/50">
+    <header className="sticky top-0 z-30 bg-background/30 backdrop-blur-lg border-b border-border/20">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Mobile Menu Trigger */}
@@ -42,7 +30,7 @@ const DashboardHeader = () => {
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-[280px] sm:w-[320px] p-0">
+              <SheetContent side="left" className="w-[280px] sm:w-[320px] p-0 bg-transparent border-0">
                 <DashboardSidebar />
               </SheetContent>
             </Sheet>
