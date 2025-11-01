@@ -5,7 +5,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { ArrowLeft, Video, Sparkles, Upload, Download, Loader2, X, SlidersHorizontal, Camera, Square, RectangleVertical, RectangleHorizontal } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
@@ -14,7 +13,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { storeMediaInSupabase } from "@/lib/supabase-storage";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import CameraCaptureDialog from "@/components/CameraCaptureDialog";
-import { Badge } from "@/components/ui/badge";
 import React from "react";
 
 interface GeneratedVideo {
@@ -71,7 +69,6 @@ const GenerateVideo = () => {
       return;
     }
     setIsLoading(true);
-    setGeneratedVideos([]);
     try {
       let imageUrl = '';
       if (generationMode === "image" && uploadedImage) {
@@ -87,7 +84,7 @@ const GenerateVideo = () => {
         toast.info("A salvar os seus vídeos...");
         const permanentUrls = await storeMediaInSupabase(temporaryUrls, 'video');
         const videos = permanentUrls.map((url, index) => ({ url, id: `${Date.now()}-${index}` }));
-        setGeneratedVideos(videos);
+        setGeneratedVideos(prev => [...videos, ...prev]);
         toast.success("Sucesso!", { description: `${videos.length} vídeo(s) gerado(s) com sucesso.` });
       } else {
         throw new Error('Nenhum vídeo foi gerado.');
@@ -120,25 +117,46 @@ const GenerateVideo = () => {
             <Link to="/dashboard" className="flex items-center gap-2 text-muted-foreground hover:text-foreground"><ArrowLeft className="w-4 h-4" /><span>Voltar ao Dashboard</span></Link>
             <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full"><Sparkles className="w-4 h-4 text-primary" /><span className="text-sm font-semibold">3 créditos por vídeo</span></div>
           </div>
-          <div className="flex-1 flex flex-col gap-6">
+          <div className="flex-1 flex flex-col gap-6 min-h-0">
             <div className="bg-card/50 backdrop-blur-xl rounded-xl shadow-lg p-6 flex-1 flex flex-col">
               <h2 className="text-2xl font-bold mb-6 flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center"><Video className="w-5 h-5 text-primary" /></div>Resultado da Geração</h2>
-              {isLoading ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 flex-1">
-                  {Array.from({ length: quantity }).map((_, i) => (<div key={i} className="relative overflow-hidden rounded-lg bg-muted/30 aspect-video"><div className="absolute inset-0 flex flex-col items-center justify-center gap-2"><Loader2 className="w-10 h-10 animate-spin text-primary" /><p className="text-xs">A gerar {i + 1}/{quantity}</p></div></div>))}
-                </div>
-              ) : generatedVideos.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 flex-1">
-                  {generatedVideos.map((video, index) => (
-                    <Card key={video.id} className="overflow-hidden group"><CardContent className="p-0"><div className="relative aspect-video bg-black"><video src={video.url} className="w-full h-full object-cover" controls /><div className="absolute bottom-2 right-2 flex gap-1.5"><Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleDownload(video.url, index)}><Download className="w-4 h-4" /></Button></div></div></CardContent></Card>
-                  ))}
+              {generatedVideos.length === 0 && !isLoading ? (
+                <div className="flex-1 flex flex-col items-center justify-center text-center">
+                  <div className="w-20 h-20 rounded-lg bg-muted/50 flex items-center justify-center mb-4"><Video className="w-10 h-10 text-muted-foreground" /></div>
+                  <h3 className="text-xl font-bold">Pronto para criar?</h3>
+                  <p className="text-muted-foreground max-w-md text-sm">Configure as opções abaixo para gerar o seu vídeo.</p>
                 </div>
               ) : (
-                <div className="flex-1 flex flex-col items-center justify-center text-center"><div className="w-20 h-20 rounded-lg bg-muted/50 flex items-center justify-center mb-4"><Video className="w-10 h-10 text-muted-foreground" /></div><h3 className="text-xl font-bold">Pronto para criar?</h3><p className="text-muted-foreground max-w-md text-sm">Configure as opções abaixo para gerar o seu vídeo.</p></div>
+                <div className="flex-1 overflow-y-auto -mr-4 pr-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {isLoading && (
+                      Array.from({ length: quantity }).map((_, i) => (
+                        <div key={`loader-${i}`} className="relative overflow-hidden rounded-lg bg-muted/30 aspect-video">
+                          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                            <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                            <p className="text-xs">A gerar {i + 1}/{quantity}</p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                    {generatedVideos.map((video, index) => (
+                      <Card key={video.id} className="overflow-hidden group">
+                        <CardContent className="p-0">
+                          <div className="relative aspect-video bg-black">
+                            <video src={video.url} className="w-full h-full object-cover" controls />
+                            <div className="absolute bottom-2 right-2 flex gap-1.5">
+                              <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleDownload(video.url, index)}><Download className="w-4 h-4" /></Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
           </div>
-          <div className="w-full max-w-4xl mx-auto mt-8 sticky bottom-6 z-20">
+          <div className="w-full max-w-4xl mx-auto pt-8 sticky bottom-0 pb-6 bg-background">
             <div className="relative flex items-center gap-1 rounded-full bg-card/80 backdrop-blur-xl border border-border/50 p-2 shadow-lg">
               {generationMode === 'image' && (<>
                 <Input id="image-upload-video" type="file" accept=".jpg,.jpeg,.png,.webp" onChange={(e) => e.target.files && handleImageUpload(e.target.files[0])} className="hidden" />

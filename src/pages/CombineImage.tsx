@@ -55,7 +55,6 @@ const CombineImage = () => {
       return;
     }
     setIsLoading(true);
-    setCombinedImages([]);
     try {
       toast.info("A fazer upload das imagens...");
       const [url1, url2] = await Promise.all([uploadToImgbb(image1.file), uploadToImgbb(image2.file)]);
@@ -69,7 +68,7 @@ const CombineImage = () => {
       toast.info("A salvar a sua imagem...");
       const [permanentUrl] = await storeMediaInSupabase([temporaryUrl], 'image');
       const newImage: CombinedImage = { url: permanentUrl, id: `${Date.now()}` };
-      setCombinedImages([newImage]);
+      setCombinedImages(prev => [newImage, ...prev]);
       toast.success("Sucesso!", { description: "Imagens combinadas com sucesso." });
     } catch (error) {
       toast.error("Erro ao combinar imagens", { description: "Ocorreu um problema. Por favor, tente novamente em breve." });
@@ -99,23 +98,57 @@ const CombineImage = () => {
             <Link to="/dashboard" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"><ArrowLeft className="w-4 h-4" /><span>Voltar ao Dashboard</span></Link>
             <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full"><Sparkles className="w-4 h-4 text-primary" /><span className="text-sm font-semibold">2 créditos por combinação</span></div>
           </div>
-          <div className="flex-1 flex flex-col gap-6">
+          <div className="flex-1 flex flex-col gap-6 min-h-0">
             <div className="bg-card/50 backdrop-blur-xl rounded-xl shadow-lg p-6 flex-1 flex flex-col">
               <h2 className="text-2xl font-bold mb-6 flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center"><Combine className="w-5 h-5 text-primary" /></div>Resultado da Combinação</h2>
-              {isLoading ? (
-                <div className="flex-1 flex items-center justify-center"><div className="relative overflow-hidden rounded-lg bg-muted/30 aspect-square w-full max-w-sm"><div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-white"><Loader2 className="w-10 h-10 animate-spin text-primary" /><p>A combinar...</p></div></div></div>
-              ) : combinedImages.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {combinedImages.map((image) => (
-                    <Card key={image.id} className="overflow-hidden group"><CardContent className="p-0"><div className="relative aspect-square"><img src={image.url} alt="Imagem combinada" className="w-full h-full object-cover" /><div className="absolute bottom-2 right-2 flex gap-1.5"><Dialog onOpenChange={(isOpen) => !isOpen && setZoomLevel(1)}><DialogTrigger asChild><Button variant="outline" size="icon" className="h-8 w-8"><Maximize2 className="w-4 h-4" /></Button></DialogTrigger><DialogContent className="max-w-[95vw] max-h-[95vh] p-2 flex flex-col"><div className="flex-1 relative overflow-auto"><img src={image.url} alt="Imagem combinada" className="max-w-none max-h-none" style={{ transform: `scale(${zoomLevel})` }} /></div><div className="flex items-center justify-center gap-2 pt-2"><Button variant="outline" size="icon" onClick={() => setZoomLevel(p => Math.max(p - 0.2, 0.2))}><ZoomOut className="w-4 h-4" /></Button><Button variant="outline" onClick={() => setZoomLevel(1)}>Reset</Button><Button variant="outline" size="icon" onClick={() => setZoomLevel(p => Math.min(p + 0.2, 5))}><ZoomIn className="w-4 h-4" /></Button></div></DialogContent></Dialog><Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleDownload(image.url)}><Download className="w-4 h-4" /></Button></div></div></CardContent></Card>
-                  ))}
+              {combinedImages.length === 0 && !isLoading ? (
+                <div className="flex-1 flex flex-col items-center justify-center text-center">
+                  <div className="w-20 h-20 rounded-lg bg-muted/50 flex items-center justify-center mb-4"><Combine className="w-10 h-10 text-muted-foreground" /></div>
+                  <h3 className="text-xl font-bold">Pronto para combinar?</h3>
+                  <p className="text-muted-foreground max-w-md text-sm">Envie duas imagens e descreva como combiná-las.</p>
                 </div>
               ) : (
-                <div className="flex-1 flex flex-col items-center justify-center text-center"><div className="w-20 h-20 rounded-lg bg-muted/50 flex items-center justify-center mb-4"><Combine className="w-10 h-10 text-muted-foreground" /></div><h3 className="text-xl font-bold">Pronto para combinar?</h3><p className="text-muted-foreground max-w-md text-sm">Envie duas imagens e descreva como combiná-las.</p></div>
+                <div className="flex-1 overflow-y-auto -mr-4 pr-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {isLoading && (
+                      <div className="relative overflow-hidden rounded-lg bg-muted/30 aspect-square">
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-white">
+                          <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                          <p>A combinar...</p>
+                        </div>
+                      </div>
+                    )}
+                    {combinedImages.map((image) => (
+                      <Card key={image.id} className="overflow-hidden group">
+                        <CardContent className="p-0">
+                          <div className="relative aspect-square">
+                            <img src={image.url} alt="Imagem combinada" className="w-full h-full object-cover" />
+                            <div className="absolute bottom-2 right-2 flex gap-1.5">
+                              <Dialog onOpenChange={(isOpen) => !isOpen && setZoomLevel(1)}>
+                                <DialogTrigger asChild><Button variant="outline" size="icon" className="h-8 w-8"><Maximize2 className="w-4 h-4" /></Button></DialogTrigger>
+                                <DialogContent className="max-w-[95vw] max-h-[95vh] p-2 flex flex-col">
+                                  <div className="flex-1 relative overflow-auto">
+                                    <img src={image.url} alt="Imagem combinada" className="max-w-none max-h-none" style={{ transform: `scale(${zoomLevel})` }} />
+                                  </div>
+                                  <div className="flex items-center justify-center gap-2 pt-2">
+                                    <Button variant="outline" size="icon" onClick={() => setZoomLevel(p => Math.max(p - 0.2, 0.2))}><ZoomOut className="w-4 h-4" /></Button>
+                                    <Button variant="outline" onClick={() => setZoomLevel(1)}>Reset</Button>
+                                    <Button variant="outline" size="icon" onClick={() => setZoomLevel(p => Math.min(p + 0.2, 5))}><ZoomIn className="w-4 h-4" /></Button>
+                                  </div>
+                                </DialogContent>
+                              </Dialog>
+                              <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleDownload(image.url)}><Download className="w-4 h-4" /></Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
           </div>
-          <div className="w-full max-w-4xl mx-auto mt-8 sticky bottom-6 z-20">
+          <div className="w-full max-w-4xl mx-auto pt-8 sticky bottom-0 pb-6 bg-background">
             <div className="relative flex items-center gap-1 rounded-full bg-card/80 backdrop-blur-xl border border-border/50 p-2 shadow-lg">
               <Input id="image-upload-1" type="file" accept=".jpg,.jpeg,.png" onChange={(e) => e.target.files && handleImageUpload(e.target.files[0], 1)} className="hidden" />
               <label htmlFor="image-upload-1"><Button variant="ghost" size="icon" className="rounded-full" asChild disabled={isLoading}><span><Upload className="w-5 h-5" /></span></Button></label>

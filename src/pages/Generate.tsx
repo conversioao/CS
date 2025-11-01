@@ -55,7 +55,6 @@ const Generate = () => {
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
-  const [history, setHistory] = useState<GeneratedImage[]>([]);
   const [imageToEdit, setImageToEdit] = useState<GeneratedImage | null>(null);
   const [editPrompt, setEditPrompt] = useState('');
   const [isEditing, setIsEditing] = useState(false);
@@ -135,7 +134,6 @@ const Generate = () => {
       return;
     }
     setIsLoading(true);
-    setGeneratedImages([]);
     try {
       let imgUrl = uploadedImageUrl;
       if (uploadedImage) {
@@ -163,7 +161,6 @@ const Generate = () => {
           const permanentUrls = await storeMediaInSupabase(temporaryUrls, 'image');
           const images: GeneratedImage[] = permanentUrls.map((url, index) => ({ url, id: `${Date.now()}-${index}` }));
           setGeneratedImages(prev => [...images, ...prev]);
-          setHistory(prev => [...images, ...prev]);
           toast.success("Sucesso!", { description: `${images.length} imagem(ns) gerada(s) e armazenada(s) com sucesso.` });
         } else {
           throw new Error('Nenhuma imagem foi gerada.');
@@ -218,7 +215,6 @@ const Generate = () => {
           const storedUrls = await storeMediaInSupabase(editedUrls, 'image');
           const newEditedImages: GeneratedImage[] = storedUrls.map((url, index) => ({ url, id: `edited-${Date.now()}-${index}` }));
           setGeneratedImages(prev => [...newEditedImages, ...prev]);
-          setHistory(prev => [...newEditedImages, ...prev]);
           toast.success("Sucesso!", { description: "Imagem editada com sucesso." });
           setImageToEdit(null);
           setEditPrompt('');
@@ -261,13 +257,21 @@ const Generate = () => {
             </div>
           </div>
 
-          <div className="flex-1 flex flex-col gap-6">
-            <div className="flex-1 flex flex-col">
-              <div className="bg-card/50 backdrop-blur-xl rounded-xl shadow-lg p-4 sm:p-6 flex-1 flex flex-col relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-40 h-40 bg-primary/5 rounded-full blur-2xl" /><div className="absolute bottom-0 left-0 w-40 h-40 bg-secondary/5 rounded-full blur-2xl" />
-                {isLoading ? (
-                  isEditing && imageToEdit ? (
-                    <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 flex-1 relative z-10">
+          <div className="flex-1 flex flex-col gap-6 min-h-0">
+            <div className="bg-card/50 backdrop-blur-xl rounded-xl shadow-lg p-4 sm:p-6 flex-1 flex flex-col relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-40 h-40 bg-primary/5 rounded-full blur-2xl" /><div className="absolute bottom-0 left-0 w-40 h-40 bg-secondary/5 rounded-full blur-2xl" />
+              {generatedImages.length === 0 && !isLoading ? (
+                <div className="flex-1 flex flex-col items-center justify-center text-center">
+                  <div className="w-20 h-20 rounded-lg bg-muted/50 backdrop-blur-sm flex items-center justify-center"><Image className="w-10 h-10 text-muted-foreground" /></div>
+                  <div className="space-y-2 mt-4">
+                    <h3 className="text-xl font-bold">Pronto para criar?</h3>
+                    <p className="text-muted-foreground max-w-md text-sm">Envie uma imagem ou descreva o que você quer gerar na caixa abaixo.</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex-1 overflow-y-auto -mr-4 pr-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {isLoading && isEditing && imageToEdit && (
                       <div className="relative overflow-hidden rounded-lg bg-muted/30 backdrop-blur-sm aspect-square">
                         <img src={imageToEdit.url} alt="A editar" className="w-full h-full object-cover filter blur-sm brightness-50" />
                         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-white bg-black/20">
@@ -275,25 +279,55 @@ const Generate = () => {
                           <p className="text-sm text-white/80 font-semibold">A editar...</p>
                         </div>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 flex-1 relative z-10">
-                      {Array.from({ length: quantity }).map((_, i) => (<div key={i} className="relative overflow-hidden rounded-lg bg-muted/30 backdrop-blur-sm aspect-square"><div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-white bg-black/20"><Loader2 className="w-10 h-10 animate-spin text-primary" /><p className="text-xs text-white/80 text-center px-2">{currentLoadingMessage}</p></div></div>))}
-                    </div>
-                  )
-                ) : generatedImages.length > 0 ? (
-                  <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 flex-1 relative z-10">
-                    {generatedImages.map((image, index) => (<Card key={image.id} className="overflow-hidden group hover:shadow-lg transition-all bg-card/50 backdrop-blur-sm aspect-square"><CardContent className="p-0 h-full"><div className="relative w-full h-full overflow-hidden"><img src={image.url} alt={`Imagem gerada ${index + 1}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" loading="lazy" /><div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"><div className="absolute bottom-2 right-2 flex gap-1.5"><Dialog onOpenChange={(isOpen) => { if (!isOpen) setZoomLevel(1); }}><DialogTrigger asChild><Button variant="outline" size="icon" className="h-8 w-8 bg-black/50 border-white/20 hover:bg-black/80 text-white"><Maximize2 className="w-4 h-4" /></Button></DialogTrigger><DialogContent className="max-w-[95vw] max-h-[95vh] p-2 sm:p-4 flex flex-col"><div className="flex-1 relative overflow-auto rounded-lg"><div className="flex items-center justify-center h-full w-full"><img src={image.url} alt={`Imagem gerada ${index + 1}`} className="max-w-none max-h-none object-contain transition-transform duration-200 ease-in-out" style={{ transform: `scale(${zoomLevel})` }} /></div></div><div className="flex items-center justify-center gap-2 pt-2"><Button variant="outline" size="icon" onClick={() => setZoomLevel(prev => Math.max(prev - 0.2, 0.2))}><ZoomOut className="w-4 h-4" /></Button><Button variant="outline" onClick={() => setZoomLevel(1)}>Reset</Button><Button variant="outline" size="icon" onClick={() => setZoomLevel(prev => Math.min(prev + 0.2, 5))}><ZoomIn className="w-4 h-4" /></Button></div></DialogContent></Dialog><Button variant="outline" size="icon" className="h-8 w-8 bg-black/50 border-white/20 hover:bg-black/80 text-white" onClick={() => handleDownload(image.url, index)}><Download className="w-4 h-4" /></Button><Button variant="outline" size="icon" className="h-8 w-8 bg-black/50 border-white/20 hover:bg-black/80 text-white" onClick={() => setImageToEdit(image)}><Edit className="w-4 h-4" /></Button></div></div></div></CardContent></Card>))}
+                    )}
+                    {isLoading && !isEditing && (
+                      Array.from({ length: quantity }).map((_, i) => (
+                        <div key={`loader-${i}`} className="relative overflow-hidden rounded-lg bg-muted/30 backdrop-blur-sm aspect-square">
+                          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-white bg-black/20">
+                            <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                            <p className="text-xs text-white/80 text-center px-2">{currentLoadingMessage}</p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                    {generatedImages.map((image) => (
+                      <Card key={image.id} className="overflow-hidden group hover:shadow-lg transition-all bg-card/50 backdrop-blur-sm aspect-square">
+                        <CardContent className="p-0 h-full">
+                          <div className="relative w-full h-full overflow-hidden">
+                            <img src={image.url} alt="Imagem gerada" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" loading="lazy" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                              <div className="absolute bottom-2 right-2 flex gap-1.5">
+                                <Dialog onOpenChange={(isOpen) => { if (!isOpen) setZoomLevel(1); }}>
+                                  <DialogTrigger asChild><Button variant="outline" size="icon" className="h-8 w-8 bg-black/50 border-white/20 hover:bg-black/80 text-white"><Maximize2 className="w-4 h-4" /></Button></DialogTrigger>
+                                  <DialogContent className="max-w-[95vw] max-h-[95vh] p-2 sm:p-4 flex flex-col">
+                                    <div className="flex-1 relative overflow-auto rounded-lg">
+                                      <div className="flex items-center justify-center h-full w-full">
+                                        <img src={image.url} alt="Imagem gerada" className="max-w-none max-h-none object-contain transition-transform duration-200 ease-in-out" style={{ transform: `scale(${zoomLevel})` }} />
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center justify-center gap-2 pt-2">
+                                      <Button variant="outline" size="icon" onClick={() => setZoomLevel(prev => Math.max(prev - 0.2, 0.2))}><ZoomOut className="w-4 h-4" /></Button>
+                                      <Button variant="outline" onClick={() => setZoomLevel(1)}>Reset</Button>
+                                      <Button variant="outline" size="icon" onClick={() => setZoomLevel(prev => Math.min(prev + 0.2, 5))}><ZoomIn className="w-4 h-4" /></Button>
+                                    </div>
+                                  </DialogContent>
+                                </Dialog>
+                                <Button variant="outline" size="icon" className="h-8 w-8 bg-black/50 border-white/20 hover:bg-black/80 text-white" onClick={() => handleDownload(image.url, 0)}><Download className="w-4 h-4" /></Button>
+                                <Button variant="outline" size="icon" className="h-8 w-8 bg-black/50 border-white/20 hover:bg-black/80 text-white" onClick={() => setImageToEdit(image)}><Edit className="w-4 h-4" /></Button>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
                   </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center gap-4 text-center flex-1 relative z-10"><div className="w-20 h-20 rounded-lg bg-muted/50 backdrop-blur-sm flex items-center justify-center"><Image className="w-10 h-10 text-muted-foreground" /></div><div className="space-y-2"><h3 className="text-xl font-bold">Pronto para criar?</h3><p className="text-muted-foreground max-w-md text-sm">Envie uma imagem ou descreva o que você quer gerar na caixa abaixo.</p></div></div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
             <CameraCaptureDialog isOpen={isCameraOpen} onClose={() => setIsCameraOpen(false)} onCapture={handleCapture} />
           </div>
           
-          <div className="w-full max-w-4xl mx-auto mt-8 sticky bottom-6 z-20">
+          <div className="w-full max-w-4xl mx-auto pt-8 sticky bottom-0 pb-6 bg-background">
             {imageToEdit ? (
               <div className="relative rounded-xl bg-card/80 backdrop-blur-xl border border-border/50 p-2 shadow-lg animate-fade-in">
                 <div className="p-2 border-b border-border/50 mb-2"><div className="flex items-center gap-3"><img src={imageToEdit.url} alt="Editing thumbnail" className="w-12 h-12 rounded-md object-cover" /><div className="flex-1"><p className="text-sm font-semibold">Editando imagem</p><p className="text-xs text-muted-foreground">Descreva as alterações que deseja fazer.</p></div><Button variant="ghost" size="icon" className="rounded-full h-8 w-8" onClick={() => { setImageToEdit(null); setEditPrompt(''); }}><X className="w-4 h-4" /></Button></div></div>
