@@ -1,27 +1,35 @@
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import modelUGC from "@/assets/model-ugc.jpg";
+import modelSocialBoost from "@/assets/model-socialboost.jpg";
+import modelFashion from "@/assets/model-fashion.jpg";
+import modelVFX from "@/assets/model-vfx.jpg";
 
 const models = [
   {
     name: "Advision UGC",
     description: "Modelo principal para conteúdo autêntico",
     popular: true,
+    image: modelUGC,
   },
   {
     name: "SocialBost",
     description: "Otimizado para redes sociais",
     popular: false,
+    image: modelSocialBoost,
   },
   {
     name: "FashionFit",
     description: "Especializado em moda e vestuário",
     popular: false,
+    image: modelFashion,
   },
   {
     name: "Advision VFX",
     description: "Efeitos visuais avançados",
     popular: false,
+    image: modelVFX,
   },
 ];
 
@@ -42,13 +50,18 @@ const ModelsSection = () => {
           {models.map((model, index) => (
             <Card 
               key={index}
-              className="p-6 bg-card border-border hover:border-primary/50 transition-all duration-300 hover-lift hover-glow relative stagger-item"
+              className="p-6 bg-card border-border hover:border-primary/50 transition-all duration-300 hover-lift hover-glow relative stagger-item overflow-hidden"
             >
-              {model.popular && (
-                <Badge className="absolute top-4 right-4 gradient-primary animate-custom-pulse">Popular</Badge>
-              )}
-              <h3 className="text-xl font-bold mb-2 mt-2">{model.name}</h3>
-              <p className="text-muted-foreground text-sm">{model.description}</p>
+              <img src={model.image} alt={model.name} className="absolute inset-0 w-full h-full object-cover opacity-10 group-hover:opacity-20 transition-opacity duration-300" />
+              <div className="absolute inset-0 bg-gradient-to-t from-card via-card/80 to-transparent" />
+              
+              <div className="relative">
+                {model.popular && (
+                  <Badge className="absolute top-0 right-0 gradient-primary animate-custom-pulse">Popular</Badge>
+                )}
+                <h3 className="text-xl font-bold mb-2 mt-2">{model.name}</h3>
+                <p className="text-muted-foreground text-sm">{model.description}</p>
+              </div>
             </Card>
           ))}
         </div>

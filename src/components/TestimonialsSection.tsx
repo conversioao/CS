@@ -6,16 +6,19 @@ const testimonials = [
     quote: "Economizei horas na criação de anúncios. O que antes levava dias, agora faço em minutos!",
     author: "Maria Silva",
     role: "Gerente de Marketing",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=maria"
   },
   {
     quote: "A IA do Conversio Studio entende meu estilo e gera exatamente o que eu preciso.",
     author: "João Santos",
     role: "Designer Freelancer",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=joao"
   },
   {
     quote: "Em minutos, tenho posts prontos para todas as redes sociais dos meus clientes.",
     author: "Ana Costa",
     role: "Diretora de Agência",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=ana"
   },
 ];
 
@@ -31,13 +34,16 @@ const TestimonialsSection = () => {
           {testimonials.map((testimonial, index) => (
             <Card 
               key={index}
-              className="p-8 bg-card border-border relative"
+              className="p-8 bg-card border-border relative flex flex-col"
             >
               <Quote className="w-10 h-10 text-primary/30 mb-4" />
-              <p className="text-lg mb-6 italic">"{testimonial.quote}"</p>
-              <div>
-                <p className="font-bold">{testimonial.author}</p>
-                <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+              <p className="text-lg mb-6 italic flex-grow">"{testimonial.quote}"</p>
+              <div className="flex items-center gap-4 mt-auto">
+                <img src={testimonial.avatar} alt={testimonial.author} className="w-12 h-12 rounded-full bg-muted" />
+                <div>
+                  <p className="font-bold">{testimonial.author}</p>
+                  <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                </div>
               </div>
             </Card>
           ))}

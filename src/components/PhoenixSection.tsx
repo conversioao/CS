@@ -4,8 +4,11 @@ import adExample2 from "@/assets/ad-example-2.jpg";
 
 const PhoenixSection = () => {
   return (
-    <section className="py-20 px-4">
-      <div className="container mx-auto max-w-6xl">
+    <section className="py-20 px-4 relative overflow-hidden bg-card/30">
+      <div className="absolute -right-40 -top-40 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -left-40 -bottom-40 w-[500px] h-[500px] bg-secondary/5 rounded-full blur-3xl pointer-events-none" />
+      
+      <div className="container mx-auto max-w-6xl relative z-10">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <div>
             <h2 className="text-4xl md:text-5xl font-bold mb-6">
@@ -23,16 +26,20 @@ const PhoenixSection = () => {
           </div>
           
           <div className="grid grid-cols-2 gap-4">
-            <img 
-              src={adExample1} 
-              alt="Phoenix Example 1" 
-              className="rounded-xl shadow-lg hover:scale-105 transition-transform duration-300"
-            />
-            <img 
-              src={adExample2} 
-              alt="Phoenix Example 2" 
-              className="rounded-xl shadow-lg hover:scale-105 transition-transform duration-300 mt-8"
-            />
+            <div className="rounded-xl shadow-lg hover:scale-105 transition-transform duration-300 hover:shadow-primary/20">
+              <img 
+                src={adExample1} 
+                alt="Phoenix Example 1" 
+                className="rounded-xl"
+              />
+            </div>
+            <div className="rounded-xl shadow-lg hover:scale-105 transition-transform duration-300 mt-8 hover:shadow-primary/20">
+              <img 
+                src={adExample2} 
+                alt="Phoenix Example 2" 
+                className="rounded-xl"
+              />
+            </div>
           </div>
         </div>
       </div>

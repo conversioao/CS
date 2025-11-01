@@ -26,16 +26,16 @@ const CommunityGallery = () => {
           Explore as criações da nossa comunidade
         </h2>
         
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="columns-2 md:columns-4 gap-6 space-y-6">
           {images.map((image, index) => (
             <div 
               key={index}
-              className="relative group overflow-hidden rounded-xl aspect-[4/5] hover:scale-105 transition-transform duration-300 cursor-pointer"
+              className="relative group overflow-hidden rounded-xl break-inside-avoid"
             >
               <img 
                 src={image} 
                 alt={`Community creation ${index + 1}`}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300 cursor-pointer"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-background/90 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
                 <p className="text-sm font-semibold">Ver detalhes</p>

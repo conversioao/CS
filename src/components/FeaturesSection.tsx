@@ -42,7 +42,7 @@ const FeaturesSection = () => {
             return (
               <div 
                 key={index}
-                className="relative p-8 rounded-2xl group transition-all duration-300 hover:-translate-y-2 bg-card/50 backdrop-blur-sm border border-border/50"
+                className="relative p-8 rounded-2xl group transition-all duration-300 hover:-translate-y-2 bg-card/50 backdrop-blur-sm border border-border/50 text-center"
                 style={{ 
                   animation: `fadeInUp 0.6s ease-out forwards`,
                   animationDelay: `${index * 0.15}s` 
@@ -50,9 +50,13 @@ const FeaturesSection = () => {
               >
                 <div className="absolute -inset-px rounded-2xl bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 
-                <div className="relative">
-                  <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                    <Icon className="w-8 h-8 text-white" />
+                <div className="relative flex flex-col items-center">
+                  <div className="relative mb-6">
+                    <div className="w-24 h-24 rounded-full bg-card border-2 border-border flex items-center justify-center transition-all duration-300 group-hover:border-primary">
+                      <div className={`w-20 h-20 rounded-full bg-gradient-to-br ${feature.color} flex items-center justify-center shadow-lg`}>
+                        <Icon className="w-10 h-10 text-white" />
+                      </div>
+                    </div>
                   </div>
                   
                   <h3 className="text-2xl font-bold mb-3">{feature.title}</h3>
