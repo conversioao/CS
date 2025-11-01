@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const DemoSection = () => {
   return (
-    <section className="py-20 px-4 bg-secondary/30">
+    <section className="py-20 px-4">
       <div className="container mx-auto max-w-6xl">
         <div className="text-center mb-12">
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
@@ -46,7 +46,7 @@ const DemoSection = () => {
                 </div>
               </Card>
               
-              <Card className="p-12 bg-secondary/50 flex items-center justify-center">
+              <Card className="p-12 flex items-center justify-center">
                 <div className="text-center">
                   <Sparkles className="w-16 h-16 mx-auto mb-4 text-primary" />
                   <h3 className="text-xl font-bold mb-2">Seu anúncio gerado aparecerá aqui</h3>

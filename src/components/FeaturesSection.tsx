@@ -21,7 +21,7 @@ const features = [
 
 const FeaturesSection = () => {
   return (
-    <section className="py-20 px-4 bg-secondary/30">
+    <section className="py-20 px-4">
       <div className="container mx-auto max-w-6xl">
         <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 animate-fade-in">
           Transforme ideias simples em anúncios que vendem

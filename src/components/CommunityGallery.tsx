@@ -20,7 +20,7 @@ const images = [
 
 const CommunityGallery = () => {
   return (
-    <section id="galeria" className="py-20 px-4 bg-secondary/30">
+    <section id="galeria" className="py-20 px-4">
       <div className="container mx-auto max-w-6xl">
         <h2 className="text-4xl md:text-5xl font-bold text-center mb-16">
           Explore as criações da nossa comunidade
