@@ -21,20 +21,22 @@ const tools = [
 const AdminModels = () => {
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Modelos e Custos</h1>
-      <p className="text-muted-foreground">Defina o custo em créditos para cada modelo e ferramenta de IA.</p>
+      <div>
+        <h1 className="text-3xl font-bold">Modelos e Custos</h1>
+        <p className="text-muted-foreground">Defina o custo em créditos para cada modelo e ferramenta de IA.</p>
+      </div>
       
       <div className="grid lg:grid-cols-2 gap-6">
-        <Card>
+        <Card className="bg-card/50 backdrop-blur-xl border-border/50">
           <CardHeader><CardTitle className="flex items-center gap-2"><Bot className="w-5 h-5" /> Custos dos Modelos</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             {models.map(model => {
               const Icon = model.icon;
               return (
-                <div key={model.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary">
+                <div key={model.id} className="flex items-center justify-between p-3 rounded-lg bg-background/50 border border-border/50">
                   <div className="flex items-center gap-3"><Icon className="w-5 h-5 text-primary" /><span>{model.name}</span></div>
                   <div className="flex items-center gap-2">
-                    <Input type="number" defaultValue={model.cost} className="w-20 h-8" />
+                    <Input type="number" defaultValue={model.cost} className="w-20 h-8 bg-card" />
                     <Label>créditos</Label>
                   </div>
                 </div>
@@ -43,16 +45,16 @@ const AdminModels = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-card/50 backdrop-blur-xl border-border/50">
           <CardHeader><CardTitle className="flex items-center gap-2"><Sparkles className="w-5 h-5" /> Custos das Ferramentas</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             {tools.map(tool => {
               const Icon = tool.icon;
               return (
-                <div key={tool.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary">
+                <div key={tool.id} className="flex items-center justify-between p-3 rounded-lg bg-background/50 border border-border/50">
                   <div className="flex items-center gap-3"><Icon className="w-5 h-5 text-primary" /><span>{tool.name}</span></div>
                   <div className="flex items-center gap-2">
-                    <Input type="number" defaultValue={tool.cost} className="w-20 h-8" />
+                    <Input type="number" defaultValue={tool.cost} className="w-20 h-8 bg-card" />
                     <Label>créditos</Label>
                   </div>
                 </div>
@@ -62,7 +64,7 @@ const AdminModels = () => {
         </Card>
       </div>
       <div className="flex justify-end">
-        <Button size="lg">Salvar Alterações</Button>
+        <Button size="lg" className="gradient-primary">Salvar Alterações</Button>
       </div>
     </div>
   );

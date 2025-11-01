@@ -14,10 +14,12 @@ const AdminReports = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Relatórios</h1>
-      <p className="text-muted-foreground">Gere e exporte relatórios detalhados sobre a atividade da plataforma.</p>
+      <div>
+        <h1 className="text-3xl font-bold">Relatórios</h1>
+        <p className="text-muted-foreground">Gere e exporte relatórios detalhados sobre a atividade da plataforma.</p>
+      </div>
       
-      <Card>
+      <Card className="bg-card/50 backdrop-blur-xl border-border/50">
         <CardHeader>
           <CardTitle>Gerar Novo Relatório</CardTitle>
           <CardDescription>Selecione o tipo de relatório e o intervalo de datas.</CardDescription>
@@ -26,7 +28,7 @@ const AdminReports = () => {
           <div className="space-y-2">
             <label className="text-sm font-medium">Tipo de Relatório</label>
             <Select>
-              <SelectTrigger><SelectValue placeholder="Selecione um tipo..." /></SelectTrigger>
+              <SelectTrigger className="bg-background/50"><SelectValue placeholder="Selecione um tipo..." /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="revenue">Faturação</SelectItem>
                 <SelectItem value="credits">Uso de Créditos</SelectItem>
@@ -40,7 +42,7 @@ const AdminReports = () => {
               <PopoverTrigger asChild>
                 <Button
                   variant={"outline"}
-                  className={cn("w-full justify-start text-left font-normal", !dateRange?.from && "text-muted-foreground")}
+                  className={cn("w-full justify-start text-left font-normal bg-background/50", !dateRange?.from && "text-muted-foreground")}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {dateRange?.from ? (
@@ -69,7 +71,7 @@ const AdminReports = () => {
             </Popover>
           </div>
           <div className="flex items-end">
-            <Button className="w-full" size="lg">
+            <Button className="w-full gradient-primary" size="lg">
               <FileDown className="w-4 h-4 mr-2" />
               Gerar PDF
             </Button>
