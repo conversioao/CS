@@ -71,21 +71,6 @@ const TransformationShowcase = () => {
               }}
             >
               <div className="relative rounded-3xl overflow-hidden shadow-2xl hover:shadow-glow transition-all duration-500 border border-white/5">
-                {/* Imagem de fundo */}
-                <div className="relative h-[400px] overflow-hidden">
-                  <img 
-                    src={model.image}
-                    alt={model.name}
-                    className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
-                    loading="lazy"
-                  />
-                  {/* Overlay com gradiente personalizado */}
-                  {/* <div className={`absolute inset-0 bg-gradient-to-t ${model.gradient} to-background/95`} /> */}
-                  
-                  {/* Efeito de brilho no hover */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/0 via-white/5 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                </div>
-
                 {/* Conteúdo */}
                 <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
                   <div className="flex items-start justify-between gap-4 mb-3">
