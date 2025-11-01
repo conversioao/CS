@@ -11,6 +11,8 @@ import { Link } from "react-router-dom";
 import { useState, useRef } from "react";
 import { toast } from "sonner";
 import { storeMediaInSupabase } from "@/lib/supabase-storage";
+import { useUser } from "@/hooks/useUser";
+import PlanExpiredBanner from "@/components/PlanExpiredBanner";
 
 interface GeneratedAudio {
   url: string;
@@ -18,32 +20,23 @@ interface GeneratedAudio {
   text: string;
 }
 
-const elevenLabsVoices = [
-  { id: "21m00Tcm4TlvDq8ikWAM", name: "Rachel" },
-  { id: "2EiwWnXFnvU5JabPnv8n", name: "Clyde" },
-  { id: "AZnzlk1XvdvUeBnXmlld", name: "Domi" },
-  { id: "EXAVITQu4vr4xnSDxMaL", name: "Bella" },
-  { id: "ErXwobaYiN019PkySvjV", name: "Antoni" },
-  { id: "MF3mGyEYCl7XYWbV9V6O", name: "Elli" },
-  { id: "TxGEqnHWrfWFTfGW9XjX", name: "Josh" },
-  { id: "VR6AewLTigWG4xSOh_et", name: "Arnold" },
-  { id: "pNInz6obpgDQGcFmaJgB", name: "Adam" },
-  { id: "yoZ06aMxZJJ28mfd3POQ", name: "Sam" },
-];
-
 const GenerateVoice = () => {
+  const { isExpired } = useUser();
   const [text, setText] = useState("");
-  const [voiceId, setVoiceId] = useState(elevenLabsVoices[0].id);
-  const [modelId, setModelId] = useState("eleven_multilingual_v2");
-  const [stability, setStability] = useState([0.5]);
-  const [similarity, setSimilarity] = useState([0.75]);
-  const [style, setStyle] = useState([0]);
+  const [voiceType, setVoiceType] = useState("Masculino");
+  const [style, setStyle] = useState("Profissional");
+  const [speed, setSpeed] = useState([1]);
+  const [language, setLanguage] = useState("Português (Angola)");
   const [isLoading, setIsLoading] = useState(false);
   const [generatedAudios, setGeneratedAudios] = useState<GeneratedAudio[]>([]);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const handleGenerate = async () => {
+    if (isExpired) {
+      toast.error("Plano gratuito expirado", { description: "Por favor, compre créditos para continuar." });
+      return;
+    }
     if (!text.trim()) {
       toast.error("Texto necessário", { description: "Por favor, insira o texto para gerar a voz." });
       return;
@@ -51,7 +44,7 @@ const GenerateVoice = () => {
     setIsLoading(true);
     try {
       toast.info("Gerando áudio...", { description: "A sua narração está a ser criada." });
-      // Mock API call - replace with actual ElevenLabs call
+      // Mock API call
       await new Promise(resolve => setTimeout(resolve, 3000));
       const mockUrl = "https://storage.googleapis.com/eleven-public-prod/premade/voices/21m00Tcm4TlvDq8ikWAM/df6788f9-5c32-428f-814c-38a1a1452146.mp3";
       
@@ -100,6 +93,9 @@ const GenerateVoice = () => {
             <Link to="/dashboard" className="flex items-center gap-2 text-muted-foreground hover:text-foreground"><ArrowLeft className="w-4 h-4" /><span>Voltar ao Dashboard</span></Link>
             <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full"><Sparkles className="w-4 h-4 text-primary" /><span className="text-sm font-semibold">1 crédito por 1000 caracteres</span></div>
           </div>
+          
+          {isExpired && <PlanExpiredBanner />}
+
           <div className="grid lg:grid-cols-[1fr,420px] gap-6">
             <div className="bg-card/50 backdrop-blur-xl rounded-xl shadow-lg p-6 min-h-[600px] flex flex-col">
               <h2 className="text-2xl font-bold mb-6 flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center"><AudioLines className="w-5 h-5 text-primary" /></div>Áudios Gerados</h2>
@@ -122,18 +118,17 @@ const GenerateVoice = () => {
             </div>
             <div className="space-y-4">
               <Card className="p-6 bg-card/50 backdrop-blur-xl shadow-lg"><div className="space-y-4">
-                <div className="space-y-2"><Label htmlFor="voice-text">Texto para Narração</Label><Textarea id="voice-text" placeholder="Escreva o seu texto aqui..." value={text} onChange={e => setText(e.target.value)} className="min-h-[150px] resize-none" /></div>
+                <div className="space-y-2"><Label htmlFor="voice-text">Descrição da Narração</Label><Textarea id="voice-text" placeholder="Escreva o seu texto aqui..." value={text} onChange={e => setText(e.target.value)} className="min-h-[150px] resize-none" /></div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2"><Label htmlFor="voice-id">Voz</Label><Select value={voiceId} onValueChange={setVoiceId}><SelectTrigger id="voice-id"><SelectValue /></SelectTrigger><SelectContent>{elevenLabsVoices.map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}</SelectContent></Select></div>
-                  <div className="space-y-2"><Label htmlFor="model-id">Modelo</Label><Select value={modelId} onValueChange={setModelId}><SelectTrigger id="model-id"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="eleven_multilingual_v2">Multilingual v2</SelectItem><SelectItem value="eleven_mono_v1">Mono v1</SelectItem></SelectContent></Select></div>
+                  <div className="space-y-2"><Label htmlFor="voice-type">Tipo de Voz</Label><Select value={voiceType} onValueChange={setVoiceType}><SelectTrigger id="voice-type"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Masculino">Masculino</SelectItem><SelectItem value="Feminino">Feminino</SelectItem></SelectContent></Select></div>
+                  <div className="space-y-2"><Label htmlFor="voice-style">Estilo</Label><Select value={style} onValueChange={setStyle}><SelectTrigger id="voice-style"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Profissional">Profissional</SelectItem><SelectItem value="Casual">Casual</SelectItem><SelectItem value="Animado">Animado</SelectItem></SelectContent></Select></div>
                 </div>
+                 <div className="space-y-2"><Label htmlFor="language">Idioma</Label><Select value={language} onValueChange={setLanguage}><SelectTrigger id="language"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Português (Angola)">Português (Angola)</SelectItem><SelectItem value="Português (Brasil)">Português (Brasil)</SelectItem><SelectItem value="English (US)">English (US)</SelectItem></SelectContent></Select></div>
                 <div className="space-y-3 pt-2">
-                  <div className="space-y-2"><div className="flex justify-between items-center"><Label>Estabilidade</Label><span className="text-xs font-mono">{stability[0].toFixed(2)}</span></div><Slider value={stability} onValueChange={setStability} max={1} step={0.05} /></div>
-                  <div className="space-y-2"><div className="flex justify-between items-center"><Label>Similaridade</Label><span className="text-xs font-mono">{similarity[0].toFixed(2)}</span></div><Slider value={similarity} onValueChange={setSimilarity} max={1} step={0.05} /></div>
-                  <div className="space-y-2"><div className="flex justify-between items-center"><Label>Estilo</Label><span className="text-xs font-mono">{style[0].toFixed(2)}</span></div><Slider value={style} onValueChange={setStyle} max={1} step={0.05} /></div>
+                  <div className="space-y-2"><div className="flex justify-between items-center"><Label>Velocidade</Label><span className="text-xs font-mono">{speed[0].toFixed(2)}x</span></div><Slider value={speed} onValueChange={setSpeed} min={0.5} max={2} step={0.05} /></div>
                 </div>
               </div></Card>
-              <Button size="lg" className="w-full gradient-primary" onClick={handleGenerate} disabled={isLoading}>{isLoading ? <><Loader2 className="w-5 h-5 animate-spin mr-2" />A Gerar...</> : <><AudioLines className="w-5 h-5 mr-2" />Gerar Voz</>}</Button>
+              <Button size="lg" className="w-full gradient-primary" onClick={handleGenerate} disabled={isLoading || isExpired}>{isLoading ? <><Loader2 className="w-5 h-5 animate-spin mr-2" />A Gerar...</> : <><AudioLines className="w-5 h-5 mr-2" />Gerar Voz</>}</Button>
             </div>
           </div>
         </main>

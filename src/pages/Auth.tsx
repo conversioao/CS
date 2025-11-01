@@ -37,10 +37,21 @@ const Auth = () => {
     setTimeout(() => {
       toast({
         title: "Conta criada com sucesso!",
-        description: "Você ganhou 50 créditos gratuitos para começar",
+        description: "Você ganhou 100 créditos gratuitos para começar",
       });
       setIsLoading(false);
-      localStorage.setItem('isNewUser', 'true');
+      
+      const newUser = {
+        id: `user_${Date.now()}`,
+        name: (e.target as any).elements['signup-name'].value || "Novo Usuário",
+        email: "user@example.com", // Mock email
+        credits: 100,
+        registrationDate: Date.now(),
+        plan: 'Free Trial',
+      };
+      localStorage.setItem('conversio_user', JSON.stringify(newUser));
+      localStorage.setItem('isNewUser', 'true'); // Keep this for the onboarding tour
+
       navigate("/onboarding");
     }, 1500);
   };
@@ -160,7 +171,7 @@ const Auth = () => {
                     {isLoading ? "Criando conta..." : "Criar conta grátis"}
                   </Button>
                   <p className="text-xs text-center text-muted-foreground">
-                    Ao se cadastrar, você ganha 50 créditos gratuitos
+                    Ao se cadastrar, você ganha 100 créditos gratuitos
                   </p>
                 </form>
               </TabsContent>

@@ -9,13 +9,15 @@ import {
 } from "@/components/ui/sheet";
 import DashboardSidebar from "./DashboardSidebar";
 import NotificationBell from "./NotificationBell";
+import { useUser } from "@/hooks/useUser";
 
 const DashboardHeader = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { user } = useUser();
   
   const userData = {
-    name: "Usuário Demo",
-    credits: 250,
+    name: user.name || "Usuário Demo",
+    credits: user.credits,
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=demo",
   };
 
