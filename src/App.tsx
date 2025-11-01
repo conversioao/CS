@@ -20,6 +20,12 @@ import Credits from "./pages/Credits";
 import Account from "./pages/Account";
 import Onboarding from "./pages/Onboarding";
 import NotFound from "./pages/NotFound";
+import AdminLayout from "./components/admin/AdminLayout";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminPayments from "./pages/admin/AdminPayments";
+import AdminModels from "./pages/admin/AdminModels";
+import AdminSettings from "./pages/admin/AdminSettings";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +36,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          {/* User Routes */}
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/onboarding" element={<Onboarding />} />
@@ -46,6 +53,16 @@ const App = () => (
           <Route path="/community" element={<Community />} />
           <Route path="/credits" element={<Credits />} />
           <Route path="/account" element={<Account />} />
+
+          {/* Admin Routes */}
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="users" element={<AdminUsers />} />
+            <Route path="payments" element={<AdminPayments />} />
+            <Route path="models" element={<AdminModels />} />
+            <Route path="settings" element={<AdminSettings />} />
+          </Route>
+
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

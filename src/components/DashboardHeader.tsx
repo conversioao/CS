@@ -8,6 +8,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import DashboardSidebar from "./DashboardSidebar";
+import NotificationBell from "./NotificationBell";
 
 const DashboardHeader = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -40,6 +41,7 @@ const DashboardHeader = () => {
 
           {/* User Info and Actions */}
           <div className="flex items-center gap-3">
+            <NotificationBell />
             <div id="dashboard-nav-credits" className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-full">
               <CreditCard className="w-4 h-4 text-primary" />
               <span className="text-sm font-bold">{userData.credits}</span>
