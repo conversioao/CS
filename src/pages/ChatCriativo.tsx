@@ -21,12 +21,47 @@ interface CampaignData {
   adStyle?: string;
 }
 
-interface CampaignPlan {
-  plano_7_dias: { dia: number; tema: string; copy: string; variacoes_copy: string[] }[];
-  descricao_curta_imagem: string;
-  hashtags: string[];
+// Estrutura de dados recebida do webhook
+interface WebhookResponseData {
+  chat_id: string;
+  timestamp: string;
+  resumo: string;
+  copy_principal: string;
   modelo_sugerido: string;
-  melhorias_produto?: { baixa_resolucao?: string; fundo_confuso?: string };
+  descricao_curta_imagem: string;
+  hashtags: string;
+  melhor_horario: string;
+  melhorias_produto: string;
+  plano_7_dias: {
+    dia: number;
+    data: string;
+    hora: string;
+    texto_variacoes: string[];
+    descricao_imagem: string;
+    acao_recomendada: string;
+    dica_engajamento: string;
+  }[];
+}
+
+// Estrutura de dados formatada para exibição no painel
+interface FormattedCampaignPlan {
+  chat_id: string;
+  titulo_campanha: string;
+  resumo: string;
+  copy_principal: string;
+  modelo_sugerido: string;
+  descricao_curta_imagem: string;
+  hashtags: string;
+  melhor_horario: string;
+  melhorias_produto: string;
+  plano_formatado: {
+    titulo: string;
+    hora: string;
+    descricao_imagem: string;
+    texto_variacoes: string[];
+    acao_recomendada: string;
+    dica_engajamento: string;
+  }[];
 }
 
 const mockCampaigns = [
@@ -35,12 +70,35 @@ const mockCampaigns = [
   { id: 3, productName: 'Sumo de Múcua Energético', createdAt: '22 de Out, 2024', status: 'Concluído', imageUrl: 'https://images.unsplash.com/photo-1575429239283-4763a9b2b267?w=400&h=400&fit=crop' },
 ];
 
+// --- Função de Transformação ---
+const transformWebhookData = (data: WebhookResponseData, productName?: string): FormattedCampaignPlan => {
+  return {
+    chat_id: data.chat_id ?? '(não disponível)',
+    titulo_campanha: `Plano de Campanha para ${productName || 'o seu produto'}`,
+    resumo: data.resumo ?? '(não disponível)',
+    copy_principal: data.copy_principal ?? '(não disponível)',
+    modelo_sugerido: data.modelo_sugerido ?? '(não disponível)',
+    descricao_curta_imagem: data.descricao_curta_imagem ?? '(não disponível)',
+    hashtags: data.hashtags ?? '(não disponível)',
+    melhor_horario: data.melhor_horario ? `Melhor hora para postar: ${data.melhor_horario} (Luanda)` : '(não disponível)',
+    melhorias_produto: data.melhorias_produto ?? '(não disponível)',
+    plano_formatado: (data.plano_7_dias || []).map(dia => ({
+      titulo: `Dia ${dia.dia} - ${dia.data}`,
+      hora: dia.hora ?? '(não disponível)',
+      descricao_imagem: dia.descricao_imagem ?? '(não disponível)',
+      texto_variacoes: dia.texto_variacoes ?? [],
+      acao_recomendada: dia.acao_recomendada ?? '(não disponível)',
+      dica_engajamento: dia.dica_engajamento ?? '(não disponível)',
+    })),
+  };
+};
+
 // --- Componente Principal ---
 const ChatCriativo = () => {
   const [view, setView] = useState<'list' | 'wizard'>('list');
   const [wizardStep, setWizardStep] = useState(1);
   const [campaignData, setCampaignData] = useState<CampaignData>({});
-  const [generatedPlan, setGeneratedPlan] = useState<CampaignPlan | null>(null);
+  const [generatedPlan, setGeneratedPlan] = useState<FormattedCampaignPlan | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -104,37 +162,28 @@ const ChatCriativo = () => {
           body: formData,
         });
 
-        if (!imgbbResponse.ok) {
-          throw new Error('Erro ao fazer upload da imagem para o ImgBB.');
-        }
-
+        if (!imgbbResponse.ok) throw new Error('Erro ao fazer upload da imagem para o ImgBB.');
         const imgbbData = await imgbbResponse.json();
-        if (!imgbbData.data || !imgbbData.data.url) {
-            throw new Error('Resposta inválida do ImgBB.');
-        }
+        if (!imgbbData.data || !imgbbData.data.url) throw new Error('Resposta inválida do ImgBB.');
         
         dataToSend.imageUrl = imgbbData.data.url;
       }
 
       const webhookResponse = await fetch('https://n8n.conversio.ao/webhook-test/chatcriativo', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(dataToSend),
       });
 
-      if (!webhookResponse.ok) {
-        throw new Error('A resposta do servidor não foi bem-sucedida.');
-      }
-
-      const campaignPlan: CampaignPlan = await webhookResponse.json();
+      if (!webhookResponse.ok) throw new Error('A resposta do servidor não foi bem-sucedida.');
       
-      if (!campaignPlan.plano_7_dias || !campaignPlan.descricao_curta_imagem) {
-        throw new Error('A resposta do webhook está mal formatada.');
-      }
+      const webhookPayload = await webhookResponse.json();
+      const rawData = webhookPayload[0]?.output;
 
-      setGeneratedPlan(campaignPlan);
+      if (!rawData) throw new Error('A resposta do webhook está mal formatada ou vazia.');
+
+      const formattedPlan = transformWebhookData(rawData, campaignData.productName);
+      setGeneratedPlan(formattedPlan);
       setWizardStep(5); // Etapa de resultados
     } catch (error) {
       console.error("Erro ao gerar campanha:", error);
@@ -282,17 +331,11 @@ const ChatCriativo = () => {
 };
 
 // --- Componente de Exibição do Plano ---
-const CampaignPlanDisplay = ({ plan }: { plan: CampaignPlan }) => {
+const CampaignPlanDisplay = ({ plan }: { plan: FormattedCampaignPlan }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const handleGenerateClick = () => {
-    if (plan.descricao_curta_imagem.length < 100 || plan.descricao_curta_imagem.length > 150) {
-      toast({
-        title: "Aviso de Validação",
-        description: `A descrição para a imagem (${plan.descricao_curta_imagem.length} chars) está fora do ideal (100-150 chars). O resultado pode variar.`,
-      });
-    }
     navigate(`/generate?model=${encodeURIComponent(plan.modelo_sugerido)}&description=${encodeURIComponent(plan.descricao_curta_imagem)}`);
   };
   
@@ -304,50 +347,65 @@ const CampaignPlanDisplay = ({ plan }: { plan: CampaignPlan }) => {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold">Seu Plano de Marketing Criativo!</h2>
-        <p className="text-muted-foreground">Aqui está a estratégia que a IA preparou para si.</p>
+        <h2 className="text-2xl font-bold">{plan.titulo_campanha}</h2>
+        <p className="text-muted-foreground">{plan.resumo}</p>
       </div>
-      {plan.melhorias_produto && (
+      
+      {plan.melhorias_produto && plan.melhorias_produto !== '(não disponível)' && (
         <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-200">
           <h4 className="font-semibold flex items-center gap-2"><AlertTriangle size={16} /> Sugestões de Melhoria</h4>
-          {Object.values(plan.melhorias_produto).map((sug, i) => <p key={i} className="text-sm mt-1">- {sug}</p>)}
+          <p className="text-sm mt-1">- {plan.melhorias_produto}</p>
         </div>
       )}
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><ImageIcon size={16} /> Para a Imagem</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm"><strong className="text-foreground">Modelo:</strong> {plan.modelo_sugerido}</p>
-          <p className="text-sm"><strong className="text-foreground">Descrição:</strong> {plan.descricao_curta_imagem}</p>
-          <p className="text-sm"><strong className="text-foreground">Hashtags:</strong> {plan.hashtags.join(' ')}</p>
+          <p className="text-sm"><strong className="text-foreground">Modelo Sugerido:</strong> {plan.modelo_sugerido}</p>
+          <p className="text-sm"><strong className="text-foreground">Descrição para IA:</strong> {plan.descricao_curta_imagem}</p>
+          <p className="text-sm"><strong className="text-foreground">Hashtags:</strong> {plan.hashtags}</p>
           <Button onClick={handleGenerateClick} className="w-full mt-4 gradient-primary">
-            <Sparkles className="w-4 h-4 mr-2" /> Gerar com Modelo Sugerido
+            <Sparkles className="w-4 h-4 mr-2" /> Gerar Imagem com Modelo Sugerido
           </Button>
         </CardContent>
       </Card>
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><FileText size={16} /> Plano de Conteúdo para 7 Dias</CardTitle>
         </CardHeader>
         <CardContent>
+          <p className="text-sm mb-4"><strong className="text-foreground">Copy Principal:</strong> {plan.copy_principal}</p>
+          <p className="text-sm mb-4 font-semibold">{plan.melhor_horario}</p>
           <Accordion type="single" collapsible className="w-full">
-            {plan.plano_7_dias.map(item => (
-              <AccordionItem value={`dia-${item.dia}`} key={item.dia}>
-                <AccordionTrigger>Dia {item.dia}: {item.tema}</AccordionTrigger>
-                <AccordionContent className="space-y-3">
+            {plan.plano_formatado.map((item, index) => (
+              <AccordionItem value={`dia-${index}`} key={index}>
+                <AccordionTrigger>{item.titulo}</AccordionTrigger>
+                <AccordionContent className="space-y-4">
                   <div>
-                    <Label className="text-xs">Copy Principal</Label>
-                    <div className="relative">
-                      <p className="text-sm p-2 bg-muted/30 rounded pr-8">{item.copy}</p>
-                      <Button variant="ghost" size="icon" className="absolute top-1 right-1 h-6 w-6" onClick={() => copyToClipboard(item.copy)}><Copy size={12} /></Button>
-                    </div>
+                    <Label className="text-xs font-bold">Variações de Texto ({item.hora})</Label>
+                    <ul className="list-disc list-inside space-y-2 text-sm mt-1">
+                      {item.texto_variacoes.map((v, i) => (
+                        <li key={i} className="relative">
+                          {v}
+                          <Button variant="ghost" size="icon" className="absolute top-0 right-0 h-6 w-6" onClick={() => copyToClipboard(v)}><Copy size={12} /></Button>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                   <div>
-                    <Label className="text-xs">Variações</Label>
-                    <ul className="list-disc list-inside space-y-1 text-sm">
-                      {item.variacoes_copy.map((v, i) => <li key={i}>{v}</li>)}
-                    </ul>
+                    <Label className="text-xs font-bold">Descrição da Imagem</Label>
+                    <p className="text-sm mt-1">{item.descricao_imagem}</p>
+                  </div>
+                  <div>
+                    <Label className="text-xs font-bold">Ação Recomendada</Label>
+                    <p className="text-sm mt-1">{item.acao_recomendada}</p>
+                  </div>
+                  <div>
+                    <Label className="text-xs font-bold">Dica de Engajamento</Label>
+                    <p className="text-sm mt-1">{item.dica_engajamento}</p>
                   </div>
                 </AccordionContent>
               </AccordionItem>
