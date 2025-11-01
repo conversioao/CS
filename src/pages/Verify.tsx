@@ -3,16 +3,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { Link, useNavigate } from 'react-router-dom';
 import logo from '@/assets/logo.png';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Loader2, CheckCircle } from 'lucide-react';
 
 const Verify = () => {
   const navigate = useNavigate();
-  const [verificationCode, setVerificationCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
+  const [countdown, setCountdown] = useState(5);
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -27,8 +26,18 @@ const Verify = () => {
     }
   }, [navigate]);
 
-  const handleVerification = async (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    if (isVerified) {
+      if (countdown > 0) {
+        const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+        return () => clearTimeout(timer);
+      } else {
+        navigate('/onboarding');
+      }
+    }
+  }, [isVerified, countdown, navigate]);
+
+  const handleVerification = async () => {
     setIsLoading(true);
 
     if (!userId) {
@@ -41,46 +50,28 @@ const Verify = () => {
     }
 
     try {
-      // 1. Chamar a função no servidor para validar o código
       const { data, error: functionError } = await supabase.functions.invoke('verify-user', {
-        body: { userId, verificationCode }
+        body: { userId }
       });
 
       if (functionError) throw functionError;
       if (!data.success) throw new Error(data.error || 'Falha na verificação');
 
-      // 2. Forçar a atualização da sessão no cliente
       await supabase.auth.refreshSession();
-      const { data: { user } } = await supabase.auth.getUser();
+      
+      localStorage.removeItem('pendingUserId');
+      localStorage.setItem('userVerified', 'true');
+      localStorage.setItem('isNewUser', 'true');
+      
+      setIsVerified(true);
 
-      // 3. Verificar se o utilizador está realmente confirmado no cliente
-      if (user && user.email_confirmed_at) {
-        toast.success('Conta verificada com sucesso!', {
-          description: 'Bem-vindo ao Conversio Studio!',
-        });
-        
-        localStorage.removeItem('pendingUserId');
-        localStorage.setItem('userVerified', 'true');
-        localStorage.setItem('isNewUser', 'true');
-        
-        // 4. Navegar para o onboarding
-        navigate('/onboarding');
-      } else {
-        throw new Error("A verificação falhou. A sessão não foi atualizada.");
-      }
     } catch (error: any) {
       toast.error('Erro na Verificação', {
-        description: error.message || 'Por favor, verifique o código e tente novamente.',
+        description: error.message || 'Não foi possível verificar a sua conta. Tente novamente.',
       });
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleResendCode = async () => {
-    toast.info('Código reenviado', {
-      description: 'Um novo código foi enviado para o seu WhatsApp. (Use 123456 para testar)',
-    });
   };
 
   return (
@@ -96,37 +87,35 @@ const Verify = () => {
             <img src={logo} alt="Conversio Studio" className="h-12 w-auto" />
           </Link>
           <CardTitle className="text-2xl">Verifique a sua Conta</CardTitle>
-          <CardDescription>Enviámos um código para o seu WhatsApp. Por favor, insira-o abaixo para ativar a sua conta.</CardDescription>
+          <CardDescription>
+            {isVerified 
+              ? "A sua conta foi verificada com sucesso!" 
+              : "Clique no botão abaixo para ativar a sua conta e confirmar o seu número de WhatsApp."}
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleVerification} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="verificationCode">Código de Verificação</Label>
-              <Input 
-                id="verificationCode" 
-                placeholder="O código é 123456" 
-                required 
-                value={verificationCode} 
-                onChange={(e) => setVerificationCode(e.target.value)} 
-              />
+          {isVerified ? (
+            <div className="text-center space-y-4">
+              <div className="flex justify-center">
+                <CheckCircle className="w-16 h-16 text-green-500" />
+              </div>
+              <p className="text-muted-foreground">
+                Você será redirecionado em {countdown} segundos...
+              </p>
             </div>
-            <Button type="submit" className="w-full gradient-primary" disabled={isLoading}>
-              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Validar Número'}
-            </Button>
-          </form>
-          
-          <div className="mt-4 text-center">
-            <Button variant="link" onClick={handleResendCode} className="text-sm">
-              Não recebeu o código? Reenviar
-            </Button>
-          </div>
-          
-          <div className="mt-6 p-4 bg-muted/30 rounded-lg">
-            <div className="flex items-center gap-2 text-sm">
-              <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-              <span>Este passo confirma que você é o proprietário do número de WhatsApp.</span>
+          ) : (
+            <div className="space-y-4">
+              <Button onClick={handleVerification} className="w-full gradient-primary" disabled={isLoading}>
+                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Verificar Conta Agora'}
+              </Button>
+              <div className="mt-6 p-4 bg-muted/30 rounded-lg">
+                <div className="flex items-center gap-2 text-sm">
+                  <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                  <span>Este passo confirma que você é o proprietário do número de WhatsApp.</span>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </CardContent>
       </Card>
     </div>

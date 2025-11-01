@@ -16,8 +16,6 @@ const supabaseAdmin = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 );
 
-const MOCK_VERIFICATION_CODE = "123456"; // Código de teste
-
 // @ts-ignore
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -26,21 +24,12 @@ serve(async (req) => {
   }
 
   try {
-    const { userId, verificationCode } = await req.json();
+    const { userId } = await req.json();
     
-    if (!userId || !verificationCode) {
+    if (!userId) {
       // @ts-ignore
       return new Response(
-        JSON.stringify({ success: false, error: 'ID do utilizador e código de verificação são obrigatórios' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
-    }
-
-    // Validar o código de verificação
-    if (verificationCode !== MOCK_VERIFICATION_CODE) {
-      // @ts-ignore
-      return new Response(
-        JSON.stringify({ success: false, error: 'Código de verificação inválido.' }),
+        JSON.stringify({ success: false, error: 'ID do utilizador é obrigatório' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
