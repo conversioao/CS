@@ -73,7 +73,7 @@ const TransformationShowcase = () => {
                     loading="lazy"
                   />
                   {/* Overlay com gradiente personalizado */}
-                  <div className={`absolute inset-0 bg-gradient-to-t ${model.gradient} to-background/95`} />
+                  {/* <div className={`absolute inset-0 bg-gradient-to-t ${model.gradient} to-background/95`} /> */}
                   
                   {/* Efeito de brilho no hover */}
                   <div className="absolute inset-0 bg-gradient-to-br from-white/0 via-white/5 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
