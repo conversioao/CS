@@ -66,7 +66,7 @@ const TransformationShowcase = () => {
                 <img
                   src={model.image}
                   alt={model.name}
-                  className="w-full h-48 object-contain"
+                  className="w-full h-48 object-cover"
                 />
                 {/* Conteúdo */}
                 <div className="absolute bottom-0 left-0 right-0 p-4">
