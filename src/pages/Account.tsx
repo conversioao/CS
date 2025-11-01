@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { User, Upload, Mail, Settings, CreditCard, Bot, Palette, Copy } from "lucide-react";
 import { useState, useRef } from "react";
-import { useColorThief } from "use-color-thief";
+import useColorThief from "use-color-thief";
 import { toast } from "sonner";
 
 const Account = () => {
@@ -18,7 +18,7 @@ const Account = () => {
     format: 'hex',
     colorCount: 5,
     quality: 10,
-  });
+  }) as { color: string | undefined, palette: string[] | undefined };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

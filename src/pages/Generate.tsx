@@ -84,6 +84,38 @@ const Generate = () => {
     setIsLoading(false);
   };
 
+  const handleEditImage = async () => {
+    if (!editPrompt.trim() || !imageToEdit) {
+      toast.error("Faltam dados", { description: "Por favor, adicione uma descrição para editar a imagem." });
+      return;
+    }
+    setIsEditing(true);
+    setIsLoading(true);
+    try {
+      toast.info("Editando imagem...", { description: "A processar a sua solicitação." });
+      const response = await fetch('https://n8n.conversio.ao/webhook-test/editar_imagem', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image_url: imageToEdit.url, description: editPrompt }) });
+      if (!response.ok) throw new Error('Erro ao editar imagem');
+      const webhookResponse = await response.json();
+      if (webhookResponse && Array.isArray(webhookResponse)) {
+        const editedUrls = webhookResponse.filter(item => item?.message?.content).map(item => item.message.content);
+        if (editedUrls.length > 0) {
+          const storedUrls = await storeMediaInSupabase(editedUrls, 'image');
+          const newEditedImages: GeneratedImage[] = storedUrls.map((url, index) => ({ url, id: `edited-${Date.now()}-${index}` }));
+          setGeneratedImages(prev => [...newEditedImages, ...prev]);
+          toast.success("Sucesso!", { description: "Imagem editada com sucesso." });
+          setImageToEdit(null);
+          setEditPrompt('');
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao editar imagem:', error);
+      toast.error("Ocorreu um erro ao editar a imagem.", { description: "Por favor, tente novamente dentro de instantes." });
+    } finally {
+      setIsEditing(false);
+      setIsLoading(false);
+    }
+  };
+
   // Other handlers remain the same
 
   return (
@@ -95,7 +127,39 @@ const Generate = () => {
           {/* Main content structure remains the same */}
           <div className="w-full max-w-4xl mx-auto pt-8 sticky bottom-0 pb-6 bg-background">
             {imageToEdit ? (
-              {/* Edit bar UI remains the same */}
+              <div className="relative rounded-xl bg-card/80 backdrop-blur-xl border border-border/50 p-2 shadow-lg animate-fade-in">
+                <div className="p-2 border-b border-border/50 mb-2">
+                  <div className="flex items-center gap-3">
+                    <img src={imageToEdit.url} alt="Editing thumbnail" className="w-12 h-12 rounded-md object-cover" />
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold">Editando imagem</p>
+                      <p className="text-xs text-muted-foreground">Descreva as alterações que deseja fazer.</p>
+                    </div>
+                    <Button variant="ghost" size="icon" className="rounded-full h-8 w-8" onClick={() => { setImageToEdit(null); setEditPrompt(''); }}>
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 px-2">
+                  <Textarea
+                    id="edit-description"
+                    placeholder="Ex: Mude a cor do fundo para azul..."
+                    value={editPrompt}
+                    onChange={(e) => setEditPrompt(e.target.value)}
+                    disabled={isEditing}
+                    className="flex-1 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 resize-none text-base py-2.5"
+                    rows={1}
+                  />
+                  <Button
+                    size="icon"
+                    className="rounded-full w-10 h-10 gradient-primary glow-effect"
+                    onClick={handleEditImage}
+                    disabled={isEditing || !editPrompt.trim()}
+                  >
+                    {isEditing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
+                  </Button>
+                </div>
+              </div>
             ) : (
               <div className="relative flex items-center gap-1 rounded-full bg-card/80 backdrop-blur-xl border border-border/50 p-2 shadow-lg">
                 {/* Input elements remain the same */}
