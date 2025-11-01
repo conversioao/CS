@@ -48,13 +48,14 @@ const ProcessSection = () => {
                   key={index}
                   className="text-center flex flex-col items-center"
                 >
-                  <div className="relative mb-6">
-                    <div className="w-24 h-24 rounded-full bg-card border-2 border-border flex items-center justify-center transition-all duration-300 group-hover:border-primary">
-                      <div className="w-20 h-20 rounded-full bg-gradient-primary flex items-center justify-center shadow-lg shadow-primary/30">
-                        <Icon className="w-10 h-10 text-primary-foreground" />
-                      </div>
+                  <div className="relative mb-6 group">
+                    <div className="w-24 h-24 rounded-full flex items-center justify-center bg-card relative transition-all duration-300 group-hover:scale-110 ring-1 ring-inset ring-white/10">
+                      {/* Glow effect */}
+                      <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl opacity-0 group-hover:opacity-75 transition-opacity duration-500 group-hover:animate-pulse" />
+                      
+                      <Icon className="w-10 h-10 text-foreground/80 group-hover:text-primary transition-colors duration-300 relative z-10" />
                     </div>
-                    <div className="absolute -top-3 -right-3 w-10 h-10 rounded-full bg-background border-2 border-primary flex items-center justify-center font-bold text-lg">
+                    <div className="absolute -top-1 -right-1 w-8 h-8 rounded-full bg-primary flex items-center justify-center font-bold text-sm text-primary-foreground border-4 border-background">
                       {index + 1}
                     </div>
                   </div>
