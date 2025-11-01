@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import logo from '@/assets/logo.png';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const Register = () => {
+  const navigate = useNavigate();
   const [fullName, setFullName] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const [password, setPassword] = useState('');
@@ -36,7 +37,7 @@ const Register = () => {
     const dummyEmail = `${formattedWhatsapp}@conversio.studio`;
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email: dummyEmail,
         password,
         options: {
@@ -50,9 +51,18 @@ const Register = () => {
         },
       });
       if (error) throw error;
-      toast.success('Cadastro realizado!', {
-        description: 'Enviámos um link de confirmação para o seu e-mail associado.',
-      });
+
+      if (data.session) {
+        toast.success('Conta criada com sucesso!', {
+          description: 'A preparar o seu painel...',
+        });
+        localStorage.setItem('isNewUser', 'true');
+        navigate('/onboarding');
+      } else {
+        toast.info('Confirme o seu e-mail', {
+          description: 'Enviámos um link de confirmação para o seu e-mail associado.',
+        });
+      }
     } catch (error: any) {
       toast.error('Erro no Cadastro', {
         description: error.message || 'Não foi possível criar a sua conta. Tente novamente.',
