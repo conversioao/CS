@@ -51,12 +51,12 @@ const TransformationShowcase = () => {
           </p>
         </div>
 
-        <div className="flex overflow-x-auto space-x-6 py-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {models.map((model, index) => (
             <Link
               to={`/model/${model.slug}`}
               key={index}
-              className="group relative w-64 sm:w-80 flex-shrink-0 opacity-0 hover-lift block"
+              className="group relative opacity-0 hover-lift block"
               style={{ 
                 animation: `fadeInUp 0.8s ease-out forwards`,
                 animationDelay: `${index * 0.15}s` 
