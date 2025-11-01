@@ -8,9 +8,9 @@ import modelPulse from "@/assets/model-pulse.jpg";
 import modelStyleAI from "@/assets/model-styleai.jpg";
 import modelVision from "@/assets/model-vision.jpg";
 import transformationExample1 from "@/assets/transformation-example-1.jpg";
-import transformationExample2 from "@/assets/transformation-example-2.jpg";
+import transformationExample2 from "@/assets/transformation-example-2.JPG";
 import transformationExample3 from "@/assets/transformation-example-3.jpg";
-import transformationExample4 from "@/assets/transformation-example-4.jpg";
+import transformationExample4 from "@/assets/transformation-example-4.JPG";
 
 const modelData = {
   persona: {
