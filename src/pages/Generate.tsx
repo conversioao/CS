@@ -11,7 +11,6 @@ import { Link, useSearchParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { storeMediaInSupabase } from "@/lib/supabase-storage";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
@@ -42,6 +41,24 @@ const Generate = () => {
   const [editModal, setEditModal] = useState<EditModalState>({ isOpen: false, imageUrl: '', imageId: '' });
   const [editPrompt, setEditPrompt] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [timer, setTimer] = useState(0);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    if (isLoading) {
+      setTimer(0);
+      interval = setInterval(() => {
+        setTimer(prevTimer => prevTimer + 1);
+      }, 1000);
+    } else if (!isLoading && interval) {
+      clearInterval(interval);
+    }
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [isLoading]);
 
   useEffect(() => {
     const modelParam = searchParams.get('model');
@@ -243,37 +260,42 @@ const Generate = () => {
                 <div className="absolute bottom-0 left-0 w-40 h-40 bg-secondary/5 rounded-full blur-2xl" />
                 
                 {isLoading ? (
-                  <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 relative z-10">
+                  <div className="w-full grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 flex-1 relative z-10">
                     {Array.from({ length: quantity }).map((_, i) => (
-                      <div key={i} className="relative overflow-hidden rounded-lg bg-muted/30 backdrop-blur-sm">
-                        <div className="aspect-square relative">
-                          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                            <div className="w-12 h-12 rounded-full border-2 border-muted-foreground/20 border-t-primary animate-spin" />
-                            <p className="text-sm text-muted-foreground">Gerando {i + 1}/{quantity}</p>
+                      <div key={i} className="relative overflow-hidden rounded-lg bg-muted/30 backdrop-blur-sm aspect-square">
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-white bg-black/20">
+                          <div className="text-4xl font-mono font-bold drop-shadow-lg">
+                            {String(Math.floor(timer / 60)).padStart(2, '0')}:{String(timer % 60).padStart(2, '0')}
+                          </div>
+                          <p className="text-xs text-white/80">Gerando {i + 1}/{quantity}...</p>
+                          <div className="absolute bottom-0 left-0 w-full h-1 bg-primary/20 overflow-hidden">
+                            <div className="h-full bg-primary animate-shimmer w-full" style={{ backgroundSize: '200% 100%', backgroundImage: 'linear-gradient(90deg, transparent, hsl(var(--primary)), transparent)' }}></div>
                           </div>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : generatedImages.length > 0 ? (
-                  <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 relative z-10">
+                  <div className="w-full grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 flex-1 relative z-10">
                     {generatedImages.map((image, index) => (
-                      <Card key={image.id} className="overflow-hidden group hover:shadow-lg transition-all bg-card/50 backdrop-blur-sm">
-                        <CardContent className="p-0">
-                          <div className="relative aspect-square overflow-hidden">
-                            <img src={image.url} alt={`Imagem gerada ${index + 1}`} className="w-full h-full object-cover" loading="lazy" />
-                          </div>
-                          <div className="p-3 flex gap-2 bg-card/80 backdrop-blur-sm">
-                            <Dialog>
-                              <DialogTrigger asChild><Button variant="outline" size="sm" className="flex-1"><Maximize2 className="w-4 h-4 mr-2" />Ampliar</Button></DialogTrigger>
-                              <DialogContent className="max-w-[95vw] max-h-[95vh] p-4 overflow-auto">
-                                <div className="relative w-full h-full flex items-center justify-center">
-                                  <img src={image.url} alt={`Imagem gerada ${index + 1}`} className="max-w-full max-h-[85vh] object-contain" />
-                                </div>
-                              </DialogContent>
-                            </Dialog>
-                            <Button variant="outline" size="sm" onClick={() => handleDownload(image.url, index)}><Download className="w-4 h-4" /></Button>
-                            <Button variant="outline" size="sm" onClick={() => setEditModal({ isOpen: true, imageUrl: image.url, imageId: image.id })}><Edit className="w-4 h-4" /></Button>
+                      <Card key={image.id} className="overflow-hidden group hover:shadow-lg transition-all bg-card/50 backdrop-blur-sm aspect-square">
+                        <CardContent className="p-0 h-full">
+                          <div className="relative w-full h-full overflow-hidden">
+                            <img src={image.url} alt={`Imagem gerada ${index + 1}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" loading="lazy" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                              <div className="absolute bottom-2 right-2 flex gap-1.5">
+                                <Dialog>
+                                  <DialogTrigger asChild><Button variant="outline" size="icon" className="h-8 w-8 bg-black/50 border-white/20 hover:bg-black/80 text-white"><Maximize2 className="w-4 h-4" /></Button></DialogTrigger>
+                                  <DialogContent className="max-w-[95vw] max-h-[95vh] p-4 overflow-auto">
+                                    <div className="relative w-full h-full flex items-center justify-center">
+                                      <img src={image.url} alt={`Imagem gerada ${index + 1}`} className="max-w-full max-h-[85vh] object-contain" />
+                                    </div>
+                                  </DialogContent>
+                                </Dialog>
+                                <Button variant="outline" size="icon" className="h-8 w-8 bg-black/50 border-white/20 hover:bg-black/80 text-white" onClick={() => handleDownload(image.url, index)}><Download className="w-4 h-4" /></Button>
+                                <Button variant="outline" size="icon" className="h-8 w-8 bg-black/50 border-white/20 hover:bg-black/80 text-white" onClick={() => setEditModal({ isOpen: true, imageUrl: image.url, imageId: image.id })}><Edit className="w-4 h-4" /></Button>
+                              </div>
+                            </div>
                           </div>
                         </CardContent>
                       </Card>
