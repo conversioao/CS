@@ -77,6 +77,11 @@ All colors MUST be HSL.
     box-shadow: var(--shadow-glow);
   }
 
+  .bg-dot-pattern {
+    background-image: radial-gradient(circle at 1px 1px, hsl(var(--border) / 0.5) 1px, transparent 0);
+    background-size: 25px 25px;
+  }
+
   /* Scroll-triggered animations */
   @keyframes fadeInUp {
     from {

@@ -1,9 +1,10 @@
-import DashboardNav from "@/components/DashboardNav";
+import DashboardHeader from "@/components/DashboardHeader";
+import DashboardSidebar from "@/components/DashboardSidebar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Check, Sparkles, Upload } from "lucide-react";
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -174,79 +175,90 @@ const Credits = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <DashboardNav />
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">
-            Pacotes de Créditos
-          </h1>
-          <p className="text-muted-foreground text-lg">
-            Escolha o pacote ideal para suas necessidades criativas
-          </p>
-        </div>
+    <div className="min-h-screen bg-background flex">
+      <div className="hidden lg:block">
+        <DashboardSidebar />
+      </div>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <DashboardHeader />
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 relative">
+          <div className="absolute inset-0 pointer-events-none z-[-1] overflow-hidden">
+            <div className="absolute inset-0 bg-dot-pattern opacity-20" />
+            <div className="absolute top-[-20%] left-[-10%] w-[40rem] h-[40rem] bg-primary/10 rounded-full blur-3xl animate-pulse" />
+            <div className="absolute bottom-[-30%] right-[-15%] w-[50rem] h-[50rem] bg-secondary/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+          </div>
+          
+          <div className="text-center mb-12">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">
+              Pacotes de Créditos
+            </h1>
+            <p className="text-muted-foreground text-lg">
+              Escolha o pacote ideal para suas necessidades criativas
+            </p>
+          </div>
 
-        <div className="grid md:grid-cols-3 gap-6 mb-16">
-          {plans.map((plan, index) => (
-            <div
-              key={index}
-              className={`relative bg-secondary/20 border rounded-xl p-8 ${
-                plan.popular ? "border-primary" : "border-border"
-              }`}
-            >
-              {plan.popular && (
-                <Badge className="absolute top-4 right-4 bg-primary">
-                  Mais Popular
-                </Badge>
-              )}
-              
-              <div className="flex justify-center mb-6">
-                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Sparkles className="w-8 h-8 text-primary" />
-                </div>
-              </div>
-              
-              <h3 className="text-2xl font-bold text-center mb-2">{plan.name}</h3>
-              <div className="text-center mb-2">
-                <span className="text-4xl font-bold gradient-text">{plan.price}</span>
-              </div>
-              <p className="text-center text-muted-foreground mb-6">{plan.credits}</p>
-              
-              <ul className="space-y-3 mb-8">
-                {plan.features.map((feature, featureIndex) => (
-                  <li key={featureIndex} className="flex items-start gap-3">
-                    <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                    <span className="text-sm">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-              
-              <Button
-                className={`w-full ${
-                  plan.popular ? "gradient-primary" : ""
+          <div className="grid md:grid-cols-3 gap-6 mb-16">
+            {plans.map((plan, index) => (
+              <div
+                key={index}
+                className={`relative bg-secondary/20 border rounded-xl p-8 ${
+                  plan.popular ? "border-primary" : "border-border"
                 }`}
-                variant={plan.popular ? "default" : "outline"}
-                size="lg"
-                onClick={() => handlePurchase(plan)}
               >
-                Adquirir Créditos
-              </Button>
-            </div>
-          ))}
-        </div>
-
-        <div className="max-w-3xl mx-auto bg-secondary/20 border border-border rounded-xl p-8">
-          <h2 className="text-2xl font-bold mb-6">Como funcionam os créditos?</h2>
-          <ul className="space-y-3">
-            {howItWorks.map((item, index) => (
-              <li key={index} className="flex items-start gap-3">
-                <span className="text-primary mt-1">•</span>
-                <span className="text-muted-foreground">{item}</span>
-              </li>
+                {plan.popular && (
+                  <Badge className="absolute top-4 right-4 bg-primary">
+                    Mais Popular
+                  </Badge>
+                )}
+                
+                <div className="flex justify-center mb-6">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Sparkles className="w-8 h-8 text-primary" />
+                  </div>
+                </div>
+                
+                <h3 className="text-2xl font-bold text-center mb-2">{plan.name}</h3>
+                <div className="text-center mb-2">
+                  <span className="text-4xl font-bold gradient-text">{plan.price}</span>
+                </div>
+                <p className="text-center text-muted-foreground mb-6">{plan.credits}</p>
+                
+                <ul className="space-y-3 mb-8">
+                  {plan.features.map((feature, featureIndex) => (
+                    <li key={featureIndex} className="flex items-start gap-3">
+                      <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                      <span className="text-sm">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+                
+                <Button
+                  className={`w-full ${
+                    plan.popular ? "gradient-primary" : ""
+                  }`}
+                  variant={plan.popular ? "default" : "outline"}
+                  size="lg"
+                  onClick={() => handlePurchase(plan)}
+                >
+                  Adquirir Créditos
+                </Button>
+              </div>
             ))}
-          </ul>
-        </div>
-      </main>
+          </div>
+
+          <div className="max-w-3xl mx-auto bg-secondary/20 border border-border rounded-xl p-8">
+            <h2 className="text-2xl font-bold mb-6">Como funcionam os créditos?</h2>
+            <ul className="space-y-3">
+              {howItWorks.map((item, index) => (
+                <li key={index} className="flex items-start gap-3">
+                  <span className="text-primary mt-1">•</span>
+                  <span className="text-muted-foreground">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </main>
+      </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-md">
