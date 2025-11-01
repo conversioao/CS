@@ -12,7 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { storeMediaInSupabase, getMockUser } from "@/lib/supabase-storage";
+import { storeMediaInSupabase } from "@/lib/supabase-storage";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 interface GeneratedImage {
   url: string;
@@ -48,13 +49,10 @@ const Generate = () => {
   const [editModal, setEditModal] = useState<EditModalState>({ isOpen: false, imageUrl: '', imageId: '' });
   const [editPrompt, setEditPrompt] = useState('');
   const [isEditing, setIsEditing] = useState(false);
-  const [editedImages, setEditedImages] = useState<GeneratedImage[]>([]);
-
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validar formato
       const validFormats = ['image/jpeg', 'image/jpg', 'image/png'];
       if (!validFormats.includes(file.type)) {
         toast({
@@ -67,7 +65,6 @@ const Generate = () => {
 
       setUploadedImage(file);
       
-      // Criar URL para preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setUploadedImageUrl(reader.result as string);
@@ -92,8 +89,6 @@ const Generate = () => {
     const data = await response.json();
     return data.data.url;
   };
-
-
 
   const handleGenerate = async () => {
     if (generationType === "image" && !uploadedImage) {
@@ -125,8 +120,6 @@ const Generate = () => {
           title: "Enviando imagem...",
           description: "Fazendo upload da sua imagem",
         });
-
-        // 1. Upload para Imgbb
         imgbbUrl = await uploadToImgbb(uploadedImage);
       }
 
@@ -135,7 +128,6 @@ const Generate = () => {
         description: `Processando ${quantity} imagem(ns)`,
       });
 
-      // 2. Enviar para webhook
       const payload: any = {
         modelo: modelo,
         quantidade: quantity.toString(),
@@ -152,45 +144,28 @@ const Generate = () => {
 
       const response = await fetch('https://n8n.conversio.ao/webhook/Gerar_Modelos', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok) {
-        throw new Error('Erro ao gerar imagem');
-      }
-
+      if (!response.ok) throw new Error('Erro ao gerar imagem');
       const webhookResponse = await response.json();
 
-      // 3. Processar resposta - extrair URLs do formato do webhook
       if (webhookResponse && Array.isArray(webhookResponse)) {
         const temporaryUrls = webhookResponse
           .filter((item: any) => item?.message?.content)
           .map((item: any) => item.message.content);
 
         if (temporaryUrls.length > 0) {
-          toast({
-            title: "Salvando imagens...",
-            description: "Armazenando suas imagens no servidor",
-          });
-
-          // 4. Store in external Supabase and get permanent URLs
+          toast({ title: "Salvando imagens...", description: "Armazenando suas imagens no servidor" });
           const permanentUrls = await storeMediaInSupabase(temporaryUrls, 'image');
-
           const images: GeneratedImage[] = permanentUrls.map((url: string, index: number) => ({
             url: url,
             id: `${Date.now()}-${index}`,
           }));
-
           setGeneratedImages(prev => [...images, ...prev]);
           setHistory(prev => [...images, ...prev]);
-
-          toast({
-            title: "Sucesso!",
-            description: `${images.length} imagem(ns) gerada(s) e armazenada(s) com sucesso`,
-          });
+          toast({ title: "Sucesso!", description: `${images.length} imagem(ns) gerada(s) e armazenada(s) com sucesso` });
         } else {
           throw new Error('Nenhuma imagem foi gerada');
         }
@@ -211,7 +186,6 @@ const Generate = () => {
 
   const handleDownload = async (url: string, index: number) => {
     try {
-      // Usar link direto sem fetch para evitar CORS
       const link = document.createElement('a');
       link.href = url;
       link.download = `imagem-gerada-${index + 1}.png`;
@@ -220,17 +194,9 @@ const Generate = () => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
-      toast({
-        title: "Download iniciado",
-        description: "A imagem está sendo baixada",
-      });
+      toast({ title: "Download iniciado", description: "A imagem está sendo baixada" });
     } catch (error) {
-      toast({
-        title: "Erro no download",
-        description: "Não foi possível baixar a imagem",
-        variant: "destructive",
-      });
+      toast({ title: "Erro no download", description: "Não foi possível baixar a imagem", variant: "destructive" });
     }
   };
 
@@ -241,70 +207,37 @@ const Generate = () => {
 
   const handleEditImage = async () => {
     if (!editPrompt.trim()) {
-      toast({
-        title: "Prompt necessário",
-        description: "Por favor, adicione uma descrição para editar a imagem",
-        variant: "destructive",
-      });
+      toast({ title: "Prompt necessário", description: "Por favor, adicione uma descrição para editar a imagem", variant: "destructive" });
       return;
     }
-
     setIsEditing(true);
-
     try {
-      toast({
-        title: "Editando imagem...",
-        description: "Processando sua solicitação",
-      });
-
+      toast({ title: "Editando imagem...", description: "Processando sua solicitação" });
       const response = await fetch('https://n8n.conversio.ao/webhook-test/editar_imagem', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          image_url: editModal.imageUrl,
-          description: editPrompt,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image_url: editModal.imageUrl, description: editPrompt }),
       });
-
-      if (!response.ok) {
-        throw new Error('Erro ao editar imagem');
-      }
-
+      if (!response.ok) throw new Error('Erro ao editar imagem');
       const webhookResponse = await response.json();
-
       if (webhookResponse && Array.isArray(webhookResponse)) {
-        const editedUrls = webhookResponse
-          .filter((item: any) => item?.message?.content)
-          .map((item: any) => item.message.content);
-
+        const editedUrls = webhookResponse.filter((item: any) => item?.message?.content).map((item: any) => item.message.content);
         if (editedUrls.length > 0) {
           const storedUrls = await storeMediaInSupabase(editedUrls, 'image');
           const newEditedImages: GeneratedImage[] = storedUrls.map((url: string, index: number) => ({
             url: url,
             id: `edited-${Date.now()}-${index}`,
           }));
-
-          setEditedImages(prev => [...newEditedImages, ...prev]);
           setGeneratedImages(prev => [...newEditedImages, ...prev]);
-          
-          toast({
-            title: "Sucesso!",
-            description: "Imagem editada com sucesso",
-          });
-
+          setHistory(prev => [...newEditedImages, ...prev]);
+          toast({ title: "Sucesso!", description: "Imagem editada com sucesso" });
           setEditModal({ isOpen: false, imageUrl: '', imageId: '' });
           setEditPrompt('');
         }
       }
     } catch (error) {
       console.error('Erro ao editar imagem:', error);
-      toast({
-        title: "Erro",
-        description: error instanceof Error ? error.message : "Erro ao editar imagem. Tente novamente.",
-        variant: "destructive",
-      });
+      toast({ title: "Erro", description: error instanceof Error ? error.message : "Erro ao editar imagem. Tente novamente.", variant: "destructive" });
     } finally {
       setIsEditing(false);
     }
@@ -312,7 +245,6 @@ const Generate = () => {
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* Gradient Background Effects */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-secondary/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
@@ -332,10 +264,8 @@ const Generate = () => {
         </div>
 
         <div className="grid lg:grid-cols-[1fr,420px] gap-4 sm:gap-6">
-          {/* Preview Area */}
           <div className="space-y-6">
             <div className="bg-card/50 backdrop-blur-xl rounded-xl shadow-lg p-4 sm:p-6 min-h-[400px] sm:min-h-[600px] flex flex-col relative overflow-hidden">
-              {/* Decorative elements */}
               <div className="absolute top-0 right-0 w-40 h-40 bg-primary/5 rounded-full blur-2xl" />
               <div className="absolute bottom-0 left-0 w-40 h-40 bg-secondary/5 rounded-full blur-2xl" />
               
@@ -365,54 +295,19 @@ const Generate = () => {
                     <Card key={image.id} className="overflow-hidden group hover:shadow-lg transition-all bg-card/50 backdrop-blur-sm">
                       <CardContent className="p-0">
                         <div className="relative aspect-square overflow-hidden">
-                          <img 
-                            src={image.url} 
-                            alt={`Imagem gerada ${index + 1}`}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                            onError={(e) => {
-                              console.error('Erro ao carregar imagem:', image.url);
-                              e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="400"%3E%3Crect fill="%23ddd" width="400" height="400"/%3E%3Ctext fill="%23999" font-size="20" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle"%3EErro ao carregar%3C/text%3E%3C/svg%3E';
-                            }}
-                          />
+                          <img src={image.url} alt={`Imagem gerada ${index + 1}`} className="w-full h-full object-cover" loading="lazy" />
                         </div>
                         <div className="p-3 flex gap-2 bg-card/80 backdrop-blur-sm">
                            <Dialog>
-                            <DialogTrigger asChild>
-                              <Button variant="outline" size="sm" className="flex-1">
-                                <Maximize2 className="w-4 h-4 mr-2" />
-                                Ampliar
-                              </Button>
-                            </DialogTrigger>
+                            <DialogTrigger asChild><Button variant="outline" size="sm" className="flex-1"><Maximize2 className="w-4 h-4 mr-2" />Ampliar</Button></DialogTrigger>
                             <DialogContent className="max-w-[95vw] max-h-[95vh] p-4 overflow-auto">
                               <div className="relative w-full h-full flex items-center justify-center">
-                                <img 
-                                  src={image.url} 
-                                  alt={`Imagem gerada ${index + 1}`}
-                                  className="max-w-full max-h-[85vh] object-contain cursor-zoom-in hover:scale-150 transition-transform duration-300"
-                                  onClick={(e) => {
-                                    e.currentTarget.classList.toggle('scale-150');
-                                    e.currentTarget.classList.toggle('cursor-zoom-in');
-                                    e.currentTarget.classList.toggle('cursor-zoom-out');
-                                  }}
-                                />
+                                <img src={image.url} alt={`Imagem gerada ${index + 1}`} className="max-w-full max-h-[85vh] object-contain" />
                               </div>
                             </DialogContent>
                           </Dialog>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleDownload(image.url, index)}
-                          >
-                            <Download className="w-4 h-4" />
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => setEditModal({ isOpen: true, imageUrl: image.url, imageId: image.id })}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => handleDownload(image.url, index)}><Download className="w-4 h-4" /></Button>
+                          <Button variant="outline" size="sm" onClick={() => setEditModal({ isOpen: true, imageUrl: image.url, imageId: image.id })}><Edit className="w-4 h-4" /></Button>
                         </div>
                       </CardContent>
                     </Card>
@@ -420,56 +315,27 @@ const Generate = () => {
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center gap-4 text-center flex-1 relative z-10">
-                  <div className="w-20 h-20 rounded-lg bg-muted/50 backdrop-blur-sm flex items-center justify-center">
-                    <Image className="w-10 h-10 text-muted-foreground" />
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="text-xl font-bold">Pronto para criar?</h3>
-                    <p className="text-muted-foreground max-w-md text-sm">
-                      Configure as opções ao lado e clique em "Gerar Imagem" para começar
-                    </p>
-                  </div>
+                  <div className="w-20 h-20 rounded-lg bg-muted/50 backdrop-blur-sm flex items-center justify-center"><Image className="w-10 h-10 text-muted-foreground" /></div>
+                  <div className="space-y-2"><h3 className="text-xl font-bold">Pronto para criar?</h3><p className="text-muted-foreground max-w-md text-sm">Configure as opções ao lado e clique em "Gerar Imagem" para começar</p></div>
                 </div>
               )}
             </div>
 
-            {/* History Section */}
             {history.length > 0 && (
               <div className="bg-card/50 backdrop-blur-xl rounded-xl shadow-lg p-6">
-                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-primary" />
-                  Histórico de Gerações
-                </h3>
+                <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><Sparkles className="w-5 h-5 text-primary" />Histórico de Gerações</h3>
                 <ScrollArea className="h-[300px] pr-4">
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                     {history.map((image, index) => (
                       <Dialog key={image.id}>
                         <DialogTrigger asChild>
                           <div className="relative group cursor-pointer rounded-lg overflow-hidden hover:shadow-lg transition-all">
-                            <img 
-                              src={image.url} 
-                              alt={`Histórico ${index + 1}`}
-                              className="w-full aspect-square object-cover"
-                              loading="lazy"
-                            />
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
-                              <Maximize2 className="w-5 h-5 text-white" />
-                            </div>
+                            <img src={image.url} alt={`Histórico ${index + 1}`} className="w-full aspect-square object-cover" loading="lazy" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]"><Maximize2 className="w-5 h-5 text-white" /></div>
                           </div>
                         </DialogTrigger>
                         <DialogContent className="max-w-[95vw] max-h-[95vh] p-4 overflow-auto">
-                          <div className="relative w-full h-full flex items-center justify-center">
-                            <img 
-                              src={image.url} 
-                              alt={`Histórico ${index + 1}`}
-                              className="max-w-full max-h-[85vh] object-contain cursor-zoom-in hover:scale-150 transition-transform duration-300"
-                              onClick={(e) => {
-                                e.currentTarget.classList.toggle('scale-150');
-                                e.currentTarget.classList.toggle('cursor-zoom-in');
-                                e.currentTarget.classList.toggle('cursor-zoom-out');
-                              }}
-                            />
-                          </div>
+                          <div className="relative w-full h-full flex items-center justify-center"><img src={image.url} alt={`Histórico ${index + 1}`} className="max-w-full max-h-[85vh] object-contain" /></div>
                         </DialogContent>
                       </Dialog>
                     ))}
@@ -479,246 +345,113 @@ const Generate = () => {
             )}
           </div>
 
-          {/* Edit Modal */}
           <Dialog open={editModal.isOpen} onOpenChange={(open) => !isEditing && setEditModal({ isOpen: open, imageUrl: '', imageId: '' })}>
             <DialogContent className="max-w-2xl">
               <div className="space-y-4">
                 <h2 className="text-2xl font-bold">Editar Imagem</h2>
-                
-                <div className="relative rounded-lg overflow-hidden bg-black">
-                  <img 
-                    src={editModal.imageUrl} 
-                    alt="Imagem para editar"
-                    className="w-full max-h-[400px] object-contain"
-                  />
-                </div>
-
+                <div className="relative rounded-lg overflow-hidden bg-black"><img src={editModal.imageUrl} alt="Imagem para editar" className="w-full max-h-[400px] object-contain" /></div>
                 <div className="space-y-2">
                   <Label htmlFor="edit-prompt">Descreva como quer editar a imagem</Label>
-                  <Textarea
-                    id="edit-prompt"
-                    value={editPrompt}
-                    onChange={(e) => setEditPrompt(e.target.value)}
-                    placeholder="Ex: coloque essa imagem em uma mesa com uma família negra"
-                    className="min-h-[100px]"
-                    disabled={isEditing}
-                  />
+                  <Textarea id="edit-prompt" value={editPrompt} onChange={(e) => setEditPrompt(e.target.value)} placeholder="Ex: coloque essa imagem em uma mesa com uma família negra" className="min-h-[100px]" disabled={isEditing} />
                 </div>
-
                 <div className="flex gap-2 justify-end">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => {
-                      setEditModal({ isOpen: false, imageUrl: '', imageId: '' });
-                      setEditPrompt('');
-                    }}
-                    disabled={isEditing}
-                  >
-                    Cancelar
-                  </Button>
-                  <Button 
-                    onClick={handleEditImage}
-                    disabled={isEditing || !editPrompt.trim()}
-                  >
-                    {isEditing ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Editando...
-                      </>
-                    ) : (
-                      <>
-                        <Edit className="w-4 h-4 mr-2" />
-                        Editar Imagem
-                      </>
-                    )}
+                  <Button variant="outline" onClick={() => { setEditModal({ isOpen: false, imageUrl: '', imageId: '' }); setEditPrompt(''); }} disabled={isEditing}>Cancelar</Button>
+                  <Button onClick={handleEditImage} disabled={isEditing || !editPrompt.trim()}>
+                    {isEditing ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Editando...</>) : (<><Edit className="w-4 h-4 mr-2" />Editar Imagem</>)}
                   </Button>
                 </div>
               </div>
             </DialogContent>
           </Dialog>
 
-          {/* Form Area */}
           <div className="space-y-4">
-            <Card className="p-4 sm:p-6 bg-card/50 backdrop-blur-xl shadow-lg">
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 p-4 bg-muted/30 rounded-lg">
-                  <Label className="font-semibold flex-1">Tipo de Geração</Label>
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      variant={generationType === "image" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setGenerationType("image")}
-                      disabled={isLoading}
-                      className="transition-all"
-                    >
-                      <Image className="w-4 h-4 mr-2" />
-                      Imagem
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={generationType === "text" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setGenerationType("text")}
-                      disabled={isLoading}
-                      className="transition-all"
-                    >
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      Texto
-                    </Button>
-                  </div>
-                </div>
-
-                {generationType === "image" && (
-                  <div className="space-y-2">
-                    <Label htmlFor="image-upload" className="font-semibold">Imagem Base</Label>
-                  <Input
-                    id="image-upload"
-                    type="file"
-                    accept=".jpg,.jpeg,.png"
-                    onChange={handleImageUpload}
-                    className="hidden"
-                  />
-                  <label htmlFor="image-upload">
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-start gap-2 h-auto py-3 border-dashed" 
-                      asChild
-                      disabled={isLoading}
-                    >
-                      <span>
-                        <Upload className="w-4 h-4" />
-                        <span className="text-sm">
-                          {uploadedImage ? uploadedImage.name : 'Carregar imagem do produto'}
-                        </span>
-                      </span>
-                    </Button>
-                  </label>
-                  {uploadedImageUrl && (
-                    <div className="relative mt-2 rounded-lg overflow-hidden border">
-                      <img 
-                        src={uploadedImageUrl} 
-                        alt="Preview" 
-                        className="w-full h-32 object-cover"
-                      />
-                      <Button
-                        variant="destructive"
-                        size="icon"
-                        className="absolute top-2 right-2 h-8 w-8"
-                        onClick={removeUploadedImage}
-                        disabled={isLoading}
-                      >
-                        <X className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  )}
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
-                      <span>📎</span> Formatos: .jpg, .jpeg, .png
-                    </p>
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <Label htmlFor="description" className="font-semibold">
-                    {generationType === "text" ? "Descrição da Imagem *" : "Descrição (Opcional)"}
-                  </Label>
-                  <Textarea
-                    id="description"
-                    placeholder={generationType === "text"
-                      ? "Descreva a imagem que deseja criar em detalhes..." 
-                      : "Descreva o que você quer gerar..."
-                    }
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    disabled={isLoading}
-                    className="min-h-[120px] resize-none"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="model" className="font-semibold">Modelo de IA</Label>
-                  <Select value={modelo} onValueChange={setModelo} disabled={isLoading}>
-                    <SelectTrigger id="model">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Advision UGC">Advision UGC</SelectItem>
-                      <SelectItem value="SocialBost">SocialBost</SelectItem>
-                      <SelectItem value="FashionFit">FashionFit</SelectItem>
-                      <SelectItem value="Adivisio VFX">Adivisio VFX</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label className="font-semibold">Quantidade</Label>
-                    <div className="relative">
-                      <Input
-                        type="number"
-                        min="1"
-                        max="10"
-                        value={quantity}
-                        onChange={(e) => setQuantity(Math.min(10, Math.max(1, parseInt(e.target.value) || 1)))}
-                        disabled={isLoading}
-                        className="text-center font-bold text-lg transition-all hover:border-primary/50"
-                      />
-                      <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col">
-                        <button
-                          type="button"
-                          onClick={() => setQuantity(prev => Math.min(10, prev + 1))}
-                          disabled={isLoading || quantity >= 10}
-                          className="text-muted-foreground hover:text-primary transition-colors"
-                        >
-                          ▲
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setQuantity(prev => Math.max(1, prev - 1))}
-                          disabled={isLoading || quantity <= 1}
-                          className="text-muted-foreground hover:text-primary transition-colors"
-                        >
-                          ▼
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="font-semibold">Proporção</Label>
-                    <Select value={aspectRatio} onValueChange={setAspectRatio} disabled={isLoading}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1:1">1:1</SelectItem>
-                        <SelectItem value="9:16">9:16</SelectItem>
-                        <SelectItem value="16:9">16:9</SelectItem>
-                        <SelectItem value="4:5">4:5</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+            <Card className="p-0 bg-card/50 backdrop-blur-xl shadow-lg overflow-hidden">
+              <div className="p-4 sm:p-6">
+                <div className="flex items-center gap-2 p-1 bg-muted/30 rounded-lg">
+                  <Button type="button" variant={generationType === "image" ? "default" : "ghost"} size="sm" onClick={() => setGenerationType("image")} disabled={isLoading} className="flex-1 transition-all"><Image className="w-4 h-4 mr-2" />Imagem</Button>
+                  <Button type="button" variant={generationType === "text" ? "default" : "ghost"} size="sm" onClick={() => setGenerationType("text")} disabled={isLoading} className="flex-1 transition-all"><Sparkles className="w-4 h-4 mr-2" />Texto</Button>
                 </div>
               </div>
+
+              <Accordion type="multiple" defaultValue={['item-1', 'item-2', 'item-3']} className="w-full">
+                <AccordionItem value="item-1" className="border-t border-border/50">
+                  <AccordionTrigger className="px-4 sm:px-6 py-4 text-base font-semibold">{generationType === 'image' ? '1. Imagem Base' : '1. Descrição Principal'}</AccordionTrigger>
+                  <AccordionContent className="px-4 sm:px-6 pb-6">
+                    {generationType === "image" ? (
+                      <div className="space-y-2">
+                        <Input id="image-upload" type="file" accept=".jpg,.jpeg,.png" onChange={handleImageUpload} className="hidden" />
+                        <label htmlFor="image-upload">
+                          <Button variant="outline" className="w-full justify-start gap-2 h-auto py-3 border-dashed" asChild disabled={isLoading}>
+                            <span><Upload className="w-4 h-4" /><span className="text-sm">{uploadedImage ? uploadedImage.name : 'Carregar imagem do produto'}</span></span>
+                          </Button>
+                        </label>
+                        {uploadedImageUrl && (
+                          <div className="relative mt-2 rounded-lg overflow-hidden border">
+                            <img src={uploadedImageUrl} alt="Preview" className="w-full h-32 object-cover" />
+                            <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-8 w-8" onClick={removeUploadedImage} disabled={isLoading}><X className="w-3 h-3" /></Button>
+                          </div>
+                        )}
+                        <p className="text-xs text-muted-foreground flex items-center gap-1"><span>📎</span> Formatos: .jpg, .jpeg, .png</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <Label htmlFor="description" className="font-semibold">Descrição da Imagem *</Label>
+                        <Textarea id="description" placeholder="Descreva a imagem que deseja criar em detalhes..." value={description} onChange={(e) => setDescription(e.target.value)} disabled={isLoading} className="min-h-[120px] resize-none" />
+                      </div>
+                    )}
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="item-2" className="border-t border-border/50">
+                  <AccordionTrigger className="px-4 sm:px-6 py-4 text-base font-semibold">2. Modelo e Estilo</AccordionTrigger>
+                  <AccordionContent className="px-4 sm:px-6 pb-6 space-y-4">
+                    {generationType === 'image' && (
+                      <div className="space-y-2">
+                        <Label htmlFor="description-optional" className="font-semibold">Descrição (Opcional)</Label>
+                        <Textarea id="description-optional" placeholder="Descreva o que você quer gerar..." value={description} onChange={(e) => setDescription(e.target.value)} disabled={isLoading} className="min-h-[80px] resize-none" />
+                      </div>
+                    )}
+                    <div className="space-y-2">
+                      <Label htmlFor="model" className="font-semibold">Modelo de IA</Label>
+                      <Select value={modelo} onValueChange={setModelo} disabled={isLoading}>
+                        <SelectTrigger id="model"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Advision UGC">Advision UGC</SelectItem>
+                          <SelectItem value="SocialBost">SocialBost</SelectItem>
+                          <SelectItem value="FashionFit">FashionFit</SelectItem>
+                          <SelectItem value="Adivisio VFX">Adivisio VFX</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="item-3" className="border-t border-border/50">
+                  <AccordionTrigger className="px-4 sm:px-6 py-4 text-base font-semibold">3. Ajustes Finais</AccordionTrigger>
+                  <AccordionContent className="px-4 sm:px-6 pb-6">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="font-semibold">Quantidade</Label>
+                        <Input type="number" min="1" max="10" value={quantity} onChange={(e) => setQuantity(Math.min(10, Math.max(1, parseInt(e.target.value) || 1)))} disabled={isLoading} className="text-center" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="font-semibold">Proporção</Label>
+                        <Select value={aspectRatio} onValueChange={setAspectRatio} disabled={isLoading}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1:1">1:1</SelectItem>
+                            <SelectItem value="9:16">9:16</SelectItem>
+                            <SelectItem value="16:9">16:9</SelectItem>
+                            <SelectItem value="4:5">4:5</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
             </Card>
 
-            <Button 
-              className="w-full h-11 sm:h-12 font-semibold text-sm sm:text-base gradient-primary glow-effect hover:scale-[1.02] transition-transform" 
-              size="lg"
-              onClick={handleGenerate}
-              disabled={isLoading || (generationType === "image" && !uploadedImage) || (generationType === "text" && !description)}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  Gerando...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Gerar Imagem
-                </>
-              )}
+            <Button className="w-full h-11 sm:h-12 font-semibold text-sm sm:text-base gradient-primary glow-effect hover:scale-[1.02] transition-transform" size="lg" onClick={handleGenerate} disabled={isLoading || (generationType === "image" && !uploadedImage) || (generationType === "text" && !description)}>
+              {isLoading ? (<><Loader2 className="w-4 h-4 animate-spin mr-2" />Gerando...</>) : (<><Sparkles className="w-4 h-4 mr-2" />Gerar Imagem</>)}
             </Button>
           </div>
         </div>

@@ -53,15 +53,18 @@ const ToolsSection = () => {
           
           const cardContent = (
             <Card 
-              className={`group transition-all duration-300 bg-card/50 backdrop-blur-sm border-border/50 ${
+              className={`group relative overflow-hidden transition-all duration-300 bg-card/50 backdrop-blur-sm border-border/50 ${
                 tool.disabled 
                   ? 'opacity-50 cursor-not-allowed' 
-                  : 'cursor-pointer hover:scale-105 hover:border-primary/50'
+                  : 'cursor-pointer hover:scale-105 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10'
               }`}
             >
-              <CardContent className="p-6 flex flex-col items-center text-center gap-4">
-                <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${tool.gradient} flex items-center justify-center ${!tool.disabled && 'group-hover:scale-110'} transition-transform`}>
-                  <Icon className="w-8 h-8 text-white" />
+              <div className={`absolute inset-0 bg-gradient-to-br ${tool.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
+              <CardContent className="p-6 flex flex-col items-center text-center gap-4 relative z-10">
+                <div className={`relative w-16 h-16 rounded-2xl bg-gradient-to-br ${tool.gradient} flex items-center justify-center shadow-lg ${!tool.disabled && 'group-hover:scale-110'} transition-transform duration-300`}>
+                  <Icon className="w-8 h-8 text-white transition-transform duration-300 group-hover:rotate-[-12deg]" />
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-white/30 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 animate-pulse" />
+                  <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-white/30 rounded-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg mb-1">{tool.title}</h3>
