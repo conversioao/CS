@@ -36,7 +36,7 @@ const Generate = () => {
   const [description, setDescription] = useState("");
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
-  const [generationType, setGenerationType] = useState<"image" | "text">("image");
+  const [generationType, setGenerationType] = useState<"image" | "text">("text"); // Padrão para texto
   const [isLoading, setIsLoading] = useState(false);
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
   const [history, setHistory] = useState<GeneratedImage[]>([]);
@@ -50,10 +50,13 @@ const Generate = () => {
     const imageUrlParam = searchParams.get('imageUrl');
 
     if (modelParam) setModelo(modelParam);
-    if (descriptionParam) setDescription(descriptionParam);
+    if (descriptionParam) {
+      setDescription(descriptionParam);
+      setGenerationType("text"); // Se houver descrição, o modo é texto
+    }
     if (imageUrlParam) {
       setUploadedImageUrl(imageUrlParam);
-      setGenerationType("image");
+      setGenerationType("image"); // Se houver imagem, o modo é imagem
     }
   }, [searchParams]);
 
