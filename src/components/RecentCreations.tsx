@@ -1,4 +1,4 @@
-import { Clock, Download } from "lucide-react";
+import { Clock, Download, ArrowRight } from "lucide-react";
 import { useState, useEffect } from "react";
 import {
   Dialog,
@@ -7,6 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const RecentCreations = () => {
   const [recentImages, setRecentImages] = useState<Array<{ id: string; url: string }>>([]);
@@ -14,10 +15,7 @@ const RecentCreations = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
-    // Buscar imagens do localStorage
     const allImages: Array<{ id: string; url: string }> = [];
-    
-    // Buscar do histórico de geração de imagens
     const imageHistory = localStorage.getItem('image_history');
     if (imageHistory) {
       try {
@@ -29,9 +27,7 @@ const RecentCreations = () => {
         console.error('Error parsing image history:', e);
       }
     }
-    
-    // Pegar apenas as últimas 8 imagens
-    setRecentImages(allImages.slice(0, 8));
+    setRecentImages(allImages.slice(0, 4)); // Show only 4 on dashboard
   }, []);
 
   const handleImageClick = (creation: { id: string; url: string }) => {
@@ -59,14 +55,14 @@ const RecentCreations = () => {
   };
   return (
     <section id="recent-creations-section">
-      <div className="flex items-center justify-between mb-8">
-        <h2 className="text-3xl md:text-4xl font-bold gradient-text">
-          Criações Recentes
-        </h2>
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Clock className="w-4 h-4" />
-          <span className="text-sm">Últimas 8 criações</span>
-        </div>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-3xl font-bold">Criações Recentes</h2>
+        <Link to="/gallery">
+          <Button variant="ghost" className="group">
+            Ver todas
+            <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+          </Button>
+        </Link>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {recentImages.length > 0 ? (
@@ -74,7 +70,7 @@ const RecentCreations = () => {
             <div
               key={creation.id}
               onClick={() => handleImageClick(creation)}
-              className="group relative aspect-square rounded-xl overflow-hidden cursor-pointer hover:scale-105 transition-all duration-300 bg-card/50 backdrop-blur-sm"
+              className="group relative aspect-square rounded-xl overflow-hidden cursor-pointer hover:scale-105 transition-all duration-300 bg-card/50 backdrop-blur-sm shadow-lg"
             >
               <img
                 src={creation.url}
@@ -83,13 +79,16 @@ const RecentCreations = () => {
                 loading="lazy"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-                <p className="text-white font-semibold text-sm">Sua criação</p>
+                <p className="text-white font-semibold text-sm">Ver detalhes</p>
               </div>
             </div>
           ))
         ) : (
-          <div className="col-span-full text-center py-12">
-            <p className="text-muted-foreground">Nenhuma criação ainda. Comece a criar!</p>
+          <div className="col-span-full text-center py-12 bg-card/30 backdrop-blur-sm rounded-xl border border-border/50">
+            <p className="text-muted-foreground">Nenhuma criação ainda.</p>
+            <Link to="/generate">
+              <Button className="mt-4 gradient-primary">Comece a criar agora</Button>
+            </Link>
           </div>
         )}
       </div>
