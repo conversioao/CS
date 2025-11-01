@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardHeader from "@/components/DashboardHeader";
 import DashboardSidebar from "@/components/DashboardSidebar";
@@ -8,18 +8,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Bot, User, Loader2, Upload, Sparkles, Image as ImageIcon, AlertTriangle, Copy, Send } from "lucide-react";
+import { Loader2, Upload, Sparkles, Image as ImageIcon, AlertTriangle, Copy, PlusCircle, ArrowLeft, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 
 // --- Tipos ---
-interface Message {
-  id: number;
-  sender: "user" | "ai";
-  type: "text" | "image_prompt" | "input_prompt" | "campaign_plan" | "image_display";
-  content: any;
+interface CampaignData {
+  imageUrl?: string;
+  productName?: string;
+  targetAudience?: string;
+  socialMedia?: string;
+  adStyle?: string;
 }
 
 interface CampaignPlan {
@@ -30,63 +29,38 @@ interface CampaignPlan {
   melhorias_produto?: { baixa_resolucao?: string; fundo_confuso?: string };
 }
 
-// --- Fluxo da Conversa ---
-const chatFlow = [
-  { id: "start", sender: "ai" as const, type: "text" as const, content: "Olá! Vamos criar uma campanha de marketing incrível. Para começar, por favor, envie uma imagem do seu produto." },
-  { id: "image", sender: "user" as const, type: "image_prompt" as const, content: null },
-  { id: "name", sender: "ai" as const, type: "input_prompt" as const, content: { key: "productName", label: "Qual é o nome do produto?" } },
-  { id: "audience", sender: "ai" as const, type: "input_prompt" as const, content: { key: "targetAudience", label: "Para quem é este produto? (Público-alvo)", multiline: true } },
-  { id: "platform", sender: "ai" as const, type: "input_prompt" as const, content: { key: "socialMedia", label: "Para qual rede social é o anúncio?", options: ["Instagram", "Facebook", "TikTok", "LinkedIn"] } },
-  { id: "style", sender: "ai" as const, type: "input_prompt" as const, content: { key: "adStyle", label: "Qual estilo de anúncio você prefere?", options: ["Moderno e Minimalista", "Vibrante e Energético", "Elegante e Sofisticado"] } },
-  { id: "end", sender: "ai" as const, type: "text" as const, content: "Ótimo! Tenho todas as informações. A gerar o seu plano de marketing..." },
+const mockCampaigns = [
+  { id: 1, productName: 'Tênis Voador', createdAt: '28 de Out, 2024', status: 'Concluído', imageUrl: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=400&fit=crop' },
+  { id: 2, productName: 'Relógio Futurista', createdAt: '25 de Out, 2024', status: 'Concluído', imageUrl: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=400&fit=crop' },
+  { id: 3, productName: 'Sumo de Múcua Energético', createdAt: '22 de Out, 2024', status: 'Concluído', imageUrl: 'https://images.unsplash.com/photo-1575429239283-4763a9b2b267?w=400&h=400&fit=crop' },
 ];
 
 // --- Componente Principal ---
 const ChatCriativo = () => {
-  const { toast } = useToast();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [view, setView] = useState<'list' | 'wizard'>('list');
+  const [wizardStep, setWizardStep] = useState(1);
+  const [campaignData, setCampaignData] = useState<CampaignData>({});
+  const [generatedPlan, setGeneratedPlan] = useState<CampaignPlan | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [userInput, setUserInput] = useState<any>({});
-  const viewportRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
-  useEffect(() => {
-    if (messages.length === 0) {
-      const { id, ...firstStep } = chatFlow[0];
-      addMessage(firstStep);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (viewportRef.current) {
-      viewportRef.current.scrollTo({ top: viewportRef.current.scrollHeight, behavior: 'smooth' });
-    }
-  }, [messages]);
-
-  const addMessage = (newMessage: Omit<Message, 'id'>) => {
-    setMessages(prev => [...prev, { ...newMessage, id: Date.now() }]);
+  const handleNewCampaign = () => {
+    setCampaignData({});
+    setGeneratedPlan(null);
+    setWizardStep(1);
+    setView('wizard');
   };
 
-  const handleNextStep = (key: string, value: any, displayValue?: string) => {
-    const updatedInput = { ...userInput, [key]: value };
-    setUserInput(updatedInput);
+  const handleBackToList = () => {
+    setView('list');
+  };
 
-    if (key === 'imageUrl') {
-      addMessage({ sender: "user", type: "image_display", content: value });
-    } else {
-      addMessage({ sender: "user", type: "text", content: displayValue || value });
-    }
+  const handleNextStep = () => {
+    setWizardStep(prev => prev + 1);
+  };
 
-    const nextStepIndex = currentStep + 1;
-    if (nextStepIndex < chatFlow.length) {
-      setCurrentStep(nextStepIndex);
-      const { id, ...nextStep } = chatFlow[nextStepIndex];
-      setTimeout(() => addMessage(nextStep), 500);
-    }
-
-    if (chatFlow[nextStepIndex].id === "end") {
-      generateCampaign(updatedInput);
-    }
+  const handlePrevStep = () => {
+    setWizardStep(prev => prev - 1);
   };
 
   const handleImageUpload = (file: File) => {
@@ -101,60 +75,127 @@ const ChatCriativo = () => {
         if (img.width < 1200 || img.height < 1200) {
           toast({ title: "Aviso", description: "Para melhores resultados, recomendamos imagens com pelo menos 1200x1200 pixels." });
         }
-        handleNextStep("imageUrl", e.target?.result as string);
+        setCampaignData(prev => ({ ...prev, imageUrl: e.target?.result as string }));
+        handleNextStep();
       };
       img.src = e.target?.result as string;
     };
     reader.readAsDataURL(file);
   };
 
-  const generateCampaign = async (finalUserInput: any) => {
+  const generateCampaign = async () => {
     setIsLoading(true);
+    setWizardStep(4); // Etapa de carregamento
     try {
-      // Simulação de chamada ao webhook n8n
       await new Promise(resolve => setTimeout(resolve, 3000));
       
       const mockCampaignPlan: CampaignPlan = {
         plano_7_dias: Array.from({ length: 7 }, (_, i) => ({
           dia: i + 1,
           tema: `Tema Criativo do Dia ${i + 1}`,
-          copy: `Esta é a copy principal para o dia ${i + 1} sobre ${finalUserInput.productName}.`,
+          copy: `Esta é a copy principal para o dia ${i + 1} sobre ${campaignData.productName}.`,
           variacoes_copy: [`Variação 1 para o dia ${i + 1}`, `Variação 2 para o dia ${i + 1}`]
         })),
-        descricao_curta_imagem: `Um anúncio de ${finalUserInput.adStyle} para ${finalUserInput.productName}, perfeito para ${finalUserInput.socialMedia}.`,
-        hashtags: ["#marketingdigital", `#${finalUserInput.productName.replace(/\s/g, '')}`, "#sucesso"],
+        descricao_curta_imagem: `Um anúncio de ${campaignData.adStyle} para ${campaignData.productName}, perfeito para ${campaignData.socialMedia}.`,
+        hashtags: ["#marketingdigital", `#${(campaignData.productName || '').replace(/\s/g, '')}`, "#sucesso"],
         modelo_sugerido: "Advision UGC",
         melhorias_produto: {
           baixa_resolucao: "A imagem parece ter baixa resolução. Tente uma imagem com maior qualidade para um resultado mais profissional."
         }
       };
-      addMessage({ sender: "ai", type: "campaign_plan", content: mockCampaignPlan });
+      setGeneratedPlan(mockCampaignPlan);
+      setWizardStep(5); // Etapa de resultados
     } catch (error) {
       toast({ title: "Erro", description: "Não foi possível gerar a campanha.", variant: "destructive" });
+      setWizardStep(3); // Volta para a etapa anterior em caso de erro
     } finally {
       setIsLoading(false);
     }
   };
 
-  const renderMessage = (msg: Message) => {
-    switch (msg.type) {
-      case "text": return <p>{msg.content}</p>;
-      case "image_display": return <img src={msg.content} alt="Produto enviado" className="rounded-lg max-w-xs" />;
-      case "campaign_plan": return <CampaignPlanDisplay plan={msg.content} />;
-      default: return null;
+  const renderWizardStep = () => {
+    switch (wizardStep) {
+      case 1: // Upload de Imagem
+        return (
+          <div className="text-center">
+            <h2 className="text-2xl font-bold mb-2">Passo 1: Imagem do Produto</h2>
+            <p className="text-muted-foreground mb-6">Envie uma imagem de alta qualidade do seu produto.</p>
+            <Input id="image-upload-wizard" type="file" accept="image/*" onChange={(e) => e.target.files && handleImageUpload(e.target.files[0])} className="hidden" />
+            <label htmlFor="image-upload-wizard" className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+              <Upload className="w-12 h-12 text-muted-foreground mb-4" />
+              <p className="font-semibold">Clique para carregar ou arraste e solte</p>
+              <p className="text-sm text-muted-foreground">PNG, JPG (MAX. 5MB)</p>
+            </label>
+          </div>
+        );
+      case 2: // Detalhes do Produto
+        return (
+          <div>
+            <h2 className="text-2xl font-bold mb-2">Passo 2: Detalhes do Produto</h2>
+            <p className="text-muted-foreground mb-6">Conte-nos mais sobre o que estamos a promover.</p>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="productName">Nome do Produto</Label>
+                <Input id="productName" value={campaignData.productName || ''} onChange={(e) => setCampaignData(p => ({ ...p, productName: e.target.value }))} />
+              </div>
+              <div>
+                <Label htmlFor="targetAudience">Público-alvo</Label>
+                <Textarea id="targetAudience" value={campaignData.targetAudience || ''} onChange={(e) => setCampaignData(p => ({ ...p, targetAudience: e.target.value }))} />
+              </div>
+            </div>
+          </div>
+        );
+      case 3: // Detalhes da Campanha
+        return (
+          <div>
+            <h2 className="text-2xl font-bold mb-2">Passo 3: Detalhes da Campanha</h2>
+            <p className="text-muted-foreground mb-6">Defina o estilo e o foco da sua campanha.</p>
+            <div className="space-y-4">
+              <div>
+                <Label>Rede Social</Label>
+                <Select value={campaignData.socialMedia} onValueChange={(val) => setCampaignData(p => ({ ...p, socialMedia: val }))}>
+                  <SelectTrigger><SelectValue placeholder="Selecione a rede social" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Instagram">Instagram</SelectItem>
+                    <SelectItem value="Facebook">Facebook</SelectItem>
+                    <SelectItem value="TikTok">TikTok</SelectItem>
+                    <SelectItem value="LinkedIn">LinkedIn</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Estilo do Anúncio</Label>
+                <Select value={campaignData.adStyle} onValueChange={(val) => setCampaignData(p => ({ ...p, adStyle: val }))}>
+                  <SelectTrigger><SelectValue placeholder="Selecione o estilo" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Moderno e Minimalista">Moderno e Minimalista</SelectItem>
+                    <SelectItem value="Vibrante e Energético">Vibrante e Energético</SelectItem>
+                    <SelectItem value="Elegante e Sofisticado">Elegante e Sofisticado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+        );
+      case 4: // Carregando
+        return (
+          <div className="text-center flex flex-col items-center justify-center h-full">
+            <Loader2 className="w-16 h-16 text-primary animate-spin mb-6" />
+            <h2 className="text-2xl font-bold">A gerar a sua campanha...</h2>
+            <p className="text-muted-foreground">A nossa IA está a preparar um plano incrível para si.</p>
+          </div>
+        );
+      case 5: // Resultados
+        return generatedPlan ? <CampaignPlanDisplay plan={generatedPlan} /> : null;
+      default:
+        return null;
     }
   };
 
-  const renderCurrentInput = () => {
-    if (isLoading || currentStep >= chatFlow.length) return null;
-    const currentMsg = chatFlow[currentStep];
-    if (currentMsg.type === "image_prompt") {
-      return <ImageUploader onUpload={handleImageUpload} />;
-    }
-    if (currentMsg.type === "input_prompt") {
-      return <InputRenderer prompt={currentMsg.content} onSumbit={handleNextStep} />;
-    }
-    return null;
+  const isNextDisabled = () => {
+    if (wizardStep === 2 && !campaignData.productName) return true;
+    if (wizardStep === 3 && (!campaignData.socialMedia || !campaignData.adStyle)) return true;
+    return false;
   };
 
   return (
@@ -162,82 +203,52 @@ const ChatCriativo = () => {
       <div className="hidden lg:block"><DashboardSidebar /></div>
       <div className="flex-1 flex flex-col overflow-hidden">
         <DashboardHeader />
-        <main className="flex-1 flex flex-col p-4 sm:p-6 lg:p-8 relative">
-          <div className="flex-1 flex flex-col bg-card/50 backdrop-blur-xl rounded-xl shadow-lg overflow-hidden">
-            <header className="p-4 border-b border-border/50 flex items-center gap-3">
-              <Bot className="w-6 h-6 text-primary" />
-              <h1 className="text-lg font-bold">ChatCriativo de Marketing</h1>
-            </header>
-            <ScrollArea className="flex-1 p-6" ref={viewportRef}>
-              <div className="space-y-6">
-                {messages.map((message) => (
-                  <div key={message.id} className={cn("flex items-start gap-4 max-w-[85%]", message.sender === "user" ? "ml-auto flex-row-reverse" : "mr-auto")}>
-                    <div className={cn("w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0", message.sender === "user" ? "bg-primary text-primary-foreground" : "bg-muted")}>
-                      {message.sender === "user" ? <User size={18} /> : <Bot size={18} />}
-                    </div>
-                    <div className={cn("p-4 rounded-lg", message.sender === "user" ? "bg-primary text-primary-foreground" : "bg-muted")}>
-                      {renderMessage(message)}
-                    </div>
-                  </div>
-                ))}
-                {isLoading && <LoaderMessage />}
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+          {view === 'list' ? (
+            <div>
+              <div className="flex items-center justify-between mb-8">
+                <h1 className="text-3xl font-bold">Minhas Campanhas</h1>
+                <Button onClick={handleNewCampaign}><PlusCircle className="w-4 h-4 mr-2" /> Criar Nova Campanha</Button>
               </div>
-            </ScrollArea>
-            <div className="p-4 border-t border-border/50">
-              {renderCurrentInput()}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {mockCampaigns.map(campaign => (
+                  <Card key={campaign.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                    <CardHeader className="p-0">
+                      <img src={campaign.imageUrl} alt={campaign.productName} className="w-full h-40 object-cover" />
+                    </CardHeader>
+                    <CardContent className="p-4">
+                      <h3 className="font-semibold text-lg">{campaign.productName}</h3>
+                      <p className="text-sm text-muted-foreground">{campaign.createdAt}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div>
+              <Button variant="ghost" onClick={handleBackToList} className="mb-4"><ArrowLeft className="w-4 h-4 mr-2" /> Voltar para Campanhas</Button>
+              <Card className="max-w-3xl mx-auto">
+                <CardContent className="p-8 min-h-[400px] flex flex-col justify-between">
+                  {renderWizardStep()}
+                  {wizardStep > 1 && wizardStep < 4 && (
+                    <div className="flex justify-between mt-8">
+                      <Button variant="outline" onClick={handlePrevStep}>Voltar</Button>
+                      <Button onClick={wizardStep === 3 ? generateCampaign : handleNextStep} disabled={isNextDisabled()}>
+                        {wizardStep === 3 ? 'Gerar Campanha' : 'Próximo'}
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </main>
       </div>
     </div>
   );
 };
 
-// --- Componentes Auxiliares ---
-const ImageUploader = ({ onUpload }: { onUpload: (file: File) => void }) => {
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) onUpload(e.target.files[0]);
-  };
-  return (
-    <div className="flex justify-center">
-      <Input id="image-upload-chat" type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
-      <label htmlFor="image-upload-chat">
-        <Button asChild className="cursor-pointer"><span className="flex items-center gap-2"><Upload size={16} /> Carregar Imagem</span></Button>
-      </label>
-    </div>
-  );
-};
-
-const InputRenderer = ({ prompt, onSumbit }: { prompt: any, onSumbit: (key: string, value: string) => void }) => {
-  const [value, setValue] = useState('');
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (value.trim()) onSumbit(prompt.key, value);
-  };
-
-  if (prompt.options) {
-    return (
-      <div className="flex gap-2">
-        <Select onValueChange={(val) => onSumbit(prompt.key, val)}>
-          <SelectTrigger><SelectValue placeholder={prompt.label} /></SelectTrigger>
-          <SelectContent>{prompt.options.map((opt: string) => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
-        </Select>
-      </div>
-    );
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="flex gap-2">
-      {prompt.multiline ? (
-        <Textarea value={value} onChange={(e) => setValue(e.target.value)} placeholder={prompt.label} className="flex-1" />
-      ) : (
-        <Input value={value} onChange={(e) => setValue(e.target.value)} placeholder={prompt.label} className="flex-1" />
-      )}
-      <Button type="submit" size="icon" disabled={!value.trim()}><Send size={18} /></Button>
-    </form>
-  );
-};
-
+// --- Componente de Exibição do Plano ---
 const CampaignPlanDisplay = ({ plan }: { plan: CampaignPlan }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -258,30 +269,35 @@ const CampaignPlanDisplay = ({ plan }: { plan: CampaignPlan }) => {
   };
 
   return (
-    <Card className="bg-background border-primary/20 w-full max-w-2xl">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2"><Sparkles className="text-primary" /> Seu Plano de Marketing Criativo!</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {plan.melhorias_produto && (
-          <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-200">
-            <h4 className="font-semibold flex items-center gap-2"><AlertTriangle size={16} /> Sugestões de Melhoria</h4>
-            {Object.values(plan.melhorias_produto).map((sug, i) => <p key={i} className="text-sm mt-1">- {sug}</p>)}
-          </div>
-        )}
-        
-        <div className="p-4 rounded-lg bg-muted/50">
-          <h4 className="font-semibold flex items-center gap-2 mb-2"><ImageIcon size={16} /> Para a Imagem</h4>
+    <div className="space-y-6">
+      <div className="text-center">
+        <h2 className="text-2xl font-bold">Seu Plano de Marketing Criativo!</h2>
+        <p className="text-muted-foreground">Aqui está a estratégia que a IA preparou para si.</p>
+      </div>
+      {plan.melhorias_produto && (
+        <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-200">
+          <h4 className="font-semibold flex items-center gap-2"><AlertTriangle size={16} /> Sugestões de Melhoria</h4>
+          {Object.values(plan.melhorias_produto).map((sug, i) => <p key={i} className="text-sm mt-1">- {sug}</p>)}
+        </div>
+      )}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><ImageIcon size={16} /> Para a Imagem</CardTitle>
+        </CardHeader>
+        <CardContent>
           <p className="text-sm"><strong className="text-foreground">Modelo:</strong> {plan.modelo_sugerido}</p>
           <p className="text-sm"><strong className="text-foreground">Descrição:</strong> {plan.descricao_curta_imagem}</p>
           <p className="text-sm"><strong className="text-foreground">Hashtags:</strong> {plan.hashtags.join(' ')}</p>
           <Button onClick={handleGenerateClick} className="w-full mt-4 gradient-primary">
             <Sparkles className="w-4 h-4 mr-2" /> Gerar com Modelo Sugerido
           </Button>
-        </div>
-
-        <div>
-          <h4 className="font-semibold mb-2">Plano de Conteúdo para 7 Dias</h4>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><FileText size={16} /> Plano de Conteúdo para 7 Dias</CardTitle>
+        </CardHeader>
+        <CardContent>
           <Accordion type="single" collapsible className="w-full">
             {plan.plano_7_dias.map(item => (
               <AccordionItem value={`dia-${item.dia}`} key={item.dia}>
@@ -304,19 +320,10 @@ const CampaignPlanDisplay = ({ plan }: { plan: CampaignPlan }) => {
               </AccordionItem>
             ))}
           </Accordion>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
-
-const LoaderMessage = () => (
-  <div className="flex items-start gap-4 max-w-[85%] mr-auto">
-    <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-muted"><Bot size={18} /></div>
-    <div className="p-4 rounded-lg bg-muted flex items-center gap-2">
-      <Loader2 className="w-4 h-4 animate-spin" /><span>Pensando...</span>
-    </div>
-  </div>
-);
 
 export default ChatCriativo;
