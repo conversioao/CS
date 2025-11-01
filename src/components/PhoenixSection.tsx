@@ -21,7 +21,7 @@ const PhoenixSection = () => {
             <p className="text-lg text-muted-foreground mb-8">
               Nosso modelo Phoenix foi treinado especificamente para entender contextos de marketing e publicidade, gerando não apenas imagens bonitas, mas anúncios que convertem.
             </p>
-            <Link to="/auth">
+            <Link to="/register">
               <Button size="lg" className="gradient-primary">
                 Testar Modelo Phoenix
               </Button>

@@ -11,7 +11,7 @@ const FinalCTA = () => {
         <p className="text-xl text-muted-foreground mb-8">
           Junte-se a milhares de criadores e empresas que já transformaram sua estratégia de marketing com IA.
         </p>
-        <Link to="/auth">
+        <Link to="/register">
           <Button size="lg" className="gradient-primary text-lg px-12 glow-effect">
             Começar Agora
           </Button>

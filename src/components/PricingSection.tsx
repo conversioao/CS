@@ -92,7 +92,7 @@ const PricingSection = () => {
                 ))}
               </ul>
               
-              <Link to="/auth">
+              <Link to="/register">
                 <Button 
                   size="lg"
                   className={`w-full text-lg ${plan.popular ? "gradient-primary glow-effect" : ""}`}

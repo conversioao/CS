@@ -11,7 +11,7 @@ const CTASection = () => {
         <p className="text-xl text-muted-foreground mb-8">
           Crie campanhas, anúncios e conteúdos com apenas um clique.
         </p>
-        <Link to="/auth">
+        <Link to="/register">
           <Button size="lg" className="gradient-primary text-lg px-8 glow-effect">
             Experimentar Gratuitamente
           </Button>

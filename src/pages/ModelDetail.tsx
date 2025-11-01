@@ -154,13 +154,13 @@ const ModelDetail = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <Link to={`/generate?model=${encodeURIComponent(model.name)}`} className="flex-1">
+              <Link to={`/register`} className="flex-1">
                 <Button size="lg" className="w-full gradient-primary">
                   <Sparkles className="w-5 h-5" />
                   Usar Este Modelo
                 </Button>
               </Link>
-              <Link to="/auth" className="flex-1">
+              <Link to="/register" className="flex-1">
                 <Button size="lg" variant="outline" className="w-full">
                   Criar Conta Gratuita
                 </Button>
