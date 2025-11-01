@@ -7,6 +7,9 @@ import modelPersona from "@/assets/model-persona.jpg";
 import modelPulse from "@/assets/model-pulse.jpg";
 import modelStyleAI from "@/assets/model-styleai.jpg";
 import modelVision from "@/assets/model-vision.jpg";
+import transformationExample1 from "@/assets/transformation-example-1.jpg";
+import transformationExample2 from "@/assets/transformation-example-2.jpg";
+import transformationExample3 from "@/assets/transformation-example-3.jpg";
 
 const modelData = {
   persona: {
@@ -14,7 +17,7 @@ const modelData = {
     title: "Anúncios Autênticos com Pessoas Reais",
     description: "Cria anúncios autênticos com pessoas verdadeiras e produtos reais. Ideal para marcas que buscam conexão genuína com seu público.",
     image: modelPersona,
-    videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+    exampleImage: transformationExample1,
     features: [
       "Criação de conteúdo UGC realista",
       "Pessoas e produtos autênticos",
@@ -30,7 +33,7 @@ const modelData = {
     title: "Conteúdo Vibrante para Redes Sociais",
     description: "Transforma o teu conteúdo em anúncios vibrantes e cheios de vida. Perfeito para maximizar o engajamento nas redes sociais.",
     image: modelPulse,
-    videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+    exampleImage: transformationExample3,
     features: [
       "Otimizado para redes sociais",
       "Conteúdo viral e engajador",
@@ -46,7 +49,7 @@ const modelData = {
     title: "Experimentação Digital de Moda",
     description: "Experimenta digitalmente as tuas roupas com realismo profissional. A solução perfeita para e-commerce de moda.",
     image: modelStyleAI,
-    videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+    exampleImage: transformationExample2,
     features: [
       "Try-on digital profissional",
       "Realismo fotográfico",
@@ -62,7 +65,7 @@ const modelData = {
     title: "Efeitos Visuais Cinematográficos",
     description: "Cria anúncios com efeitos visuais dignos de cinema. Para campanhas premium que exigem máximo impacto visual.",
     image: modelVision,
-    videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+    exampleImage: transformationExample3,
     features: [
       "VFX de nível cinematográfico",
       "Efeitos visuais avançados",
@@ -114,14 +117,12 @@ const ModelDetail = () => {
               <div className={`absolute inset-0 bg-gradient-to-t ${model.color} to-transparent opacity-20`} />
             </div>
 
-            {/* Vídeo Demonstrativo */}
+            {/* Imagem Demonstrativa */}
             <div className="relative rounded-2xl overflow-hidden shadow-2xl aspect-video">
-              <iframe
-                src={model.videoUrl}
-                title={`${model.name} Demo`}
-                className="w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
+              <img
+                src={model.exampleImage}
+                alt={`${model.name} Example`}
+                className="w-full h-full object-cover"
               />
             </div>
           </div>
