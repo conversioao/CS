@@ -1,4 +1,4 @@
-import { ImagePlus, Video, Wand2, Layers, Music } from "lucide-react";
+import { ImagePlus, Video, Wand2, Layers, Music, AudioLines } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
@@ -19,6 +19,13 @@ const tools = [
     color: "from-purple-500 to-pink-500",
   },
   {
+    title: "Gerador de Voz",
+    description: "Crie narrações com vozes realistas.",
+    icon: AudioLines,
+    link: "/generate-voice",
+    color: "from-green-500 to-emerald-500",
+  },
+  {
     title: "Editar Imagem",
     description: "Remova fundos, mude estilos e mais.",
     icon: Wand2,
@@ -36,8 +43,7 @@ const tools = [
     title: "Gerar Músicas",
     description: "Crie trilhas sonoras com Suno AI.",
     icon: Music,
-    link: "#",
-    disabled: true,
+    link: "/generate-music",
     color: "from-gray-500 to-gray-600",
   },
 ];

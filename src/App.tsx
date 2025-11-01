@@ -11,6 +11,7 @@ import GenerateVideo from "./pages/GenerateVideo";
 import EditImage from "./pages/EditImage";
 import CombineImage from "./pages/CombineImage";
 import GenerateMusic from "./pages/GenerateMusic";
+import GenerateVoice from "./pages/GenerateVoice";
 import Templates from "./pages/Templates";
 import Models from "./pages/Models";
 import ModelDetail from "./pages/ModelDetail";
@@ -26,6 +27,7 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminPayments from "./pages/admin/AdminPayments";
 import AdminModels from "./pages/admin/AdminModels";
 import AdminSettings from "./pages/admin/AdminSettings";
+import AdminReports from "./pages/admin/AdminReports";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +45,7 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/generate" element={<Generate />} />
           <Route path="/generate-video" element={<GenerateVideo />} />
+          <Route path="/generate-voice" element={<GenerateVoice />} />
           <Route path="/edit-image" element={<EditImage />} />
           <Route path="/combine-image" element={<CombineImage />} />
           <Route path="/generate-music" element={<GenerateMusic />} />
@@ -61,6 +64,7 @@ const App = () => (
             <Route path="payments" element={<AdminPayments />} />
             <Route path="models" element={<AdminModels />} />
             <Route path="settings" element={<AdminSettings />} />
+            <Route path="reports" element={<AdminReports />} />
           </Route>
 
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
