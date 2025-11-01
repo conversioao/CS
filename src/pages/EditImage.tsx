@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { ArrowLeft, Wand2, Sparkles, Upload, Download, Maximize2, Loader2, X, Camera, ZoomIn, ZoomOut } from "lucide-react";
+import { ArrowLeft, Wand2, Sparkles, Upload, Download, Maximize2, Loader2, X, Camera, ZoomIn, ZoomOut, Edit } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -25,6 +25,9 @@ const EditImage = () => {
   const [editedImages, setEditedImages] = useState<EditedImage[]>([]);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
+  const [imageToEdit, setImageToEdit] = useState<EditedImage | null>(null);
+  const [editPrompt, setEditPrompt] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
 
   const handleImageUpload = (file: File) => {
     const validFormats = ['image/jpeg', 'image/jpg', 'image/png'];
@@ -38,7 +41,7 @@ const EditImage = () => {
     reader.readAsDataURL(file);
   };
 
-  const handleEdit = async () => {
+  const handleGenerate = async () => {
     if (!uploadedImage || !description) {
       toast.error("Campos necessários", { description: "Por favor, faça upload de uma imagem e adicione uma descrição." });
       return;
@@ -67,6 +70,42 @@ const EditImage = () => {
     } catch (error) {
       toast.error("Erro ao editar imagem", { description: "Ocorreu um problema. Por favor, tente novamente em breve." });
     } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEditImage = async () => {
+    if (!editPrompt.trim() || !imageToEdit) {
+      toast.error("Faltam dados", { description: "Por favor, adicione uma descrição para editar a imagem." });
+      return;
+    }
+    setIsEditing(true);
+    setIsLoading(true);
+    try {
+      toast.info("Editando imagem...", { description: "A processar a sua solicitação." });
+      const response = await fetch('https://n8n.conversio.ao/webhook-test/editar_imagem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image_url: imageToEdit.url, description: editPrompt })
+      });
+      if (!response.ok) throw new Error('Erro ao editar imagem');
+      
+      const webhookData = await response.json();
+      const temporaryUrl = webhookData.url || webhookData[0]?.message?.content || imageToEdit.url;
+
+      toast.info("A salvar a sua imagem...");
+      const [permanentUrl] = await storeMediaInSupabase([temporaryUrl], 'image');
+      const newImage: EditedImage = { url: permanentUrl, id: `edited-${Date.now()}` };
+      
+      setEditedImages(prev => [newImage, ...prev]);
+      toast.success("Sucesso!", { description: "Imagem editada com sucesso." });
+      setImageToEdit(null);
+      setEditPrompt('');
+    } catch (error) {
+      console.error('Erro ao editar imagem:', error);
+      toast.error("Ocorreu um erro ao editar a imagem.", { description: "Por favor, tente novamente dentro de instantes." });
+    } finally {
+      setIsEditing(false);
       setIsLoading(false);
     }
   };
@@ -108,7 +147,7 @@ const EditImage = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {isLoading && (
                       <div className="relative overflow-hidden rounded-lg bg-muted/30 aspect-square">
-                        <img src={uploadedImageUrl || ''} alt="A editar" className="w-full h-full object-cover filter blur-sm brightness-50" />
+                        <img src={isEditing ? imageToEdit?.url : uploadedImageUrl || ''} alt="A editar" className="w-full h-full object-cover filter blur-sm brightness-50" />
                         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-white">
                           <Loader2 className="w-10 h-10 animate-spin text-primary" />
                           <p>A editar...</p>
@@ -135,6 +174,7 @@ const EditImage = () => {
                                 </DialogContent>
                               </Dialog>
                               <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleDownload(image.url)}><Download className="w-4 h-4" /></Button>
+                              <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setImageToEdit(image)}><Edit className="w-4 h-4" /></Button>
                             </div>
                           </div>
                         </CardContent>
@@ -146,14 +186,50 @@ const EditImage = () => {
             </div>
           </div>
           <div className="w-full max-w-4xl mx-auto pt-8 sticky bottom-0 pb-6 bg-background">
-            <div className="relative flex items-center gap-1 rounded-full bg-card/80 backdrop-blur-xl border border-border/50 p-2 shadow-lg">
-              <Input id="image-upload-edit" type="file" accept=".jpg,.jpeg,.png" onChange={(e) => e.target.files && handleImageUpload(e.target.files[0])} className="hidden" />
-              <label htmlFor="image-upload-edit"><Button variant="ghost" size="icon" className="rounded-full" asChild disabled={isLoading}><span><Upload className="w-5 h-5" /></span></Button></label>
-              <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setIsCameraOpen(true)} disabled={isLoading}><Camera className="w-5 h-5" /></Button>
-              {uploadedImageUrl && (<div className="absolute -top-14 left-12 w-12 h-12 rounded-lg overflow-hidden border-2 border-primary"><img src={uploadedImageUrl} alt="Preview" className="w-full h-full object-cover" /><Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-5 w-5 rounded-full" onClick={() => setUploadedImageUrl(null)} disabled={isLoading}><X className="w-3 h-3" /></Button></div>)}
-              <Textarea placeholder="Descreva as alterações... Ex: remover fundo, mudar cor..." value={description} onChange={(e) => setDescription(e.target.value)} disabled={isLoading} className="flex-1 bg-transparent border-none focus-visible:ring-0 resize-none text-base py-2.5" rows={1} />
-              <Button size="icon" className="rounded-full w-10 h-10 gradient-primary" onClick={handleEdit} disabled={isLoading || !uploadedImage || !description}>{isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}</Button>
-            </div>
+            {imageToEdit ? (
+              <div className="relative rounded-xl bg-card/80 backdrop-blur-xl border border-border/50 p-2 shadow-lg animate-fade-in">
+                <div className="p-2 border-b border-border/50 mb-2">
+                  <div className="flex items-center gap-3">
+                    <img src={imageToEdit.url} alt="Editing thumbnail" className="w-12 h-12 rounded-md object-cover" />
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold">Editando imagem</p>
+                      <p className="text-xs text-muted-foreground">Descreva as alterações que deseja fazer.</p>
+                    </div>
+                    <Button variant="ghost" size="icon" className="rounded-full h-8 w-8" onClick={() => { setImageToEdit(null); setEditPrompt(''); }}>
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 px-2">
+                  <Textarea
+                    id="edit-description"
+                    placeholder="Ex: Mude a cor do fundo para azul..."
+                    value={editPrompt}
+                    onChange={(e) => setEditPrompt(e.target.value)}
+                    disabled={isEditing}
+                    className="flex-1 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 resize-none text-base py-2.5"
+                    rows={1}
+                  />
+                  <Button
+                    size="icon"
+                    className="rounded-full w-10 h-10 gradient-primary glow-effect"
+                    onClick={handleEditImage}
+                    disabled={isEditing || !editPrompt.trim()}
+                  >
+                    {isEditing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="relative flex items-center gap-1 rounded-full bg-card/80 backdrop-blur-xl border border-border/50 p-2 shadow-lg">
+                <Input id="image-upload-edit" type="file" accept=".jpg,.jpeg,.png" onChange={(e) => e.target.files && handleImageUpload(e.target.files[0])} className="hidden" />
+                <label htmlFor="image-upload-edit"><Button variant="ghost" size="icon" className="rounded-full" asChild disabled={isLoading}><span><Upload className="w-5 h-5" /></span></Button></label>
+                <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setIsCameraOpen(true)} disabled={isLoading}><Camera className="w-5 h-5" /></Button>
+                {uploadedImageUrl && (<div className="absolute -top-14 left-12 w-12 h-12 rounded-lg overflow-hidden border-2 border-primary"><img src={uploadedImageUrl} alt="Preview" className="w-full h-full object-cover" /><Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-5 w-5 rounded-full" onClick={() => setUploadedImageUrl(null)} disabled={isLoading}><X className="w-3 h-3" /></Button></div>)}
+                <Textarea placeholder="Descreva as alterações... Ex: remover fundo, mudar cor..." value={description} onChange={(e) => setDescription(e.target.value)} disabled={isLoading} className="flex-1 bg-transparent border-none focus-visible:ring-0 resize-none text-base py-2.5" rows={1} />
+                <Button size="icon" className="rounded-full w-10 h-10 gradient-primary" onClick={handleGenerate} disabled={isLoading || !uploadedImage || !description}>{isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}</Button>
+              </div>
+            )}
           </div>
           <CameraCaptureDialog isOpen={isCameraOpen} onClose={() => setIsCameraOpen(false)} onCapture={handleImageUpload} />
         </main>

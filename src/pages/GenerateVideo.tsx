@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Video, Sparkles, Upload, Download, Loader2, X, SlidersHorizontal, Camera, Square, RectangleVertical, RectangleHorizontal } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { storeMediaInSupabase } from "@/lib/supabase-storage";
@@ -27,6 +27,14 @@ const aspectRatios = [
   { value: "4:5", label: "4:5 (Retrato)", icon: RectangleVertical },
 ];
 
+const loadingMessages = [
+  "A aquecer os processadores de vídeo...",
+  "A renderizar os frames...",
+  "A compilar o seu vídeo...",
+  "Adicionando os toques finais...",
+  "Quase pronto, isso pode demorar um pouco...",
+];
+
 const GenerateVideo = () => {
   const [quantity, setQuantity] = useState(1);
   const [aspectRatio, setAspectRatio] = useState("16:9");
@@ -37,6 +45,34 @@ const GenerateVideo = () => {
   const [generatedVideos, setGeneratedVideos] = useState<GeneratedVideo[]>([]);
   const [generationMode, setGenerationMode] = useState<"image" | "text">("image");
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [timer, setTimer] = useState(0);
+  const [currentLoadingMessage, setCurrentLoadingMessage] = useState(loadingMessages[0]);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    if (isLoading) {
+      setTimer(0);
+      setCurrentLoadingMessage(loadingMessages[0]);
+      let messageIndex = 0;
+      interval = setInterval(() => {
+        setTimer(prevTimer => {
+          const newTimer = prevTimer + 1;
+          if (newTimer > 0 && newTimer % 15 === 0) {
+            messageIndex = (messageIndex + 1) % loadingMessages.length;
+            setCurrentLoadingMessage(loadingMessages[messageIndex]);
+          }
+          return newTimer;
+        });
+      }, 1000);
+    } else if (interval) {
+      clearInterval(interval);
+    }
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [isLoading]);
 
   const handleImageUpload = (file: File) => {
     const validFormats = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
@@ -132,9 +168,14 @@ const GenerateVideo = () => {
                     {isLoading && (
                       Array.from({ length: quantity }).map((_, i) => (
                         <div key={`loader-${i}`} className="relative overflow-hidden rounded-lg bg-muted/30 aspect-video">
-                          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-center p-4">
                             <Loader2 className="w-10 h-10 animate-spin text-primary" />
-                            <p className="text-xs">A gerar {i + 1}/{quantity}</p>
+                            <p className="text-sm font-semibold">{currentLoadingMessage}</p>
+                            <p className="text-xs text-muted-foreground">Vídeo {i + 1} de {quantity}</p>
+                            <div className="text-lg font-mono text-primary tabular-nums">
+                              {String(Math.floor(timer / 60)).padStart(2, '0')}:{String(timer % 60).padStart(2, '0')}
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-2">Este processo pode levar até 10 minutos.</p>
                           </div>
                         </div>
                       ))
