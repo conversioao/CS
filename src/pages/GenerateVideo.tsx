@@ -6,525 +6,152 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Video, Sparkles, Upload, Download, Maximize2, Edit, Loader2, X, Play } from "lucide-react";
+import { ArrowLeft, Video, Sparkles, Upload, Download, Loader2, X, SlidersHorizontal, Camera, Square, RectangleVertical, RectangleHorizontal } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { storeMediaInSupabase } from "@/lib/supabase-storage";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import CameraCaptureDialog from "@/components/CameraCaptureDialog";
+import { Badge } from "@/components/ui/badge";
+import React from "react";
 
 interface GeneratedVideo {
   url: string;
   id: string;
-  thumbnail?: string;
 }
 
+const aspectRatios = [
+  { value: "16:9", label: "16:9 (Horizontal)", icon: RectangleHorizontal },
+  { value: "9:16", label: "9:16 (Vertical)", icon: RectangleVertical },
+  { value: "1:1", label: "1:1 (Quadrado)", icon: Square },
+  { value: "4:5", label: "4:5 (Retrato)", icon: RectangleVertical },
+];
+
 const GenerateVideo = () => {
-  const { toast } = useToast();
   const [quantity, setQuantity] = useState(1);
   const [aspectRatio, setAspectRatio] = useState("16:9");
-  const [modelo, setModelo] = useState("VideoFX Pro");
   const [description, setDescription] = useState("");
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [generatedVideos, setGeneratedVideos] = useState<GeneratedVideo[]>([]);
-  const [history, setHistory] = useState<GeneratedVideo[]>([]);
   const [generationMode, setGenerationMode] = useState<"image" | "text">("image");
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
 
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const validFormats = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-      if (!validFormats.includes(file.type)) {
-        toast({
-          title: "Formato inválido",
-          description: "Por favor, envie uma imagem .jpg, .png ou .webp",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      setUploadedImage(file);
-      
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setUploadedImageUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+  const handleImageUpload = (file: File) => {
+    const validFormats = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!validFormats.includes(file.type)) {
+      toast.error("Formato inválido", { description: "Por favor, envie uma imagem .jpg, .png ou .webp." });
+      return;
     }
+    setUploadedImage(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setUploadedImageUrl(reader.result as string);
+    reader.readAsDataURL(file);
   };
 
   const uploadToImgbb = async (file: File): Promise<string> => {
     const formData = new FormData();
     formData.append('image', file);
-
-    const response = await fetch('https://api.imgbb.com/1/upload?key=8360d0dc6e3b2243b4dc8a45b4040974', {
-      method: 'POST',
-      body: formData,
-    });
-
-    if (!response.ok) {
-      throw new Error('Erro ao fazer upload da imagem');
-    }
-
+    const response = await fetch('https://api.imgbb.com/1/upload?key=8360d0dc6e3b2243b4dc8a45b4040974', { method: 'POST', body: formData });
+    if (!response.ok) throw new Error('Erro ao fazer upload da imagem');
     const data = await response.json();
     return data.data.url;
   };
 
-
   const handleGenerate = async () => {
     if (generationMode === "image" && !uploadedImage) {
-      toast({
-        title: "Imagem necessária",
-        description: "Por favor, faça upload de uma imagem",
-        variant: "destructive",
-      });
+      toast.error("Imagem necessária", { description: "Por favor, faça upload de uma imagem." });
       return;
     }
-
     if (generationMode === "text" && !description) {
-      toast({
-        title: "Descrição necessária",
-        description: "Por favor, adicione uma descrição",
-        variant: "destructive",
-      });
+      toast.error("Descrição necessária", { description: "Por favor, adicione uma descrição." });
       return;
     }
-
     setIsLoading(true);
     setGeneratedVideos([]);
-
     try {
       let imageUrl = '';
-
-      // Se modo imagem, fazer upload primeiro
       if (generationMode === "image" && uploadedImage) {
-        toast({
-          title: "Enviando imagem...",
-          description: "Fazendo upload da sua imagem",
-        });
-
+        toast.info("A fazer upload da imagem...");
         imageUrl = await uploadToImgbb(uploadedImage);
       }
-
-      toast({
-        title: "Gerando vídeos...",
-        description: `Processando ${quantity} vídeo(s). Isso pode levar até 10 minutos.`,
-      });
-
-      // Enviar para webhook com identificação de tipo
-      const response = await fetch('https://n8n.conversio.ao/webhook-test/criar-video', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          type: generationMode, // 'image' ou 'text'
-          image_url: generationMode === "image" ? imageUrl : null,
-          description: description,
-          quantidade: quantity.toString(),
-          proporcao: aspectRatio,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Erro ao enviar requisição para geração de vídeo');
-      }
-
+      toast.info("A gerar vídeos...", { description: `Isso pode levar alguns minutos.` });
+      const response = await fetch('https://n8n.conversio.ao/webhook-test/criar-video', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: generationMode, image_url: imageUrl, description, quantidade: quantity.toString(), proporcao: aspectRatio }) });
+      if (!response.ok) throw new Error('Erro ao gerar vídeo');
       const webhookResponse = await response.json();
-
-      let videos: GeneratedVideo[] = [];
-
-      if (webhookResponse && Array.isArray(webhookResponse)) {
-        const temporaryUrls = webhookResponse
-          .filter((item: any) => item?.message?.content)
-          .map((item: any) => item.message.content);
-
-        if (temporaryUrls.length > 0) {
-          toast({
-            title: "Salvando vídeos...",
-            description: "Armazenando seus vídeos no servidor",
-          });
-
-          // Store in external Supabase and get permanent URLs
-          const permanentUrls = await storeMediaInSupabase(temporaryUrls, 'video');
-
-          videos = permanentUrls.map((url: string, index: number) => ({
-            url: url,
-            id: `${Date.now()}-${index}`,
-            thumbnail: `https://images.unsplash.com/photo-1492619375914-88005aa9e8fb?w=400&h=300&fit=crop`
-          }));
-        }
-      }
-
-      if (videos.length > 0) {
-        setGeneratedVideos(prev => [...videos, ...prev]);
-        setHistory(prev => [...videos, ...prev]);
-
-        toast({
-          title: "Sucesso!",
-          description: `${videos.length} vídeo(s) gerado(s) e armazenado(s) com sucesso`,
-        });
+      const temporaryUrls = (webhookResponse && Array.isArray(webhookResponse)) ? webhookResponse.filter(item => item?.message?.content).map(item => item.message.content) : [];
+      if (temporaryUrls.length > 0) {
+        toast.info("A salvar os seus vídeos...");
+        const permanentUrls = await storeMediaInSupabase(temporaryUrls, 'video');
+        const videos = permanentUrls.map((url, index) => ({ url, id: `${Date.now()}-${index}` }));
+        setGeneratedVideos(videos);
+        toast.success("Sucesso!", { description: `${videos.length} vídeo(s) gerado(s) com sucesso.` });
       } else {
-        throw new Error('Nenhum vídeo foi gerado');
+        throw new Error('Nenhum vídeo foi gerado.');
       }
     } catch (error) {
-      console.error('Erro ao gerar vídeo:', error);
-      toast({
-        title: "Erro",
-        description: error instanceof Error ? error.message : "Erro ao gerar vídeo. Tente novamente.",
-        variant: "destructive",
-      });
+      toast.error("Erro ao gerar vídeo", { description: "Ocorreu um problema. Por favor, tente novamente em breve." });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDownload = async (url: string, index: number) => {
-    try {
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `video-gerado-${index + 1}.mp4`;
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      toast({
-        title: "Download iniciado",
-        description: "O vídeo está sendo baixado",
-      });
-    } catch (error) {
-      toast({
-        title: "Erro no download",
-        description: "Não foi possível baixar o vídeo",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const removeUploadedImage = () => {
-    setUploadedImage(null);
-    setUploadedImageUrl(null);
+  const handleDownload = (url: string, index: number) => {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `video-gerado-${index + 1}.mp4`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("Download iniciado.");
   };
 
   return (
     <div className="min-h-screen bg-background flex">
-      <div className="hidden lg:block">
-        <DashboardSidebar />
-      </div>
+      <div className="hidden lg:block"><DashboardSidebar /></div>
       <div className="flex-1 flex flex-col overflow-hidden">
         <DashboardHeader />
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 relative">
-          <div className="absolute inset-0 pointer-events-none z-[-1] overflow-hidden">
-            <div className="absolute inset-0 bg-dot-pattern opacity-20" />
-            <div className="absolute top-[-20%] left-[-10%] w-[40rem] h-[40rem] bg-primary/10 rounded-full blur-3xl animate-pulse" />
-            <div className="absolute bottom-[-30%] right-[-15%] w-[50rem] h-[50rem] bg-secondary/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
-          </div>
-          
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 relative flex flex-col">
+          <div className="absolute inset-0 pointer-events-none z-[-1] bg-dot-pattern opacity-20" />
           <div className="mb-8 flex items-center justify-between">
-            <Link to="/dashboard" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
-              <ArrowLeft className="w-4 h-4" />
-              <span className="font-medium">Voltar ao Dashboard</span>
-            </Link>
-            <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-lg backdrop-blur-sm">
-              <Sparkles className="w-4 h-4 text-primary" />
-              <span className="text-sm font-semibold">3 créditos por geração</span>
-            </div>
+            <Link to="/dashboard" className="flex items-center gap-2 text-muted-foreground hover:text-foreground"><ArrowLeft className="w-4 h-4" /><span>Voltar ao Dashboard</span></Link>
+            <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full"><Sparkles className="w-4 h-4 text-primary" /><span className="text-sm font-semibold">3 créditos por vídeo</span></div>
           </div>
-
-          <div className="grid lg:grid-cols-[1fr,420px] gap-6">
-            {/* Preview Area */}
-            <div className="space-y-6">
-              <div className="bg-card/50 backdrop-blur-xl rounded-xl shadow-lg p-6 min-h-[600px] flex flex-col">
-                <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 backdrop-blur-sm flex items-center justify-center">
-                    <Video className="w-5 h-5 text-primary" />
-                  </div>
-                  Resultado da Geração
-                </h2>
-                
-                {isLoading ? (
-                  <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
-                    {Array.from({ length: quantity }).map((_, i) => (
-                      <div key={i} className="relative overflow-hidden rounded-lg bg-muted/30 backdrop-blur-sm">
-                        <div className="aspect-video relative">
-                          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                            <div className="w-12 h-12 rounded-full border-2 border-muted-foreground/20 border-t-primary animate-spin" />
-                            <p className="text-sm text-muted-foreground">Gerando {i + 1}/{quantity}</p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : generatedVideos.length > 0 ? (
-                  <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
-                    {generatedVideos.map((video, index) => (
-                      <Card key={video.id} className="overflow-hidden group hover:shadow-lg transition-all bg-card/50 backdrop-blur-sm">
-                        <CardContent className="p-0">
-                          <div className="relative aspect-video overflow-hidden bg-black">
-                            <video 
-                              src={video.url} 
-                              className="w-full h-full object-cover"
-                              controls
-                              poster={video.thumbnail}
-                            />
-                          </div>
-                          <div className="p-3 flex gap-2 bg-card/80 backdrop-blur-sm">
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button variant="outline" size="sm" className="flex-1">
-                                  <Maximize2 className="w-4 h-4 mr-2" />
-                                  Ampliar
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="max-w-[95vw] max-h-[95vh] p-4 overflow-auto bg-black">
-                                <div className="relative w-full h-full flex items-center justify-center">
-                                  <video 
-                                    src={video.url} 
-                                    className="max-w-full max-h-[85vh]"
-                                    controls
-                                    autoPlay
-                                  />
-                                </div>
-                              </DialogContent>
-                            </Dialog>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => handleDownload(video.url, index)}
-                            >
-                              <Download className="w-4 h-4" />
-                            </Button>
-                            <Button variant="outline" size="sm">
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center gap-4 text-center flex-1">
-                    <div className="w-20 h-20 rounded-lg bg-muted/50 backdrop-blur-sm flex items-center justify-center">
-                      <Video className="w-10 h-10 text-muted-foreground" />
-                    </div>
-                    <div className="space-y-2">
-                      <h3 className="text-xl font-bold">Pronto para criar?</h3>
-                      <p className="text-muted-foreground max-w-md text-sm">
-                        Configure as opções ao lado e clique em "Gerar Vídeo" para começar
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* History Section */}
-              {history.length > 0 && (
-                <div className="bg-card/50 backdrop-blur-xl rounded-xl shadow-lg p-6">
-                  <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-primary" />
-                    Histórico de Gerações
-                  </h3>
-                  <ScrollArea className="h-[300px] pr-4">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                      {history.map((video, index) => (
-                        <Dialog key={video.id}>
-                          <DialogTrigger asChild>
-                            <div className="relative group cursor-pointer rounded-lg overflow-hidden hover:shadow-lg transition-all bg-black">
-                              <div className="aspect-video relative">
-                                {video.thumbnail && (
-                                  <img 
-                                    src={video.thumbnail} 
-                                    alt={`Histórico ${index + 1}`}
-                                    className="w-full h-full object-cover"
-                                  />
-                                )}
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                  <Play className="w-8 h-8 text-white" />
-                                </div>
-                              </div>
-                            </div>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-[95vw] max-h-[95vh] p-4 overflow-auto bg-black">
-                            <div className="relative w-full h-full flex items-center justify-center">
-                              <video 
-                                src={video.url} 
-                                className="max-w-full max-h-[85vh]"
-                                controls
-                                autoPlay
-                              />
-                            </div>
-                          </DialogContent>
-                        </Dialog>
-                      ))}
-                    </div>
-                  </ScrollArea>
+          <div className="flex-1 flex flex-col gap-6">
+            <div className="bg-card/50 backdrop-blur-xl rounded-xl shadow-lg p-6 flex-1 flex flex-col">
+              <h2 className="text-2xl font-bold mb-6 flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center"><Video className="w-5 h-5 text-primary" /></div>Resultado da Geração</h2>
+              {isLoading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 flex-1">
+                  {Array.from({ length: quantity }).map((_, i) => (<div key={i} className="relative overflow-hidden rounded-lg bg-muted/30 aspect-video"><div className="absolute inset-0 flex flex-col items-center justify-center gap-2"><Loader2 className="w-10 h-10 animate-spin text-primary" /><p className="text-xs">A gerar {i + 1}/{quantity}</p></div></div>))}
                 </div>
+              ) : generatedVideos.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 flex-1">
+                  {generatedVideos.map((video, index) => (
+                    <Card key={video.id} className="overflow-hidden group"><CardContent className="p-0"><div className="relative aspect-video bg-black"><video src={video.url} className="w-full h-full object-cover" controls /><div className="absolute bottom-2 right-2 flex gap-1.5"><Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleDownload(video.url, index)}><Download className="w-4 h-4" /></Button></div></div></CardContent></Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex-1 flex flex-col items-center justify-center text-center"><div className="w-20 h-20 rounded-lg bg-muted/50 flex items-center justify-center mb-4"><Video className="w-10 h-10 text-muted-foreground" /></div><h3 className="text-xl font-bold">Pronto para criar?</h3><p className="text-muted-foreground max-w-md text-sm">Configure as opções abaixo para gerar o seu vídeo.</p></div>
               )}
             </div>
-
-            {/* Form Area */}
-            <div className="space-y-4">
-              <Card className="p-6 bg-card/50 backdrop-blur-xl shadow-lg">
-                <Tabs value={generationMode} onValueChange={(v) => setGenerationMode(v as "image" | "text")} className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 mb-4">
-                    <TabsTrigger value="image">Imagem para Vídeo</TabsTrigger>
-                    <TabsTrigger value="text">Texto para Vídeo</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="image" className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="image-upload" className="font-semibold">Imagem Base *</Label>
-                      <Input
-                        id="image-upload"
-                        type="file"
-                        accept="image/jpeg,image/jpg,image/png,image/webp"
-                        onChange={handleImageUpload}
-                        className="hidden"
-                      />
-                      <label htmlFor="image-upload">
-                        <Button 
-                          variant="outline" 
-                          className="w-full justify-start gap-2 h-auto py-3 border-dashed" 
-                          asChild
-                          disabled={isLoading}
-                        >
-                          <span>
-                            <Upload className="w-4 h-4" />
-                            <span className="text-sm">
-                              {uploadedImage ? uploadedImage.name : 'Carregar imagem'}
-                            </span>
-                          </span>
-                        </Button>
-                      </label>
-                      {uploadedImageUrl && (
-                        <div className="relative mt-2 rounded-lg overflow-hidden">
-                          <img 
-                            src={uploadedImageUrl} 
-                            alt="Preview"
-                            className="w-full h-32 object-cover"
-                          />
-                          <Button
-                            variant="destructive"
-                            size="icon"
-                            className="absolute top-2 right-2 h-8 w-8"
-                            onClick={removeUploadedImage}
-                            disabled={isLoading}
-                          >
-                            <X className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      )}
-                      <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        <span>📎</span> Formatos: .jpg, .png, .webp
-                      </p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="description" className="font-semibold">Descrição (Opcional)</Label>
-                      <Textarea
-                        id="description"
-                        placeholder="Descreva como a imagem deve se movimentar... Ex: zoom suave, rotação 360°, efeito parallax..."
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        disabled={isLoading}
-                        className="min-h-[80px] resize-none"
-                      />
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="text" className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="text-description" className="font-semibold">Descrição *</Label>
-                      <Textarea
-                        id="text-description"
-                        placeholder="Descreva o vídeo que deseja gerar... Ex: produto em movimento, transição suave, fundo dinâmico..."
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        disabled={isLoading}
-                        className="min-h-[120px] resize-none"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Descreva detalhadamente o vídeo que deseja criar
-                      </p>
-                    </div>
-                  </TabsContent>
-                </Tabs>
-
-                <div className="space-y-4 mt-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="model" className="font-semibold">Modelo de IA</Label>
-                    <Select value={modelo} onValueChange={setModelo} disabled={isLoading}>
-                      <SelectTrigger id="model">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="VideoFX Pro">VideoFX Pro</SelectItem>
-                        <SelectItem value="Motion Master">Motion Master</SelectItem>
-                        <SelectItem value="Cinematic AI">Cinematic AI</SelectItem>
-                        <SelectItem value="QuickCut AI">QuickCut AI</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-2">
-                      <Label className="font-semibold">Quantidade</Label>
-                      <Input
-                        type="number"
-                        min="1"
-                        max="5"
-                        value={quantity}
-                        onChange={(e) => setQuantity(Math.min(5, Math.max(1, parseInt(e.target.value) || 1)))}
-                        disabled={isLoading}
-                        className="text-center"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="font-semibold">Proporção</Label>
-                      <Select value={aspectRatio} onValueChange={setAspectRatio} disabled={isLoading}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="16:9">16:9</SelectItem>
-                          <SelectItem value="9:16">9:16</SelectItem>
-                          <SelectItem value="1:1">1:1</SelectItem>
-                          <SelectItem value="4:5">4:5</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-
-              <Button 
-                className="w-full h-12 font-semibold" 
-                size="lg"
-                onClick={handleGenerate}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    Gerando...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Gerar Vídeo
-                  </>
-                )}
-              </Button>
+          </div>
+          <div className="w-full max-w-4xl mx-auto mt-8 sticky bottom-6 z-20">
+            <div className="relative flex items-center gap-1 rounded-full bg-card/80 backdrop-blur-xl border border-border/50 p-2 shadow-lg">
+              {generationMode === 'image' && (<>
+                <Input id="image-upload-video" type="file" accept=".jpg,.jpeg,.png,.webp" onChange={(e) => e.target.files && handleImageUpload(e.target.files[0])} className="hidden" />
+                <label htmlFor="image-upload-video"><Button variant="ghost" size="icon" className="rounded-full" asChild disabled={isLoading}><span><Upload className="w-5 h-5" /></span></Button></label>
+                <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setIsCameraOpen(true)} disabled={isLoading}><Camera className="w-5 h-5" /></Button>
+                {uploadedImageUrl && (<div className="absolute -top-14 left-12 w-12 h-12 rounded-lg overflow-hidden border-2 border-primary"><img src={uploadedImageUrl} alt="Preview" className="w-full h-full object-cover" /><Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-5 w-5 rounded-full" onClick={() => setUploadedImageUrl(null)} disabled={isLoading}><X className="w-3 h-3" /></Button></div>)}
+              </>)}
+              <Textarea placeholder={generationMode === 'image' ? "Descreva o movimento..." : "Descreva o vídeo a ser criado..."} value={description} onChange={(e) => setDescription(e.target.value)} disabled={isLoading} className="flex-1 bg-transparent border-none focus-visible:ring-0 resize-none text-base py-2.5" rows={1} />
+              <Popover><PopoverTrigger asChild><Button variant="ghost" size="icon" className="rounded-full" disabled={isLoading}><SlidersHorizontal className="w-6 h-6" /></Button></PopoverTrigger><PopoverContent className="w-80 mb-2"><div className="grid gap-4"><div className="space-y-2"><h4 className="font-medium">Configurações</h4><p className="text-sm text-muted-foreground">Ajuste os parâmetros do vídeo.</p></div><div className="grid gap-2"><div className="grid grid-cols-3 items-center gap-4"><Label>Modo</Label><div className="col-span-2"><Select value={generationMode} onValueChange={(v) => setGenerationMode(v as "image" | "text")}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="image">Imagem para Vídeo</SelectItem><SelectItem value="text">Texto para Vídeo</SelectItem></SelectContent></Select></div></div><div className="grid grid-cols-3 items-center gap-4"><Label>Quantidade</Label><Input type="number" min="1" max="4" value={quantity} onChange={(e) => setQuantity(Math.min(4, Math.max(1, parseInt(e.target.value) || 1)))} className="col-span-2 h-8" /></div><div className="grid grid-cols-3 items-center gap-4"><Label>Proporção</Label><Select value={aspectRatio} onValueChange={setAspectRatio}><SelectTrigger className="col-span-2 h-8"><SelectValue /></SelectTrigger><SelectContent>{aspectRatios.map(ar => { const Icon = ar.icon; return (<SelectItem key={ar.value} value={ar.value}><div className="flex items-center gap-2"><Icon className="w-4 h-4" /><span>{ar.label}</span></div></SelectItem>);})}</SelectContent></Select></div></div></div></PopoverContent></Popover>
+              <Button size="icon" className="rounded-full w-10 h-10 gradient-primary" onClick={handleGenerate} disabled={isLoading}>{isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}</Button>
             </div>
           </div>
+          <CameraCaptureDialog isOpen={isCameraOpen} onClose={() => setIsCameraOpen(false)} onCapture={handleImageUpload} />
         </main>
       </div>
     </div>
