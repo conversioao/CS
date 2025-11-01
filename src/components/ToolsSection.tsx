@@ -41,23 +41,20 @@ const ToolsSection = () => {
       <h2 className="text-3xl md:text-4xl font-bold mb-12 gradient-text text-center">
         Ferramentas Principais
       </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
+      <div className="flex flex-wrap items-center justify-center gap-x-12 sm:gap-x-16 gap-y-8">
         {tools.map((tool, index) => {
           const Icon = tool.icon;
           
           const toolContent = (
-            <div className={`group relative flex flex-col items-center text-center p-4 transition-all duration-300 rounded-2xl ${tool.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
+            <div className={`group relative flex flex-col items-center text-center p-4 transition-all duration-300 w-40 ${tool.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
               <div 
-                className="relative mb-6 animate-float"
-                style={{ animationDelay: `${index * 0.2}s` }}
+                className="relative mb-4"
               >
-                <div className="absolute inset-[-8px] bg-primary/40 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <div className="relative w-20 h-20 rounded-full flex items-center justify-center bg-gradient-to-br from-card to-secondary transition-all duration-300 group-hover:scale-110">
-                  <Icon className="w-9 h-9 text-primary group-hover:text-white transition-colors duration-300" />
-                </div>
+                <div className="absolute -inset-4 bg-primary/30 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 animate-pulse" style={{ animationDelay: `${index * 0.1}s` }} />
+                <Icon className="relative w-12 h-12 text-muted-foreground group-hover:text-primary transition-all duration-300 group-hover:scale-110 group-hover:drop-shadow-[0_0_15px_hsl(var(--primary))]"/>
               </div>
               <div>
-                <h3 className="font-semibold text-lg mb-1">{tool.title}</h3>
+                <h3 className="font-semibold text-lg mb-1 group-hover:text-white transition-colors">{tool.title}</h3>
                 <p className="text-sm text-muted-foreground">{tool.description}</p>
               </div>
             </div>
