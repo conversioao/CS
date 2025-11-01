@@ -14,6 +14,7 @@ import CTASection from "@/components/CTASection";
 import TestimonialsSection from "@/components/TestimonialsSection";
 import PricingSection from "@/components/PricingSection";
 import FinalCTA from "@/components/FinalCTA";
+import Footer from "@/components/Footer";
 
 const Index = () => {
   return (
@@ -34,6 +35,7 @@ const Index = () => {
       <TestimonialsSection />
       <PricingSection />
       <FinalCTA />
+      <Footer />
     </div>
   );
 };
