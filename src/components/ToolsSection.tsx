@@ -7,35 +7,30 @@ const tools = [
     title: "Gerar Imagens",
     description: "Crie imagens incríveis com IA",
     icon: ImagePlus,
-    gradient: "from-indigo-500 to-purple-500",
     link: "/generate",
   },
   {
     title: "Gerar Vídeos",
     description: "Produza vídeos únicos",
     icon: Video,
-    gradient: "from-pink-500 to-purple-500",
     link: "/generate-video",
   },
   {
     title: "Editar Imagem",
     description: "Transforme suas imagens",
     icon: Wand2,
-    gradient: "from-cyan-500 to-blue-500",
     link: "/edit-image",
   },
   {
     title: "Combinar Imagens",
     description: "Funda múltiplas imagens",
     icon: Layers,
-    gradient: "from-green-500 to-emerald-500",
     link: "/combine-image",
   },
   {
     title: "Gerar Músicas",
     description: "Em breve - Crie músicas com Suno AI",
     icon: Music,
-    gradient: "from-orange-500 to-red-500",
     link: "#",
     disabled: true,
   },
@@ -56,15 +51,13 @@ const ToolsSection = () => {
               className={`group relative overflow-hidden transition-all duration-300 bg-card/50 backdrop-blur-sm border-border/50 ${
                 tool.disabled 
                   ? 'opacity-50 cursor-not-allowed' 
-                  : 'cursor-pointer hover:scale-105 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10'
+                  : 'cursor-pointer hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10'
               }`}
             >
-              <div className={`absolute inset-0 bg-gradient-to-br ${tool.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
               <CardContent className="p-6 flex flex-col items-center text-center gap-4 relative z-10">
-                <div className={`relative w-16 h-16 rounded-2xl bg-gradient-to-br ${tool.gradient} flex items-center justify-center shadow-lg ${!tool.disabled && 'group-hover:scale-110'} transition-transform duration-300`}>
-                  <Icon className="w-8 h-8 text-white transition-transform duration-300 group-hover:rotate-[-12deg]" />
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-white/30 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 animate-pulse" />
-                  <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-white/30 rounded-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="relative w-16 h-16 rounded-full flex items-center justify-center bg-card transition-all duration-300 group-hover:scale-110 ring-1 ring-inset ring-white/10">
+                  <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl opacity-0 group-hover:opacity-75 transition-opacity duration-500 group-hover:animate-pulse" />
+                  <Icon className="w-8 h-8 text-foreground/80 group-hover:text-primary transition-colors duration-300 relative z-10" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg mb-1">{tool.title}</h3>
