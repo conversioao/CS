@@ -5,7 +5,7 @@ import WelcomeModal from "@/components/WelcomeModal";
 import DashboardTutorial from "@/components/DashboardTutorial";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import VerificationModal from "@/components/VerificationModal";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Sparkles } from "lucide-react";
@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
 const Dashboard = () => {
-  const { user, profile } = useSession();
+  const { user, profile, loading } = useSession();
   const [showPostVerificationWelcome, setShowPostVerificationWelcome] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
 
@@ -22,9 +22,8 @@ const Dashboard = () => {
 
   const handleVerificationSuccess = async () => {
     // Força a atualização da sessão para obter o novo status 'verified'
-    await supabase.auth.refreshSession(); 
-    // Recarrega a página para garantir que o contexto da sessão é atualizado
-    window.location.reload(); 
+    // O listener onAuthStateChange no SessionContext irá tratar da atualização do estado.
+    await supabase.auth.refreshSession();
   };
 
   const handleStartTutorial = () => {
@@ -38,12 +37,13 @@ const Dashboard = () => {
   };
   
   // Efeito para mostrar a modal de boas-vindas após a verificação
-  useState(() => {
+  useEffect(() => {
+    if (loading) return;
     const isNewUser = localStorage.getItem('isNewUser');
     if (isNewUser && isVerified) {
       setShowPostVerificationWelcome(true);
     }
-  });
+  }, [isVerified, loading]);
 
   return (
     <>
