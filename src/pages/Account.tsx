@@ -4,29 +4,36 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { User, Upload, Mail, Settings, CreditCard, Bot, Palette, Copy } from "lucide-react";
+import { User, Upload, Settings, CreditCard, Bot, Palette, Copy, Banknote, History } from "lucide-react";
 import { useState, useRef } from "react";
 import useColorThief from "use-color-thief";
 import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
+const transactions = [
+  { id: "TRX001", date: "15/07/2024", description: "Pacote Pro", amount: "49.950 Kzs", status: "Aprovado" },
+  { id: "TRX002", date: "10/06/2024", description: "Pacote Starter", amount: "14.950 Kzs", status: "Aprovado" },
+  { id: "TRX003", date: "05/05/2024", description: "Pacote Starter", amount: "14.950 Kzs", status: "Aprovado" },
+];
 
 const Account = () => {
   const [logoSrc, setLogoSrc] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
 
-  const { color, palette } = useColorThief(logoSrc, {
+  const { palette } = useColorThief(logoSrc, {
     format: 'hex',
     colorCount: 5,
     quality: 10,
-  }) as { color: string | undefined, palette: string[] | undefined };
+  }) as { palette: string[] | undefined };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = () => {
-        setLogoSrc(reader.result as string);
-      };
+      reader.onload = () => setLogoSrc(reader.result as string);
       reader.readAsDataURL(file);
     }
   };
@@ -37,7 +44,10 @@ const Account = () => {
       return;
     }
     setIsAnalyzing(true);
-    setTimeout(() => setIsAnalyzing(false), 1000); // Simula análise
+    setTimeout(() => {
+      setIsAnalyzing(false);
+      toast.success("Análise de cores concluída!");
+    }, 1000);
   };
 
   const copyToClipboard = (text: string) => {
@@ -47,9 +57,7 @@ const Account = () => {
 
   return (
     <div className="min-h-screen bg-background flex">
-      <div className="hidden lg:block">
-        <DashboardSidebar />
-      </div>
+      <div className="hidden lg:block"><DashboardSidebar /></div>
       <div className="flex-1 flex flex-col overflow-hidden">
         <DashboardHeader />
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 relative">
@@ -58,22 +66,34 @@ const Account = () => {
             <p className="text-muted-foreground text-lg">Gerencie suas informações e preferências</p>
           </div>
 
-          <div className="grid lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-6">
-              {/* Personal Info */}
-              <div className="bg-secondary/20 border border-border rounded-xl p-6">
-                <div className="flex items-center gap-2 mb-6"><User className="w-5 h-5 text-primary" /><h2 className="text-xl font-semibold">Informações Pessoais</h2></div>
-                <div className="grid md:grid-cols-2 gap-4"><div className="space-y-2"><Label htmlFor="name">Nome Completo</Label><Input id="name" defaultValue="Usuário Conversio" /></div><div className="space-y-2"><Label htmlFor="email">E-mail</Label><Input id="email" type="email" defaultValue="usuario@conversio.studio" /></div></div>
-                <Button className="mt-6"><Settings className="w-4 h-4 mr-2" />Salvar Alterações</Button>
-              </div>
+          <Tabs defaultValue="profile" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-6">
+              <TabsTrigger value="profile"><User className="w-4 h-4 mr-2" />Perfil</TabsTrigger>
+              <TabsTrigger value="brand"><Palette className="w-4 h-4 mr-2" />Marca</TabsTrigger>
+              <TabsTrigger value="billing"><CreditCard className="w-4 h-4 mr-2" />Faturação</TabsTrigger>
+              <TabsTrigger value="integrations"><Bot className="w-4 h-4 mr-2" />Integrações</TabsTrigger>
+            </TabsList>
 
-              {/* Brand Identity */}
-              <div className="bg-secondary/20 border border-border rounded-xl p-6">
-                <div className="flex items-center gap-2 mb-6"><Palette className="w-5 h-5 text-primary" /><h2 className="text-xl font-semibold">Identidade da Marca</h2></div>
-                <div className="grid md:grid-cols-2 gap-6 items-start">
-                  <div>
-                    <Label>Logotipo</Label>
-                    <div className="mt-2 flex items-center gap-4">
+            <TabsContent value="profile">
+              <Card className="bg-card/50 backdrop-blur-xl">
+                <CardHeader><CardTitle>Informações Pessoais</CardTitle></CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-2"><Label htmlFor="name">Nome Completo</Label><Input id="name" defaultValue="Usuário Conversio" /></div>
+                    <div className="space-y-2"><Label htmlFor="email">E-mail</Label><Input id="email" type="email" defaultValue="usuario@conversio.studio" /></div>
+                  </div>
+                  <Button><Settings className="w-4 h-4 mr-2" />Salvar Alterações</Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="brand">
+              <Card className="bg-card/50 backdrop-blur-xl">
+                <CardHeader><CardTitle>Identidade da Marca</CardTitle></CardHeader>
+                <CardContent className="grid md:grid-cols-2 gap-8">
+                  <div className="space-y-4">
+                    <Label className="text-base font-semibold">Logotipo</Label>
+                    <div className="flex items-center gap-4">
                       <div className="w-24 h-24 rounded-lg border-2 border-dashed border-border flex items-center justify-center bg-card/50">
                         {logoSrc ? <img src={logoSrc} alt="Logo Preview" className="max-w-full max-h-full object-contain" /> : <Upload className="w-8 h-8 text-muted-foreground" />}
                       </div>
@@ -84,9 +104,9 @@ const Account = () => {
                       </div>
                     </div>
                   </div>
-                  <div>
-                    <Label>Paleta de Cores</Label>
-                    <div className="mt-2 space-y-2">
+                  <div className="space-y-4">
+                    <Label className="text-base font-semibold">Paleta de Cores</Label>
+                    <div className="space-y-2">
                       {palette ? (
                         palette.map((colorHex, index) => (
                           <div key={index} className="flex items-center gap-2 group">
@@ -96,35 +116,67 @@ const Account = () => {
                           </div>
                         ))
                       ) : (
-                        <p className="text-sm text-muted-foreground">Analise um logotipo para ver a paleta.</p>
+                        <p className="text-sm text-muted-foreground pt-2">Analise um logotipo para ver a paleta.</p>
                       )}
                     </div>
                   </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="billing">
+              <div className="grid lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2">
+                  <Card className="bg-card/50 backdrop-blur-xl">
+                    <CardHeader><CardTitle className="flex items-center gap-2"><History className="w-5 h-5" /> Histórico de Transações</CardTitle></CardHeader>
+                    <CardContent>
+                      <Table>
+                        <TableHeader><TableRow><TableHead>ID</TableHead><TableHead>Data</TableHead><TableHead>Descrição</TableHead><TableHead className="text-right">Valor</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+                        <TableBody>
+                          {transactions.map(t => (
+                            <TableRow key={t.id}>
+                              <TableCell className="font-mono text-xs">{t.id}</TableCell>
+                              <TableCell>{t.date}</TableCell>
+                              <TableCell>{t.description}</TableCell>
+                              <TableCell className="text-right">{t.amount}</TableCell>
+                              <TableCell><Badge className={t.status === "Aprovado" ? "bg-green-500/20 text-green-400" : ""}>{t.status}</Badge></TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </CardContent>
+                  </Card>
+                </div>
+                <div>
+                  <Card className="bg-card/50 backdrop-blur-xl">
+                    <CardHeader><CardTitle className="flex items-center gap-2"><Banknote className="w-5 h-5" /> Créditos</CardTitle></CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="bg-primary/10 rounded-lg p-6 text-center"><div className="text-5xl font-bold gradient-text mb-2">250</div><p className="text-sm text-muted-foreground">créditos disponíveis</p></div>
+                      <Button className="w-full gradient-primary">Comprar Mais Créditos</Button>
+                    </CardContent>
+                  </Card>
                 </div>
               </div>
-            </div>
+            </TabsContent>
 
-            <div className="space-y-6">
-              {/* Credits */}
-              <div className="bg-secondary/20 border border-border rounded-xl p-6">
-                <div className="flex items-center gap-2 mb-4"><CreditCard className="w-5 h-5 text-primary" /><h2 className="text-xl font-semibold">Créditos</h2></div>
-                <div className="bg-primary/10 rounded-lg p-6 text-center mb-4"><div className="text-5xl font-bold gradient-text mb-2">250</div><p className="text-sm text-muted-foreground">créditos disponíveis</p></div>
-                <Button className="w-full gradient-primary">Comprar Mais Créditos</Button>
-              </div>
-
-              {/* WhatsApp Integration */}
-              <div className="bg-secondary/20 border border-border rounded-xl p-6">
-                <div className="flex items-center gap-2 mb-4"><Bot className="w-5 h-5 text-primary" /><h2 className="text-xl font-semibold">Integração WhatsApp</h2></div>
-                <p className="text-sm text-muted-foreground mb-4">Gere imagens diretamente do seu WhatsApp. (Recurso pago)</p>
-                <div className="space-y-2 mb-4">
-                  <Label htmlFor="whatsapp-number">Seu Nº de WhatsApp</Label>
-                  <Input id="whatsapp-number" placeholder="9XX XXX XXX" />
-                </div>
-                <Button className="w-full">Ativar por 15.000 Kzs/mês</Button>
-                <div className="text-center mt-2"><Badge variant="secondary">Status: Inativo</Badge></div>
-              </div>
-            </div>
-          </div>
+            <TabsContent value="integrations">
+              <Card className="bg-card/50 backdrop-blur-xl">
+                <CardHeader><CardTitle>Integração com WhatsApp</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-muted-foreground">Gere imagens diretamente do seu WhatsApp. Este é um recurso exclusivo com uma taxa de subscrição mensal.</p>
+                  <div className="space-y-2">
+                    <Label htmlFor="whatsapp-number">Seu Nº de WhatsApp</Label>
+                    <Input id="whatsapp-number" placeholder="9XX XXX XXX" />
+                  </div>
+                  <div className="flex items-center justify-between p-4 rounded-lg bg-secondary">
+                    <div className="font-semibold">Taxa Mensal: 15.000 Kzs</div>
+                    <Badge variant="secondary">Status: Inativo</Badge>
+                  </div>
+                  <Button className="w-full">Ativar Subscrição</Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </main>
       </div>
     </div>
