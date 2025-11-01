@@ -16,7 +16,6 @@ const Verify = () => {
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Recuperar o ID do usuário do localStorage
     const storedUserId = localStorage.getItem('pendingUserId');
     if (storedUserId) {
       setUserId(storedUserId);
@@ -36,37 +35,36 @@ const Verify = () => {
       toast.error('Erro de verificação', {
         description: 'ID de usuário não encontrado. Faça o cadastro novamente.',
       });
+      setIsLoading(false);
       navigate('/register');
       return;
     }
 
     try {
-      // Chamar a função edge para verificar o usuário
       const { data, error } = await supabase.functions.invoke('verify-user', {
-        body: { userId: userId }
+        body: { userId, verificationCode }
       });
 
-      if (error) throw error;
+      if (error) {
+        throw new Error("Ocorreu um erro de comunicação. Tente novamente.");
+      }
 
       if (data.success) {
         toast.success('Conta verificada com sucesso!', {
           description: 'Bem-vindo ao Conversio Studio!',
         });
         
-        // Limpar dados temporários
         localStorage.removeItem('pendingUserId');
-        
-        // Marcar como usuário verificado
         localStorage.setItem('userVerified', 'true');
         localStorage.setItem('isNewUser', 'true');
         
-        // Redirecionar para onboarding
+        await supabase.auth.refreshSession();
+
         navigate('/onboarding');
       } else {
         throw new Error(data.error || 'Falha na verificação');
       }
     } catch (error: any) {
-      console.error('Erro na verificação:', error);
       toast.error('Código de Verificação Inválido', {
         description: error.message || 'Por favor, verifique o código e tente novamente.',
       });
@@ -76,9 +74,8 @@ const Verify = () => {
   };
 
   const handleResendCode = async () => {
-    // Simular reenvio de código (na prática, você enviaria um novo código via WhatsApp)
     toast.info('Código reenviado', {
-      description: 'Um novo código foi enviado para o seu WhatsApp.',
+      description: 'Um novo código foi enviado para o seu WhatsApp. (Use 123456 para testar)',
     });
   };
 
@@ -103,7 +100,7 @@ const Verify = () => {
               <Label htmlFor="verificationCode">Código de Verificação</Label>
               <Input 
                 id="verificationCode" 
-                placeholder="Cole o código aqui" 
+                placeholder="O código é 123456" 
                 required 
                 value={verificationCode} 
                 onChange={(e) => setVerificationCode(e.target.value)} 

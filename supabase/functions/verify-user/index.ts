@@ -8,7 +8,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Inicializar o cliente Supabase com permissões de administrador
 // @ts-ignore
 const supabaseAdmin = createClient(
   // @ts-ignore
@@ -17,22 +16,36 @@ const supabaseAdmin = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 );
 
+const MOCK_VERIFICATION_CODE = "123456"; // Código de teste
+
+// @ts-ignore
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
+    // @ts-ignore
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { userId } = await req.json();
+    const { userId, verificationCode } = await req.json();
     
-    if (!userId) {
+    if (!userId || !verificationCode) {
+      // @ts-ignore
       return new Response(
-        JSON.stringify({ success: false, error: 'User ID is required' }),
+        JSON.stringify({ success: false, error: 'ID do utilizador e código de verificação são obrigatórios' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
 
-    // Atualizar o status na tabela de perfis para 'verified'
+    // Validar o código de verificação
+    if (verificationCode !== MOCK_VERIFICATION_CODE) {
+      // @ts-ignore
+      return new Response(
+        JSON.stringify({ success: false, error: 'Código de verificação inválido.' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+
+    // Atualizar o status no perfil para 'verified'
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
       .update({ status: 'verified' })
@@ -42,7 +55,7 @@ serve(async (req) => {
       throw profileError;
     }
 
-    // Confirmar o "e-mail" do utilizador no sistema de autenticação do Supabase
+    // Confirmar o "e-mail" do utilizador na autenticação do Supabase
     const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(
       userId,
       { email_confirm: true }
@@ -52,14 +65,17 @@ serve(async (req) => {
       throw authError;
     }
 
+    // @ts-ignore
     return new Response(
-      JSON.stringify({ success: true, message: 'User verified successfully!' }),
+      JSON.stringify({ success: true, message: 'Utilizador verificado com sucesso!' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
   } catch (error) {
+    console.error('Erro de Verificação:', error);
+    // @ts-ignore
     return new Response(
       JSON.stringify({ success: false, error: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }
 });
