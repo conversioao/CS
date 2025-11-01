@@ -1,5 +1,4 @@
-import { Auth as SupabaseAuth } from '@supabase/auth-ui-react';
-import { ThemeSupa } from '@supabase/auth-ui-shared';
+import { Auth as SupabaseAuth, Theme } from '@supabase/auth-ui-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Link, useNavigate } from 'react-router-dom';
 import logo from '@/assets/logo.png';
@@ -11,18 +10,71 @@ const Auth = () => {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN') {
-        navigate('/dashboard');
+        localStorage.setItem('isNewUser', 'true');
+        navigate('/onboarding');
       }
     });
 
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  const customTheme: Theme = {
+    default: {
+      colors: {
+        brand: 'hsl(var(--primary))',
+        brandAccent: 'hsl(var(--accent))',
+        brandButtonText: 'hsl(var(--primary-foreground))',
+        defaultButtonBackground: 'hsl(var(--card))',
+        defaultButtonBackgroundHover: 'hsl(var(--muted))',
+        defaultButtonBorder: 'hsl(var(--border))',
+        defaultButtonText: 'hsl(var(--foreground))',
+        dividerBackground: 'hsl(var(--border))',
+        inputBackground: 'hsl(var(--input))',
+        inputBorder: 'hsl(var(--border))',
+        inputBorderHover: 'hsl(var(--ring))',
+        inputBorderFocus: 'hsl(var(--ring))',
+        inputText: 'hsl(var(--foreground))',
+        inputLabelText: 'hsl(var(--foreground))',
+        inputPlaceholder: 'hsl(var(--muted-foreground))',
+        messageText: 'hsl(var(--muted-foreground))',
+        messageTextDanger: 'hsl(var(--destructive))',
+        anchorTextColor: 'hsl(var(--primary))',
+        anchorTextColorHover: 'hsl(var(--accent))',
+      },
+      space: {
+        spaceSmall: '4px',
+        spaceMedium: '8px',
+        spaceLarge: '16px',
+      },
+      fontSizes: {
+        baseBodySize: '14px',
+        baseInputSize: '14px',
+        baseLabelSize: '14px',
+        baseButtonSize: '14px',
+      },
+      fonts: {
+        bodyFont: 'inherit',
+        buttonFont: 'inherit',
+        inputFont: 'inherit',
+        labelFont: 'inherit',
+      },
+      borderWidths: {
+        buttonBorderWidth: '1px',
+        inputBorderWidth: '1px',
+      },
+      radii: {
+        borderRadiusButton: 'var(--radius)',
+        buttonBorderRadius: 'var(--radius)',
+        inputBorderRadius: 'var(--radius)',
+      },
+    },
+  };
+
   return (
     <div className="min-h-screen bg-background relative overflow-hidden flex items-center justify-center p-4">
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
       </div>
 
       <div className="w-full max-w-md relative z-10">
@@ -33,8 +85,7 @@ const Auth = () => {
         </div>
         <SupabaseAuth
           supabaseClient={supabase}
-          appearance={{ theme: ThemeSupa }}
-          theme="dark"
+          appearance={{ theme: customTheme }}
           providers={[]}
           localization={{
             variables: {
