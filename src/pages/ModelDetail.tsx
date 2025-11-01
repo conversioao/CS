@@ -49,7 +49,7 @@ const modelData = {
     title: "Experimentação Digital de Moda",
     description: "Experimenta digitalmente as tuas roupas com realismo profissional. A solução perfeita para e-commerce de moda.",
     image: modelStyleAI,
-    exampleImage: transformationExample2,
+    exampleImage: transformationExample3,
     features: [
       "Try-on digital profissional",
       "Realismo fotográfico",
