@@ -1,6 +1,6 @@
-import { CreditCard, Menu } from "lucide-react";
+import { CreditCard, Menu, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import {
   Sheet,
@@ -9,16 +9,24 @@ import {
 } from "@/components/ui/sheet";
 import DashboardSidebar from "./DashboardSidebar";
 import NotificationBell from "./NotificationBell";
-import { useUser } from "@/hooks/useUser";
+import { useSession } from "@/contexts/SessionContext";
+import { supabase } from "@/integrations/supabase/client";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const DashboardHeader = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { user } = useUser();
+  const { profile } = useSession();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/');
+  };
   
   const userData = {
-    name: user.name || "Usuário Demo",
-    credits: user.credits,
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=demo",
+    name: profile?.full_name || "Usuário",
+    credits: profile?.credits ?? 0,
+    avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${profile?.full_name || 'U'}`,
   };
 
   return (
@@ -49,12 +57,23 @@ const DashboardHeader = () => {
               <span className="text-sm font-bold">{userData.credits}</span>
             </div>
             
-            <Link to="/account" id="dashboard-nav-account">
-              <Button variant="ghost" size="sm" className="gap-2">
-                <img src={userData.avatar} alt="Avatar" className="w-6 h-6 rounded-full" />
-                <span className="text-sm hidden sm:inline">{userData.name.split(' ')[0]}</span>
-              </Button>
-            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <img src={userData.avatar} alt="Avatar" className="w-6 h-6 rounded-full" />
+                  <span className="text-sm hidden sm:inline">{userData.name.split(' ')[0]}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link to="/account">Minha Conta</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout} className="text-red-500 focus:bg-red-500/10 focus:text-red-500">
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sair
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
