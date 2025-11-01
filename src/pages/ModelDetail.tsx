@@ -50,7 +50,7 @@ const modelData = {
     title: "Experimentação Digital de Moda",
     description: "Experimenta digitalmente as tuas roupas com realismo profissional. A solução perfeita para e-commerce de moda.",
     image: modelStyleAI,
-    exampleImage: transformationExample2,
+    exampleImage: transformationExample3,
     features: [
       "Try-on digital profissional",
       "Realismo fotográfico",
@@ -66,7 +66,7 @@ const modelData = {
     title: "Efeitos Visuais Cinematográficos",
     description: "Cria anúncios com efeitos visuais dignos de cinema. Para campanhas premium que exigem máximo impacto visual.",
     image: modelVision,
-    exampleImage: transformationExample3,
+    exampleImage: transformationExample2,
     features: [
       "VFX de nível cinematográfico",
       "Efeitos visuais avançados",
