@@ -45,7 +45,7 @@ const UseCasesSection = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+        <div className="grid md:grid-cols-2 gap-8 mb-12">
           {useCases.map((useCase, index) => {
             const Icon = useCase.icon;
             return (
@@ -59,7 +59,7 @@ const UseCasesSection = () => {
               >
                 <div className="relative h-full">
                   <div className={`absolute inset-0 bg-gradient-to-br ${useCase.color} rounded-2xl opacity-50 group-hover:opacity-70 transition-opacity blur-xl`} />
-                  <div className="relative bg-card rounded-2xl p-8 border border-border hover:border-primary/50 transition-all duration-300 h-full flex flex-col">
+                  <div className="relative rounded-2xl p-8 border border-border hover:border-primary/50 transition-all duration-300 h-full flex flex-col backdrop-blur-md bg-transparent">
                     <div className="w-14 h-14 rounded-xl bg-gradient-primary flex items-center justify-center mb-6">
                       <Icon className="w-7 h-7 text-primary-foreground" />
                     </div>
