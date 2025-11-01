@@ -124,7 +124,7 @@ const HeroScrollSlider = () => {
                 <img
                   src={slide.image}
                   alt={slide.title}
-                  className="w-full h-full object-cover rounded-2xl shadow-2xl"
+                  className="w-full h-full object-contain rounded-2xl shadow-2xl"
                 />
               </div>
             </div>
