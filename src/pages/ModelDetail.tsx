@@ -116,15 +116,6 @@ const ModelDetail = () => {
               />
               <div className={`absolute inset-0 bg-gradient-to-t ${model.color} to-transparent opacity-20`} />
             </div>
-
-            {/* Imagem Demonstrativa */}
-            <div className="relative rounded-2xl overflow-hidden shadow-2xl aspect-video">
-              <img
-                src={model.exampleImage}
-                alt={`${model.name} Example`}
-                className="w-full h-full object-cover"
-              />
-            </div>
           </div>
 
           {/* Coluna do Conteúdo */}
@@ -182,6 +173,16 @@ const ModelDetail = () => {
             </div>
           </div>
         </div>
+          {/* Imagem Demonstrativa */}
+          <div className="mt-12">
+            <div className="relative rounded-2xl overflow-hidden shadow-2xl aspect-video">
+              <img
+                src={model.exampleImage}
+                alt={`${model.name} Example`}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          </div>
       </main>
     </div>
   );
