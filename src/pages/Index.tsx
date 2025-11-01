@@ -1,5 +1,5 @@
 import Navbar from "@/components/Navbar";
-import HeroCarousel from "@/components/HeroCarousel";
+import HeroSlider from "@/components/HeroSlider";
 import FeaturesSection from "@/components/FeaturesSection";
 import TransformationShowcase from "@/components/TransformationShowcase";
 import ProcessSection from "@/components/ProcessSection";
@@ -20,7 +20,7 @@ const Index = () => {
   return (
     <div className="min-h-screen">
       <Navbar />
-      <HeroCarousel />
+      <HeroSlider />
       <StatsSection />
       <TransformationShowcase />
       <FeaturesSection />
