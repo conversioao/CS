@@ -1,4 +1,4 @@
-import { CreditCard, Menu, LogOut } from "lucide-react";
+import { CreditCard, Menu, LogOut, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -12,6 +12,7 @@ import NotificationBell from "./NotificationBell";
 import { useSession } from "@/contexts/SessionContext";
 import { supabase } from "@/integrations/supabase/client";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 
 const DashboardHeader = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -27,6 +28,7 @@ const DashboardHeader = () => {
     name: profile?.full_name || "Usuário",
     credits: profile?.credits ?? 0,
     avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${profile?.full_name || 'U'}`,
+    isVerified: profile?.status === 'verified' || localStorage.getItem('userVerified') === 'true',
   };
 
   return (
@@ -61,7 +63,15 @@ const DashboardHeader = () => {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="gap-2">
                   <img src={userData.avatar} alt="Avatar" className="w-6 h-6 rounded-full" />
-                  <span className="text-sm hidden sm:inline">{userData.name.split(' ')[0]}</span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm hidden sm:inline">{userData.name.split(' ')[0]}</span>
+                    {userData.isVerified && (
+                      <Badge variant="secondary" className="text-xs bg-green-500/10 text-green-600 border-green-500/20">
+                        <CheckCircle className="w-3 h-3 mr-1" />
+                        Verificado
+                      </Badge>
+                    )}
+                  </div>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">

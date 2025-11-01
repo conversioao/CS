@@ -52,11 +52,17 @@ const Register = () => {
       });
       if (error) throw error;
 
-      toast.info('Cadastro realizado!', {
-        description: 'Enviámos um código para o seu WhatsApp. Insira-o para ativar a sua conta.',
-      });
-      navigate('/verify');
-
+      if (data.user) {
+        toast.success('Conta criada com sucesso!', {
+          description: 'Por favor, verifique o código enviado para o seu WhatsApp.',
+        });
+        
+        // Armazenar o ID do usuário para verificação
+        localStorage.setItem('pendingUserId', data.user.id);
+        navigate('/verify');
+      } else {
+        throw new Error('Falha ao criar conta. Tente novamente.');
+      }
     } catch (error: any) {
       toast.error('Erro no Cadastro', {
         description: error.message || 'Não foi possível criar a sua conta. Tente novamente.',

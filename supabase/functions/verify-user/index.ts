@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Inicializar o cliente Supabase com permissões de administrador para poder modificar dados do utilizador
+// Inicializar o cliente Supabase com permissões de administrador
 const supabaseAdmin = createClient(
   Deno.env.get('SUPABASE_URL') ?? '',
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -19,28 +19,36 @@ serve(async (req) => {
 
   try {
     const { userId } = await req.json();
+    
     if (!userId) {
-      throw new Error('O ID do utilizador é obrigatório.');
+      return new Response(
+        JSON.stringify({ success: false, error: 'User ID is required' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
     }
 
-    // Passo 1: Atualizar o status na tabela de perfis para 'verified'
+    // Atualizar o status na tabela de perfis para 'verified'
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
       .update({ status: 'verified' })
       .eq('id', userId);
 
-    if (profileError) throw profileError;
+    if (profileError) {
+      throw profileError;
+    }
 
-    // Passo 2: Confirmar o "e-mail" do utilizador no sistema de autenticação do Supabase
+    // Confirmar o "e-mail" do utilizador no sistema de autenticação do Supabase
     const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(
       userId,
       { email_confirm: true }
     );
 
-    if (authError) throw authError;
+    if (authError) {
+      throw authError;
+    }
 
     return new Response(
-      JSON.stringify({ success: true, message: 'Utilizador verificado com sucesso!' }),
+      JSON.stringify({ success: true, message: 'User verified successfully!' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
   } catch (error) {
