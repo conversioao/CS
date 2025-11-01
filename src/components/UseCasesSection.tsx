@@ -85,7 +85,7 @@ const UseCasesSection = () => {
                     ))}
                   </div>
                   
-                  <Link to="/auth" className="w-full mt-auto">
+                  <Link to="/register" className="w-full mt-auto">
                     <Button 
                       variant="outline" 
                       className="w-full bg-transparent border-border group-hover:border-primary group-hover:text-primary transition-colors"

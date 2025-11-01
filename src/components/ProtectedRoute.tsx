@@ -14,7 +14,7 @@ const ProtectedRoute = () => {
   }
 
   if (!session) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   return <Outlet />;

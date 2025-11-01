@@ -8,6 +8,8 @@ export interface Profile {
   credits: number;
   plan: 'Free Trial' | 'Paid';
   plan_expires_at: string;
+  account_type: 'user' | 'affiliate';
+  referral_code: string | null;
 }
 
 interface SessionContextValue {
