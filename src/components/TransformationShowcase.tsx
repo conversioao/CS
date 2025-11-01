@@ -11,71 +11,72 @@ const TransformationShowcase = () => {
       image: modelPersona,
       name: "Conversio Studio — Persona",
       description: "Cria anúncios autênticos com pessoas verdadeiras e produtos reais.",
-      gradient: "from-purple-500/20 to-pink-500/20",
       slug: "persona",
     },
     {
       image: modelPulse,
       name: "Conversio Studio — Pulse",
       description: "Transforma o teu conteúdo em anúncios vibrantes e cheios de vida.",
-      gradient: "from-pink-500/20 to-red-500/20",
       slug: "pulse",
     },
     {
       image: modelStyleAI,
       name: "Conversio Studio — StyleAI",
       description: "Experimenta digitalmente as tuas roupas com realismo profissional.",
-      gradient: "from-blue-500/20 to-purple-500/20",
       slug: "styleai",
     },
     {
       image: modelVision,
       name: "Conversio Studio — Vision",
       description: "Cria anúncios com efeitos visuais dignos de cinema.",
-      gradient: "from-green-500/20 to-blue-500/20",
       slug: "vision",
     }
   ];
 
   return (
-    <section className="py-10 px-4 relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent pointer-events-none" />
+    <section className="py-20 px-4 relative overflow-hidden bg-background">
+      <div className="absolute inset-0 bg-gradient-to-b from-background via-primary/5 to-background pointer-events-none" />
       
       <div className="container mx-auto max-w-7xl relative z-10">
-        <div className="text-center mb-8 animate-fade-in">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Nossos <span className="gradient-text">Modelos</span>
+        <div className="text-center mb-16 animate-fade-in">
+          <h2 className="text-4xl md:text-5xl font-bold mb-4">
+            Nossos <span className="gradient-text">Modelos de IA</span>
           </h2>
-          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-            Escolhe o modelo de IA perfeito para o teu tipo de conteúdo.
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+            Escolha o modelo de IA perfeito para o teu tipo de conteúdo e veja a mágica acontecer.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {models.map((model, index) => (
             <Link
               to={`/model/${model.slug}`}
               key={index}
-              className="group relative opacity-0 hover-lift block"
+              className="group relative opacity-0 block"
               style={{ 
                 animation: `fadeInUp 0.8s ease-out forwards`,
-                animationDelay: `${index * 0.15}s` 
+                animationDelay: `${index * 0.1}s` 
               }}
             >
-              <div className="relative rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 border border-white/5">
-                <img
-                  src={model.image}
-                  alt={model.name}
-                  className="w-full h-48 object-cover"
-                />
-                {/* Conteúdo */}
-                <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <h3 className="text-xl font-semibold text-white leading-tight">
+              <div className="relative rounded-2xl overflow-hidden shadow-lg hover:shadow-primary/20 transition-all duration-300 border border-border/50 h-full flex flex-col hover:-translate-y-2">
+                <div className="aspect-square overflow-hidden">
+                  <img
+                    src={model.image}
+                    alt={model.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+                <div className="p-6 bg-card flex flex-col flex-grow">
+                  <h3 className="text-lg font-bold text-foreground leading-tight flex-grow">
                     {model.name}
                   </h3>
-                  <p className="text-gray-200 text-sm leading-relaxed">
+                  <p className="text-sm text-muted-foreground mt-2 mb-4">
                     {model.description}
                   </p>
+                  <div className="mt-auto flex items-center gap-2 text-primary font-semibold text-sm">
+                    <span>Ver detalhes</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </div>
                 </div>
               </div>
             </Link>
