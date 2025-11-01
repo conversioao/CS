@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const FinalCTA = () => {
   return (
@@ -10,9 +11,11 @@ const FinalCTA = () => {
         <p className="text-xl text-muted-foreground mb-8">
           Junte-se a milhares de criadores e empresas que já transformaram sua estratégia de marketing com IA.
         </p>
-        <Button size="lg" className="gradient-primary text-lg px-12 glow-effect">
-          Começar Agora
-        </Button>
+        <Link to="/auth">
+          <Button size="lg" className="gradient-primary text-lg px-12 glow-effect">
+            Começar Agora
+          </Button>
+        </Link>
       </div>
     </section>
   );

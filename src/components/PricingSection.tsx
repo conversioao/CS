@@ -2,6 +2,7 @@ import { Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Link } from "react-router-dom";
 
 const plans = [
   {
@@ -91,13 +92,15 @@ const PricingSection = () => {
                 ))}
               </ul>
               
-              <Button 
-                size="lg"
-                className={`w-full text-lg ${plan.popular ? "gradient-primary glow-effect" : ""}`}
-                variant={plan.popular ? "default" : "outline"}
-              >
-                Começar Agora
-              </Button>
+              <Link to="/auth">
+                <Button 
+                  size="lg"
+                  className={`w-full text-lg ${plan.popular ? "gradient-primary glow-effect" : ""}`}
+                  variant={plan.popular ? "default" : "outline"}
+                >
+                  Começar Agora
+                </Button>
+              </Link>
             </Card>
           ))}
         </div>

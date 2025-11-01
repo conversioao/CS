@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const CTASection = () => {
   return (
@@ -10,9 +11,11 @@ const CTASection = () => {
         <p className="text-xl text-muted-foreground mb-8">
           Crie campanhas, anúncios e conteúdos com apenas um clique.
         </p>
-        <Button size="lg" className="gradient-primary text-lg px-8 glow-effect">
-          Experimentar Gratuitamente
-        </Button>
+        <Link to="/auth">
+          <Button size="lg" className="gradient-primary text-lg px-8 glow-effect">
+            Experimentar Gratuitamente
+          </Button>
+        </Link>
       </div>
     </section>
   );

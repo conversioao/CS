@@ -1,5 +1,6 @@
 import { ShoppingBag, Video, Image, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const useCases = [
   {
@@ -84,12 +85,14 @@ const UseCasesSection = () => {
                     ))}
                   </div>
                   
-                  <Button 
-                    variant="outline" 
-                    className="w-full mt-auto bg-transparent border-border group-hover:border-primary group-hover:text-primary transition-colors"
-                  >
-                    Explorar
-                  </Button>
+                  <Link to="/auth" className="w-full mt-auto">
+                    <Button 
+                      variant="outline" 
+                      className="w-full bg-transparent border-border group-hover:border-primary group-hover:text-primary transition-colors"
+                    >
+                      Explorar
+                    </Button>
+                  </Link>
                 </div>
               </div>
             );

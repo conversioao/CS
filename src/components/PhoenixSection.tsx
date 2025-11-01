@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import adExample1 from "@/assets/ad-example-1.jpg";
 import adExample2 from "@/assets/ad-example-2.jpg";
+import { Link } from "react-router-dom";
 
 const PhoenixSection = () => {
   return (
@@ -20,9 +21,11 @@ const PhoenixSection = () => {
             <p className="text-lg text-muted-foreground mb-8">
               Nosso modelo Phoenix foi treinado especificamente para entender contextos de marketing e publicidade, gerando não apenas imagens bonitas, mas anúncios que convertem.
             </p>
-            <Button size="lg" className="gradient-primary">
-              Testar Modelo Phoenix
-            </Button>
+            <Link to="/auth">
+              <Button size="lg" className="gradient-primary">
+                Testar Modelo Phoenix
+              </Button>
+            </Link>
           </div>
           
           <div className="grid grid-cols-2 gap-4">
