@@ -7,7 +7,8 @@ import { SessionContextProvider } from "./contexts/SessionContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 import Index from "./pages/Index";
-import Auth from "./pages/Auth";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Generate from "./pages/Generate";
 import GenerateVideo from "./pages/GenerateVideo";
@@ -31,6 +32,7 @@ import AdminPayments from "./pages/admin/AdminPayments";
 import AdminModels from "./pages/admin/AdminModels";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminReports from "./pages/admin/AdminReports";
+import AffiliateDashboard from "./pages/AffiliateDashboard";
 
 const queryClient = new QueryClient();
 
@@ -44,7 +46,8 @@ const App = () => (
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
             <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/model/:slug" element={<ModelDetail />} />
 
@@ -63,6 +66,7 @@ const App = () => (
               <Route path="/community" element={<Community />} />
               <Route path="/credits" element={<Credits />} />
               <Route path="/account" element={<Account />} />
+              <Route path="/affiliate/dashboard" element={<AffiliateDashboard />} />
             </Route>
 
             {/* Protected Admin Routes */}
