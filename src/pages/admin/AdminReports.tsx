@@ -7,9 +7,10 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { DateRange } from "react-day-picker";
 
 const AdminReports = () => {
-  const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({});
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
 
   return (
     <div className="space-y-6">
@@ -39,10 +40,10 @@ const AdminReports = () => {
               <PopoverTrigger asChild>
                 <Button
                   variant={"outline"}
-                  className={cn("w-full justify-start text-left font-normal", !dateRange.from && "text-muted-foreground")}
+                  className={cn("w-full justify-start text-left font-normal", !dateRange?.from && "text-muted-foreground")}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dateRange.from ? (
+                  {dateRange?.from ? (
                     dateRange.to ? (
                       <>
                         {format(dateRange.from, "LLL dd, y")} - {format(dateRange.to, "LLL dd, y")}
@@ -59,7 +60,7 @@ const AdminReports = () => {
                 <Calendar
                   initialFocus
                   mode="range"
-                  defaultMonth={dateRange.from}
+                  defaultMonth={dateRange?.from}
                   selected={dateRange}
                   onSelect={setDateRange}
                   numberOfMonths={2}
