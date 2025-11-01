@@ -52,17 +52,11 @@ const Register = () => {
       });
       if (error) throw error;
 
-      if (data.session) {
-        toast.success('Conta criada com sucesso!', {
-          description: 'A preparar o seu painel...',
-        });
-        localStorage.setItem('isNewUser', 'true');
-        navigate('/onboarding');
-      } else {
-        toast.info('Confirme o seu e-mail', {
-          description: 'Enviámos um link de confirmação para o seu e-mail associado.',
-        });
-      }
+      toast.info('Cadastro realizado!', {
+        description: 'Enviámos um código para o seu WhatsApp. Insira-o para ativar a sua conta.',
+      });
+      navigate('/verify');
+
     } catch (error: any) {
       toast.error('Erro no Cadastro', {
         description: error.message || 'Não foi possível criar a sua conta. Tente novamente.',
