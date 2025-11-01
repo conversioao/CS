@@ -175,7 +175,8 @@ const ModelDetail = () => {
         </div>
           {/* Imagem Demonstrativa */}
           <div className="mt-12">
-            <div className="relative rounded-2xl overflow-hidden shadow-2xl aspect-video">
+            <h2 className="text-2xl font-semibold mb-4">Veja o modelo em ação</h2>
+            <div className="relative rounded-2xl overflow-hidden shadow-2xl aspect-video hover:scale-110 transition-transform duration-300">
               <img
                 src={model.exampleImage}
                 alt={`${model.name} Example`}
