@@ -76,11 +76,7 @@ const ToolsSection = () => {
             </Card>
           );
 
-          return tool.disabled ? (
-            <div key={tool.title} className="opacity-50 cursor-not-allowed">
-              {content}
-            </div>
-          ) : (
+          return (
             <Link key={tool.title} to={tool.link}>
               {content}
             </Link>
