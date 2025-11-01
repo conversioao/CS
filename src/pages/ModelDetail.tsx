@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Sparkles, Check } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import modelPersona from "@/assets/model-persona.jpg";
 import modelPulse from "@/assets/model-pulse.jpg";
 import modelStyleAI from "@/assets/model-styleai.jpg";
@@ -186,6 +187,7 @@ const ModelDetail = () => {
             </div>
           </div>
       </main>
+      <Footer />
     </div>
   );
 };

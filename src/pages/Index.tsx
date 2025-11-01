@@ -8,7 +8,6 @@ import ResultsGallery from "@/components/ResultsGallery";
 import UseCasesSection from "@/components/UseCasesSection";
 import BenefitsSection from "@/components/BenefitsSection";
 import PhoenixSection from "@/components/PhoenixSection";
-import ModelsSection from "@/components/ModelsSection";
 import CommunityGallery from "@/components/CommunityGallery";
 import CTASection from "@/components/CTASection";
 import TestimonialsSection from "@/components/TestimonialsSection";
@@ -29,7 +28,6 @@ const Index = () => {
       <UseCasesSection />
       <BenefitsSection />
       <PhoenixSection />
-      <ModelsSection />
       <CommunityGallery />
       <CTASection />
       <TestimonialsSection />
