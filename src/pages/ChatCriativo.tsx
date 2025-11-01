@@ -87,26 +87,30 @@ const ChatCriativo = () => {
     setIsLoading(true);
     setWizardStep(4); // Etapa de carregamento
     try {
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      const response = await fetch('https://n8n.conversio.ao/webhook-test/chatcriativo', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(campaignData),
+      });
+
+      if (!response.ok) {
+        throw new Error('A resposta do servidor não foi bem-sucedida.');
+      }
+
+      const campaignPlan: CampaignPlan = await response.json();
       
-      const mockCampaignPlan: CampaignPlan = {
-        plano_7_dias: Array.from({ length: 7 }, (_, i) => ({
-          dia: i + 1,
-          tema: `Tema Criativo do Dia ${i + 1}`,
-          copy: `Esta é a copy principal para o dia ${i + 1} sobre ${campaignData.productName}.`,
-          variacoes_copy: [`Variação 1 para o dia ${i + 1}`, `Variação 2 para o dia ${i + 1}`]
-        })),
-        descricao_curta_imagem: `Um anúncio de ${campaignData.adStyle} para ${campaignData.productName}, perfeito para ${campaignData.socialMedia}.`,
-        hashtags: ["#marketingdigital", `#${(campaignData.productName || '').replace(/\s/g, '')}`, "#sucesso"],
-        modelo_sugerido: "Advision UGC",
-        melhorias_produto: {
-          baixa_resolucao: "A imagem parece ter baixa resolução. Tente uma imagem com maior qualidade para um resultado mais profissional."
-        }
-      };
-      setGeneratedPlan(mockCampaignPlan);
+      if (!campaignPlan.plano_7_dias || !campaignPlan.descricao_curta_imagem) {
+        throw new Error('A resposta do webhook está mal formatada.');
+      }
+
+      setGeneratedPlan(campaignPlan);
       setWizardStep(5); // Etapa de resultados
     } catch (error) {
-      toast({ title: "Erro", description: "Não foi possível gerar a campanha.", variant: "destructive" });
+      console.error("Erro ao gerar campanha:", error);
+      const errorMessage = error instanceof Error ? error.message : "Não foi possível gerar a campanha.";
+      toast({ title: "Erro", description: errorMessage, variant: "destructive" });
       setWizardStep(3); // Volta para a etapa anterior em caso de erro
     } finally {
       setIsLoading(false);
