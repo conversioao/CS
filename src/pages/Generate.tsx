@@ -33,12 +33,6 @@ const Generate = () => {
   const [aspectRatio, setAspectRatio] = useState("1:1");
   const [modelo, setModelo] = useState("Advision UGC");
   
-  useEffect(() => {
-    const modelParam = searchParams.get('model');
-    if (modelParam) {
-      setModelo(modelParam);
-    }
-  }, [searchParams]);
   const [description, setDescription] = useState("");
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
@@ -49,6 +43,19 @@ const Generate = () => {
   const [editModal, setEditModal] = useState<EditModalState>({ isOpen: false, imageUrl: '', imageId: '' });
   const [editPrompt, setEditPrompt] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    const modelParam = searchParams.get('model');
+    const descriptionParam = searchParams.get('description');
+    const imageUrlParam = searchParams.get('imageUrl');
+
+    if (modelParam) setModelo(modelParam);
+    if (descriptionParam) setDescription(descriptionParam);
+    if (imageUrlParam) {
+      setUploadedImageUrl(imageUrlParam);
+      setGenerationType("image");
+    }
+  }, [searchParams]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -91,21 +98,12 @@ const Generate = () => {
   };
 
   const handleGenerate = async () => {
-    if (generationType === "image" && !uploadedImage) {
-      toast({
-        title: "Imagem necessária",
-        description: "Por favor, faça o upload de uma imagem",
-        variant: "destructive",
-      });
+    if (generationType === "image" && !uploadedImage && !uploadedImageUrl) {
+      toast({ title: "Imagem necessária", description: "Por favor, faça o upload de uma imagem", variant: "destructive" });
       return;
     }
-
     if (generationType === "text" && !description) {
-      toast({
-        title: "Descrição necessária",
-        description: "Por favor, adicione uma descrição para gerar a imagem",
-        variant: "destructive",
-      });
+      toast({ title: "Descrição necessária", description: "Por favor, adicione uma descrição para gerar a imagem", variant: "destructive" });
       return;
     }
 
@@ -113,20 +111,15 @@ const Generate = () => {
     setGeneratedImages([]);
 
     try {
-      let imgbbUrl = '';
+      let imgUrl = uploadedImageUrl;
       
       if (generationType === "image" && uploadedImage) {
-        toast({
-          title: "Enviando imagem...",
-          description: "Fazendo upload da sua imagem",
-        });
-        imgbbUrl = await uploadToImgbb(uploadedImage);
+        toast({ title: "Enviando imagem...", description: "Fazendo upload da sua imagem" });
+        imgUrl = await uploadToImgbb(uploadedImage);
+        setUploadedImageUrl(imgUrl);
       }
 
-      toast({
-        title: "Gerando imagens...",
-        description: `Processando ${quantity} imagem(ns)`,
-      });
+      toast({ title: "Gerando imagens...", description: `Processando ${quantity} imagem(ns)` });
 
       const payload: any = {
         modelo: modelo,
@@ -139,7 +132,7 @@ const Generate = () => {
       if (generationType === "text") {
         payload.text_prompt = description;
       } else {
-        payload.image_url = imgbbUrl;
+        payload.image_url = imgUrl;
       }
 
       const response = await fetch('https://n8n.conversio.ao/webhook/Gerar_Modelos', {
@@ -152,17 +145,11 @@ const Generate = () => {
       const webhookResponse = await response.json();
 
       if (webhookResponse && Array.isArray(webhookResponse)) {
-        const temporaryUrls = webhookResponse
-          .filter((item: any) => item?.message?.content)
-          .map((item: any) => item.message.content);
-
+        const temporaryUrls = webhookResponse.filter((item: any) => item?.message?.content).map((item: any) => item.message.content);
         if (temporaryUrls.length > 0) {
           toast({ title: "Salvando imagens...", description: "Armazenando suas imagens no servidor" });
           const permanentUrls = await storeMediaInSupabase(temporaryUrls, 'image');
-          const images: GeneratedImage[] = permanentUrls.map((url: string, index: number) => ({
-            url: url,
-            id: `${Date.now()}-${index}`,
-          }));
+          const images: GeneratedImage[] = permanentUrls.map((url: string, index: number) => ({ url, id: `${Date.now()}-${index}` }));
           setGeneratedImages(prev => [...images, ...prev]);
           setHistory(prev => [...images, ...prev]);
           toast({ title: "Sucesso!", description: `${images.length} imagem(ns) gerada(s) e armazenada(s) com sucesso` });
@@ -174,11 +161,7 @@ const Generate = () => {
       }
     } catch (error) {
       console.error('Erro ao gerar imagem:', error);
-      toast({
-        title: "Erro",
-        description: error instanceof Error ? error.message : "Erro ao gerar imagem. Tente novamente.",
-        variant: "destructive",
-      });
+      toast({ title: "Erro", description: (error as Error).message, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -224,10 +207,7 @@ const Generate = () => {
         const editedUrls = webhookResponse.filter((item: any) => item?.message?.content).map((item: any) => item.message.content);
         if (editedUrls.length > 0) {
           const storedUrls = await storeMediaInSupabase(editedUrls, 'image');
-          const newEditedImages: GeneratedImage[] = storedUrls.map((url: string, index: number) => ({
-            url: url,
-            id: `edited-${Date.now()}-${index}`,
-          }));
+          const newEditedImages: GeneratedImage[] = storedUrls.map((url: string, index: number) => ({ url, id: `edited-${Date.now()}-${index}` }));
           setGeneratedImages(prev => [...newEditedImages, ...prev]);
           setHistory(prev => [...newEditedImages, ...prev]);
           toast({ title: "Sucesso!", description: "Imagem editada com sucesso" });
@@ -237,7 +217,7 @@ const Generate = () => {
       }
     } catch (error) {
       console.error('Erro ao editar imagem:', error);
-      toast({ title: "Erro", description: error instanceof Error ? error.message : "Erro ao editar imagem. Tente novamente.", variant: "destructive" });
+      toast({ title: "Erro", description: (error as Error).message, variant: "destructive" });
     } finally {
       setIsEditing(false);
     }
@@ -455,7 +435,7 @@ const Generate = () => {
                 </Accordion>
               </Card>
 
-              <Button className="w-full h-11 sm:h-12 font-semibold text-sm sm:text-base gradient-primary glow-effect hover:scale-[1.02] transition-transform" size="lg" onClick={handleGenerate} disabled={isLoading || (generationType === "image" && !uploadedImage) || (generationType === "text" && !description)}>
+              <Button className="w-full h-11 sm:h-12 font-semibold text-sm sm:text-base gradient-primary glow-effect hover:scale-[1.02] transition-transform" size="lg" onClick={handleGenerate} disabled={isLoading || (generationType === "image" && !uploadedImageUrl) || (generationType === "text" && !description)}>
                 {isLoading ? (<><Loader2 className="w-4 h-4 animate-spin mr-2" />Gerando...</>) : (<><Sparkles className="w-4 h-4 mr-2" />Gerar Imagem</>)}
               </Button>
             </div>

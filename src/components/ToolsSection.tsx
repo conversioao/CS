@@ -1,6 +1,5 @@
 import { ImagePlus, Video, Wand2, Layers, Music, Bot } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
 
@@ -24,7 +23,6 @@ const tools = [
     description: "Seu assistente de IA para conteúdo.",
     icon: Bot,
     link: "/chat-criativo",
-    premium: true,
     color: "from-green-500 to-teal-500",
   },
   {
@@ -61,11 +59,8 @@ const ToolsSection = () => {
           const content = (
             <Card
               key={tool.title}
-              className="group relative overflow-hidden bg-card/50 backdrop-blur-xl hover:bg-card/80 transition-all duration-300 hover:-translate-y-1"
+              className="group relative overflow-hidden bg-card/50 backdrop-blur-xl hover:bg-card/80 transition-all duration-300 hover:-translate-y-1 border-0"
             >
-              {tool.premium && (
-                <Badge className="absolute top-4 right-4 bg-primary z-10">PRO</Badge>
-              )}
               <CardHeader className="flex flex-row items-center gap-4 pb-2">
                 <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${tool.color} flex items-center justify-center shadow-lg`}>
                   <Icon className="w-6 h-6 text-white" />

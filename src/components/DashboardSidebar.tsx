@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Grid3x3, Image, Users, CreditCard, User, ChevronLeft, ChevronRight, Bot } from "lucide-react";
+import { Home, Grid3x3, Image, Users, CreditCard, User, ChevronLeft, ChevronRight } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import logo from "@/assets/logo.png";
 import { cn } from "@/lib/utils";
@@ -10,7 +10,6 @@ const navLinks = [
   { to: "/models", icon: Grid3x3, label: "Modelos" },
   { to: "/gallery", icon: Image, label: "Galeria" },
   { to: "/community", icon: Users, label: "Comunidade" },
-  { to: "/chat-criativo", icon: Bot, label: "ChatCriativo", premium: true },
   { to: "/credits", icon: CreditCard, label: "Créditos" },
 ];
 
@@ -51,14 +50,11 @@ const DashboardSidebar = () => {
                   >
                     <Icon className="w-5 h-5 flex-shrink-0" />
                     {!isCollapsed && <span className="truncate">{link.label}</span>}
-                    {link.premium && !isCollapsed && (
-                       <span className="absolute right-3 text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">PRO</span>
-                    )}
                   </Link>
                 </TooltipTrigger>
                 {isCollapsed && (
                   <TooltipContent side="right" align="center">
-                    <p>{link.label} {link.premium && '(PRO)'}</p>
+                    <p>{link.label}</p>
                   </TooltipContent>
                 )}
               </Tooltip>
