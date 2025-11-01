@@ -1,43 +1,66 @@
 import { Briefcase, Palette, Building2 } from "lucide-react";
-import { Card } from "@/components/ui/card";
 
 const features = [
   {
     icon: Briefcase,
     title: "Para Negócios",
-    description: "Crie campanhas de produto automaticamente.",
+    description: "Crie campanhas de produto automaticamente, otimizando seu tempo e recursos.",
+    color: "from-blue-500 to-cyan-500",
   },
   {
     icon: Palette,
     title: "Para Criadores",
-    description: "Melhore a presença nas redes sociais com designs profissionais.",
+    description: "Melhore a presença nas redes sociais com designs profissionais e conteúdo viral.",
+    color: "from-purple-500 to-pink-500",
   },
   {
     icon: Building2,
     title: "Para Agências",
-    description: "Escale a criação de anúncios com fluxos automatizados.",
+    description: "Escale a criação de anúncios com fluxos automatizados e colaboração em equipe.",
+    color: "from-green-500 to-teal-500",
   },
 ];
 
 const FeaturesSection = () => {
   return (
-    <section className="py-20 px-4">
-      <div className="container mx-auto max-w-6xl">
-        <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 animate-fade-in">
-          Transforme ideias simples em anúncios que vendem
-        </h2>
+    <section className="py-20 px-4 relative overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent pointer-events-none" />
+      
+      <div className="container mx-auto max-w-6xl relative z-10">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-bold mb-4">
+            Transforme ideias simples em <span className="gradient-text">anúncios que vendem</span>
+          </h2>
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+            Nossa plataforma foi desenhada para atender às necessidades de diferentes perfis profissionais.
+          </p>
+        </div>
         
         <div className="grid md:grid-cols-3 gap-8">
-          {features.map((feature, index) => (
-            <Card 
-              key={index}
-              className="p-8 bg-card border-border hover:border-primary/50 transition-all duration-300 hover-lift hover-glow stagger-item"
-            >
-              <feature.icon className="w-12 h-12 text-primary mb-4 transition-transform hover:scale-110" />
-              <h3 className="text-2xl font-bold mb-3">{feature.title}</h3>
-              <p className="text-muted-foreground">{feature.description}</p>
-            </Card>
-          ))}
+          {features.map((feature, index) => {
+            const Icon = feature.icon;
+            return (
+              <div 
+                key={index}
+                className="relative p-8 rounded-2xl group transition-all duration-300 hover:-translate-y-2 bg-card/50 backdrop-blur-sm border border-border/50"
+                style={{ 
+                  animation: `fadeInUp 0.6s ease-out forwards`,
+                  animationDelay: `${index * 0.15}s` 
+                }}
+              >
+                <div className="absolute -inset-px rounded-2xl bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                
+                <div className="relative">
+                  <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                    <Icon className="w-8 h-8 text-white" />
+                  </div>
+                  
+                  <h3 className="text-2xl font-bold mb-3">{feature.title}</h3>
+                  <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>
