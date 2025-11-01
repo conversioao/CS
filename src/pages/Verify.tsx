@@ -41,15 +41,20 @@ const Verify = () => {
     }
 
     try {
-      const { data, error } = await supabase.functions.invoke('verify-user', {
+      // 1. Chamar a função no servidor para validar o código
+      const { data, error: functionError } = await supabase.functions.invoke('verify-user', {
         body: { userId, verificationCode }
       });
 
-      if (error) {
-        throw new Error("Ocorreu um erro de comunicação. Tente novamente.");
-      }
+      if (functionError) throw functionError;
+      if (!data.success) throw new Error(data.error || 'Falha na verificação');
 
-      if (data.success) {
+      // 2. Forçar a atualização da sessão no cliente
+      await supabase.auth.refreshSession();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // 3. Verificar se o utilizador está realmente confirmado no cliente
+      if (user && user.email_confirmed_at) {
         toast.success('Conta verificada com sucesso!', {
           description: 'Bem-vindo ao Conversio Studio!',
         });
@@ -58,14 +63,13 @@ const Verify = () => {
         localStorage.setItem('userVerified', 'true');
         localStorage.setItem('isNewUser', 'true');
         
-        await supabase.auth.refreshSession();
-
+        // 4. Navegar para o onboarding
         navigate('/onboarding');
       } else {
-        throw new Error(data.error || 'Falha na verificação');
+        throw new Error("A verificação falhou. A sessão não foi atualizada.");
       }
     } catch (error: any) {
-      toast.error('Código de Verificação Inválido', {
+      toast.error('Erro na Verificação', {
         description: error.message || 'Por favor, verifique o código e tente novamente.',
       });
     } finally {
