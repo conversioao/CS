@@ -10,6 +10,7 @@ import modelVision from "@/assets/model-vision.jpg";
 import transformationExample1 from "@/assets/transformation-example-1.jpg";
 import transformationExample2 from "@/assets/transformation-example-2.jpg";
 import transformationExample3 from "@/assets/transformation-example-3.jpg";
+import transformationExample4 from "@/assets/transformation-example-4.jpg";
 
 const modelData = {
   persona: {
@@ -33,7 +34,7 @@ const modelData = {
     title: "Conteúdo Vibrante para Redes Sociais",
     description: "Transforma o teu conteúdo em anúncios vibrantes e cheios de vida. Perfeito para maximizar o engajamento nas redes sociais.",
     image: modelPulse,
-    exampleImage: transformationExample3,
+    exampleImage: transformationExample4,
     features: [
       "Otimizado para redes sociais",
       "Conteúdo viral e engajador",
@@ -49,7 +50,7 @@ const modelData = {
     title: "Experimentação Digital de Moda",
     description: "Experimenta digitalmente as tuas roupas com realismo profissional. A solução perfeita para e-commerce de moda.",
     image: modelStyleAI,
-    exampleImage: transformationExample3,
+    exampleImage: transformationExample2,
     features: [
       "Try-on digital profissional",
       "Realismo fotográfico",
