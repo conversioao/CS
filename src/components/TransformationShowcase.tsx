@@ -71,6 +71,16 @@ const TransformationShowcase = () => {
               }}
             >
               <div className="relative rounded-3xl overflow-hidden shadow-2xl hover:shadow-glow transition-all duration-500 border border-white/5">
+                {/* Imagem de fundo */}
+                <div className="relative h-[400px] overflow-hidden">
+                  <img 
+                    src={model.image}
+                    alt={model.name}
+                    className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+                    loading="lazy"
+                  />
+                </div>
+
                 {/* Conteúdo */}
                 <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
                   <div className="flex items-start justify-between gap-4 mb-3">
