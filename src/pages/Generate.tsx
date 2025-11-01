@@ -6,13 +6,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { ArrowLeft, Image, Sparkles, Upload, Download, Maximize2, Edit, Loader2, X, SlidersHorizontal } from "lucide-react";
+import { ArrowLeft, Image, Sparkles, Download, Maximize2, Edit, Loader2, X, SlidersHorizontal, Camera } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { storeMediaInSupabase } from "@/lib/supabase-storage";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import CameraCaptureDialog from "@/components/CameraCaptureDialog";
 
 interface GeneratedImage {
   url: string;
@@ -24,6 +25,14 @@ interface EditModalState {
   imageUrl: string;
   imageId: string;
 }
+
+const loadingMessages = [
+  "Calibrando a IA...",
+  "Pintando os pixels...",
+  "Dando vida à sua ideia...",
+  "Quase lá...",
+  "Ajustando os detalhes finais...",
+];
 
 const Generate = () => {
   const { toast } = useToast();
@@ -42,13 +51,21 @@ const Generate = () => {
   const [editPrompt, setEditPrompt] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [timer, setTimer] = useState(0);
+  const [currentLoadingMessage, setCurrentLoadingMessage] = useState(loadingMessages[0]);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
     if (isLoading) {
       setTimer(0);
+      setCurrentLoadingMessage(loadingMessages[0]);
+      let messageIndex = 0;
       interval = setInterval(() => {
         setTimer(prevTimer => prevTimer + 1);
+        if ((timer + 1) % 4 === 0) {
+          messageIndex = (messageIndex + 1) % loadingMessages.length;
+          setCurrentLoadingMessage(loadingMessages[messageIndex]);
+        }
       }, 1000);
     } else if (!isLoading && interval) {
       clearInterval(interval);
@@ -91,6 +108,16 @@ const Generate = () => {
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleCapture = (file: File) => {
+    setUploadedImage(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setUploadedImageUrl(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+    setIsCameraOpen(false);
   };
 
   const uploadToImgbb = async (file: File): Promise<string> => {
@@ -140,7 +167,7 @@ const Generate = () => {
         text_prompt: !uploadedImageUrl ? description : undefined,
       };
 
-      const response = await fetch('https://n8n.conversio.ao/webhook/Gerar_Modelos', {
+      const response = await fetch('https://n8n.conversio.ao/webhook-test/Gerar_Modelos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -250,6 +277,12 @@ const Generate = () => {
             <div className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-primary/10 backdrop-blur-sm rounded-lg">
               <Sparkles className="w-4 h-4 text-primary" />
               <span className="text-xs sm:text-sm font-semibold">2 créditos por geração</span>
+              {isLoading && (
+                <div className="flex items-center gap-1 text-xs font-mono ml-2 text-primary">
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  <span>{String(Math.floor(timer / 60)).padStart(2, '0')}:{String(timer % 60).padStart(2, '0')}</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -264,13 +297,8 @@ const Generate = () => {
                     {Array.from({ length: quantity }).map((_, i) => (
                       <div key={i} className="relative overflow-hidden rounded-lg bg-muted/30 backdrop-blur-sm aspect-square">
                         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-white bg-black/20">
-                          <div className="text-4xl font-mono font-bold drop-shadow-lg">
-                            {String(Math.floor(timer / 60)).padStart(2, '0')}:{String(timer % 60).padStart(2, '0')}
-                          </div>
-                          <p className="text-xs text-white/80">Gerando {i + 1}/{quantity}...</p>
-                          <div className="absolute bottom-0 left-0 w-full h-1 bg-primary/20 overflow-hidden">
-                            <div className="h-full bg-primary animate-shimmer w-full" style={{ backgroundSize: '200% 100%', backgroundImage: 'linear-gradient(90deg, transparent, hsl(var(--primary)), transparent)' }}></div>
-                          </div>
+                          <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                          <p className="text-xs text-white/80 text-center px-2">{currentLoadingMessage}</p>
                         </div>
                       </div>
                     ))}
@@ -328,15 +356,16 @@ const Generate = () => {
                 </div>
               </DialogContent>
             </Dialog>
+            <CameraCaptureDialog isOpen={isCameraOpen} onClose={() => setIsCameraOpen(false)} onCapture={handleCapture} />
           </div>
           
           <div className="w-full max-w-3xl mx-auto mt-6 sticky bottom-6">
-            <div className="relative flex items-center gap-2 rounded-full bg-card/80 backdrop-blur-xl border border-border/50 p-2 shadow-lg">
+            <div className="relative flex items-center gap-1 rounded-full bg-card/80 backdrop-blur-xl border border-border/50 p-2 shadow-lg">
               <div className="relative">
                 <Input id="image-upload" type="file" accept=".jpg,.jpeg,.png" onChange={handleImageUpload} className="hidden" />
                 <label htmlFor="image-upload">
                   <Button variant="ghost" size="icon" className="rounded-full" asChild disabled={isLoading}>
-                    <span><Upload className="w-5 h-5" /></span>
+                    <span><Image className="w-5 h-5" /></span>
                   </Button>
                 </label>
                 {uploadedImageUrl && (
@@ -348,6 +377,9 @@ const Generate = () => {
                   </div>
                 )}
               </div>
+              <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setIsCameraOpen(true)} disabled={isLoading}>
+                <Camera className="w-5 h-5" />
+              </Button>
 
               <Textarea
                 id="description"
@@ -355,14 +387,14 @@ const Generate = () => {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 disabled={isLoading}
-                className="flex-1 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 resize-none text-base py-2.5"
+                className="flex-1 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 resize-none text-base py-2.5 mx-2"
                 rows={1}
               />
 
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="ghost" size="icon" className="rounded-full" disabled={isLoading}>
-                    <SlidersHorizontal className="w-5 h-5" />
+                    <SlidersHorizontal className="w-6 h-6" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-80 mb-2">
