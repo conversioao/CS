@@ -61,7 +61,7 @@ const ToolsSection = () => {
           const content = (
             <Card
               key={tool.title}
-              className="group relative overflow-hidden bg-card/50 backdrop-blur-xl border-border/50 hover:border-primary/50 transition-all duration-300 hover:-translate-y-1"
+              className="group relative overflow-hidden bg-card/50 backdrop-blur-xl hover:bg-card/80 transition-all duration-300 hover:-translate-y-1"
             >
               {tool.premium && (
                 <Badge className="absolute top-4 right-4 bg-primary z-10">PRO</Badge>

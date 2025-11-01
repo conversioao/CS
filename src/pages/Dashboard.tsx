@@ -4,7 +4,6 @@ import RecentCreations from "@/components/RecentCreations";
 import WelcomeModal from "@/components/WelcomeModal";
 import DashboardTutorial from "@/components/DashboardTutorial";
 import DashboardSidebar from "@/components/DashboardSidebar";
-import DashboardStats from "@/components/DashboardStats";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -67,14 +66,9 @@ const Dashboard = () => {
               </Link>
             </div>
 
-            <div className="grid lg:grid-cols-[1fr,350px] gap-8">
-              <div className="space-y-12">
-                <ToolsSection />
-                <RecentCreations />
-              </div>
-              <div className="space-y-8">
-                <DashboardStats />
-              </div>
+            <div className="space-y-12">
+              <ToolsSection />
+              <RecentCreations />
             </div>
           </main>
         </div>
