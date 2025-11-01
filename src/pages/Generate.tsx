@@ -39,7 +39,7 @@ const Generate = () => {
   const [searchParams] = useSearchParams();
   const [quantity, setQuantity] = useState(1);
   const [aspectRatio, setAspectRatio] = useState("1:1");
-  const [modelo, setModelo] = useState("Advision UGC");
+  const [modelo, setModelo] = useState("Conversio Studio — Persona");
   
   const [description, setDescription] = useState("");
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
@@ -409,10 +409,10 @@ const Generate = () => {
                         <Select value={modelo} onValueChange={setModelo} disabled={isLoading}>
                           <SelectTrigger id="model" className="col-span-2 h-8"><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Advision UGC">Advision UGC</SelectItem>
-                            <SelectItem value="SocialBost">SocialBost</SelectItem>
-                            <SelectItem value="FashionFit">FashionFit</SelectItem>
-                            <SelectItem value="Adivisio VFX">Adivisio VFX</SelectItem>
+                            <SelectItem value="Conversio Studio — Persona">Conversio Studio — Persona</SelectItem>
+                            <SelectItem value="Conversio Studio — Pulse">Conversio Studio — Pulse</SelectItem>
+                            <SelectItem value="Conversio Studio — StyleAI">Conversio Studio — StyleAI</SelectItem>
+                            <SelectItem value="Conversio Studio — Vision">Conversio Studio — Vision</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
