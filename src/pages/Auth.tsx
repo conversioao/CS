@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Mail, Lock, User } from "lucide-react";
+import { Phone, Lock, User } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import logo from "@/assets/logo.png";
@@ -40,7 +40,8 @@ const Auth = () => {
         description: "Você ganhou 50 créditos gratuitos para começar",
       });
       setIsLoading(false);
-      navigate("/dashboard");
+      localStorage.setItem('isNewUser', 'true');
+      navigate("/onboarding");
     }, 1500);
   };
 
@@ -76,15 +77,18 @@ const Auth = () => {
               <TabsContent value="login">
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="login-email">E-mail</Label>
+                    <Label htmlFor="login-whatsapp">Nº de WhatsApp</Label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
-                        id="login-email"
-                        type="email"
-                        placeholder="seu@email.com"
+                        id="login-whatsapp"
+                        type="tel"
+                        placeholder="9XX XXX XXX"
                         className="pl-10"
                         required
+                        minLength={9}
+                        maxLength={9}
+                        pattern="[0-9]{9}"
                       />
                     </div>
                   </div>
@@ -123,15 +127,18 @@ const Auth = () => {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-email">E-mail</Label>
+                    <Label htmlFor="signup-whatsapp">Nº de WhatsApp</Label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
-                        id="signup-email"
-                        type="email"
-                        placeholder="seu@email.com"
+                        id="signup-whatsapp"
+                        type="tel"
+                        placeholder="9XX XXX XXX"
                         className="pl-10"
                         required
+                        minLength={9}
+                        maxLength={9}
+                        pattern="[0-9]{9}"
                       />
                     </div>
                   </div>

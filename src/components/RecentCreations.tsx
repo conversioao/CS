@@ -58,7 +58,7 @@ const RecentCreations = () => {
     }
   };
   return (
-    <section>
+    <section id="recent-creations-section">
       <div className="flex items-center justify-between mb-8">
         <h2 className="text-3xl md:text-4xl font-bold gradient-text">
           Criações Recentes

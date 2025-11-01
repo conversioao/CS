@@ -55,12 +55,12 @@ const DashboardNav = () => {
             })}
             
             <div className="flex items-center gap-3 ml-4 pl-4 border-l border-border">
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-full animate-custom-pulse">
+              <div id="dashboard-nav-credits" className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-full animate-custom-pulse">
                 <CreditCard className="w-4 h-4 text-primary" />
                 <span className="text-sm font-bold">{userData.credits}</span>
               </div>
               
-              <Link to="/account">
+              <Link to="/account" id="dashboard-nav-account">
                 <Button variant="ghost" size="sm" className="gap-2 hover-lift">
                   <img src={userData.avatar} alt="Avatar" className="w-6 h-6 rounded-full" />
                   <span className="text-sm">{userData.name.split(' ')[0]}</span>

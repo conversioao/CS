@@ -18,6 +18,7 @@ import Gallery from "./pages/Gallery";
 import Community from "./pages/Community";
 import Credits from "./pages/Credits";
 import Account from "./pages/Account";
+import Onboarding from "./pages/Onboarding";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/generate" element={<Generate />} />
           <Route path="/generate-video" element={<GenerateVideo />} />
