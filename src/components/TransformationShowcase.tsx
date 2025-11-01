@@ -4,9 +4,6 @@ import modelPersona from "@/assets/model-persona.jpg";
 import modelPulse from "@/assets/model-pulse.jpg";
 import modelStyleAI from "@/assets/model-styleai.jpg";
 import modelVision from "@/assets/model-vision.jpg";
-import transformationExample1 from "@/assets/transformation-example-1.jpg";
-import transformationExample2 from "@/assets/transformation-example-2.jpg";
-import transformationExample3 from "@/assets/transformation-example-3.jpg";
 
 const TransformationShowcase = () => {
   const models = [
@@ -16,7 +13,6 @@ const TransformationShowcase = () => {
       description: "Cria anúncios autênticos com pessoas verdadeiras e produtos reais.",
       gradient: "from-purple-500/20 to-pink-500/20",
       slug: "persona",
-      transformations: [transformationExample1, transformationExample2, transformationExample3],
     },
     {
       image: modelPulse,
@@ -24,7 +20,6 @@ const TransformationShowcase = () => {
       description: "Transforma o teu conteúdo em anúncios vibrantes e cheios de vida.",
       gradient: "from-pink-500/20 to-red-500/20",
       slug: "pulse",
-      transformations: [transformationExample2, transformationExample3, transformationExample1],
     },
     {
       image: modelStyleAI,
@@ -32,7 +27,6 @@ const TransformationShowcase = () => {
       description: "Experimenta digitalmente as tuas roupas com realismo profissional.",
       gradient: "from-blue-500/20 to-purple-500/20",
       slug: "styleai",
-      transformations: [transformationExample3, transformationExample1, transformationExample2],
     },
     {
       image: modelVision,
@@ -40,7 +34,6 @@ const TransformationShowcase = () => {
       description: "Cria anúncios com efeitos visuais dignos de cinema.",
       gradient: "from-green-500/20 to-blue-500/20",
       slug: "vision",
-      transformations: [transformationExample1, transformationExample2, transformationExample3],
     }
   ];
 
@@ -71,8 +64,13 @@ const TransformationShowcase = () => {
               }}
             >
               <div className="relative rounded-3xl overflow-hidden shadow-2xl hover:shadow-glow transition-all duration-500 border border-white/5">
+                <img
+                  src={model.image}
+                  alt={model.name}
+                  className="w-full h-80 object-cover"
+                />
                 {/* Conteúdo */}
-                <div className="p-6 sm:p-8">
+                <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
                   <div className="flex items-start justify-between gap-4 mb-3">
                     <h3 className="text-2xl sm:text-3xl font-bold text-white leading-tight">
                       {model.name}
@@ -82,21 +80,6 @@ const TransformationShowcase = () => {
                   <p className="text-gray-200 text-base sm:text-lg leading-relaxed">
                     {model.description}
                   </p>
-                  
-                  {/* Transformations Section */}
-                  <div className="mt-4 grid grid-cols-3 gap-2">
-                    {model.transformations.map((transformation, transformationIndex) => (
-                      <div key={transformationIndex} className="aspect-square overflow-hidden rounded-md">
-                        <img
-                          src={transformation}
-                          alt={`Transformation ${transformationIndex + 1}`}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                        />
-                      </div>
-                    ))}
-                  </div>
-
                   {/* Barra decorativa */}
                   <div className="mt-4 h-1 w-0 group-hover:w-full bg-gradient-to-r from-primary to-accent rounded-full transition-all duration-700" />
                 </div>
