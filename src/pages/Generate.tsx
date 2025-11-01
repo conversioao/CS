@@ -6,14 +6,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { ArrowLeft, Image, Sparkles, Upload, Download, Maximize2, Edit, Loader2, X } from "lucide-react";
+import { ArrowLeft, Image, Sparkles, Upload, Download, Maximize2, Edit, Loader2, X, SlidersHorizontal } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { storeMediaInSupabase } from "@/lib/supabase-storage";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface GeneratedImage {
   url: string;
@@ -36,7 +36,6 @@ const Generate = () => {
   const [description, setDescription] = useState("");
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
-  const [generationType, setGenerationType] = useState<"image" | "text">("text"); // Padrão para texto
   const [isLoading, setIsLoading] = useState(false);
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
   const [history, setHistory] = useState<GeneratedImage[]>([]);
@@ -50,14 +49,8 @@ const Generate = () => {
     const imageUrlParam = searchParams.get('imageUrl');
 
     if (modelParam) setModelo(modelParam);
-    if (descriptionParam) {
-      setDescription(descriptionParam);
-      setGenerationType("text"); // Se houver descrição, o modo é texto
-    }
-    if (imageUrlParam) {
-      setUploadedImageUrl(imageUrlParam);
-      setGenerationType("image"); // Se houver imagem, o modo é imagem
-    }
+    if (descriptionParam) setDescription(descriptionParam);
+    if (imageUrlParam) setUploadedImageUrl(imageUrlParam);
   }, [searchParams]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -101,12 +94,8 @@ const Generate = () => {
   };
 
   const handleGenerate = async () => {
-    if (generationType === "image" && !uploadedImage && !uploadedImageUrl) {
-      toast({ title: "Imagem necessária", description: "Por favor, faça o upload de uma imagem", variant: "destructive" });
-      return;
-    }
-    if (generationType === "text" && !description) {
-      toast({ title: "Descrição necessária", description: "Por favor, adicione uma descrição para gerar a imagem", variant: "destructive" });
+    if (!uploadedImageUrl && !description) {
+      toast({ title: "Faltam dados", description: "Por favor, envie uma imagem ou escreva uma descrição.", variant: "destructive" });
       return;
     }
 
@@ -116,7 +105,7 @@ const Generate = () => {
     try {
       let imgUrl = uploadedImageUrl;
       
-      if (generationType === "image" && uploadedImage) {
+      if (uploadedImage) {
         toast({ title: "Enviando imagem...", description: "Fazendo upload da sua imagem" });
         imgUrl = await uploadToImgbb(uploadedImage);
         setUploadedImageUrl(imgUrl);
@@ -128,15 +117,11 @@ const Generate = () => {
         modelo: modelo,
         quantidade: quantity.toString(),
         proporcao: aspectRatio,
-        tipo: generationType === "text" ? "texto" : "modelo",
         descricao: description || "",
+        tipo: uploadedImageUrl ? "modelo" : "texto",
+        image_url: uploadedImageUrl ? imgUrl : undefined,
+        text_prompt: !uploadedImageUrl ? description : undefined,
       };
-
-      if (generationType === "text") {
-        payload.text_prompt = description;
-      } else {
-        payload.image_url = imgUrl;
-      }
 
       const response = await fetch('https://n8n.conversio.ao/webhook/Gerar_Modelos', {
         method: 'POST',
@@ -233,7 +218,7 @@ const Generate = () => {
       </div>
       <div className="flex-1 flex flex-col overflow-hidden">
         <DashboardHeader />
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 relative">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 relative flex flex-col">
           <div className="absolute inset-0 pointer-events-none z-[-1] overflow-hidden">
             <div className="absolute inset-0 bg-dot-pattern opacity-20" />
             <div className="absolute top-[-20%] left-[-10%] w-[40rem] h-[40rem] bg-primary/10 rounded-full blur-3xl animate-pulse" />
@@ -251,18 +236,11 @@ const Generate = () => {
             </div>
           </div>
 
-          <div className="flex flex-col gap-6">
-            <div className="space-y-6">
-              <div className="bg-card/50 backdrop-blur-xl rounded-xl shadow-lg p-4 sm:p-6 min-h-[400px] sm:min-h-[600px] flex flex-col relative overflow-hidden">
+          <div className="flex-1 flex flex-col gap-6">
+            <div className="flex-1 flex flex-col">
+              <div className="bg-card/50 backdrop-blur-xl rounded-xl shadow-lg p-4 sm:p-6 flex-1 flex flex-col relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-40 h-40 bg-primary/5 rounded-full blur-2xl" />
                 <div className="absolute bottom-0 left-0 w-40 h-40 bg-secondary/5 rounded-full blur-2xl" />
-                
-                <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3 relative z-10">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-primary/10 backdrop-blur-sm flex items-center justify-center">
-                    <Image className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-                  </div>
-                  <span className="text-base sm:text-2xl">Resultado da Geração</span>
-                </h2>
                 
                 {isLoading ? (
                   <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 relative z-10">
@@ -304,33 +282,10 @@ const Generate = () => {
                 ) : (
                   <div className="flex flex-col items-center justify-center gap-4 text-center flex-1 relative z-10">
                     <div className="w-20 h-20 rounded-lg bg-muted/50 backdrop-blur-sm flex items-center justify-center"><Image className="w-10 h-10 text-muted-foreground" /></div>
-                    <div className="space-y-2"><h3 className="text-xl font-bold">Pronto para criar?</h3><p className="text-muted-foreground max-w-md text-sm">Configure as opções abaixo e clique em "Gerar Imagem" para começar</p></div>
+                    <div className="space-y-2"><h3 className="text-xl font-bold">Pronto para criar?</h3><p className="text-muted-foreground max-w-md text-sm">Envie uma imagem ou descreva o que você quer gerar na caixa abaixo.</p></div>
                   </div>
                 )}
               </div>
-
-              {history.length > 0 && (
-                <div className="bg-card/50 backdrop-blur-xl rounded-xl shadow-lg p-6">
-                  <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><Sparkles className="w-5 h-5 text-primary" />Histórico de Gerações</h3>
-                  <ScrollArea className="h-[300px] pr-4">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-                      {history.map((image, index) => (
-                        <Dialog key={image.id}>
-                          <DialogTrigger asChild>
-                            <div className="relative group cursor-pointer rounded-lg overflow-hidden hover:shadow-lg transition-all">
-                              <img src={image.url} alt={`Histórico ${index + 1}`} className="w-full aspect-square object-cover" loading="lazy" />
-                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]"><Maximize2 className="w-5 h-5 text-white" /></div>
-                            </div>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-[95vw] max-h-[95vh] p-4 overflow-auto">
-                            <div className="relative w-full h-full flex items-center justify-center"><img src={image.url} alt={`Histórico ${index + 1}`} className="max-w-full max-h-[85vh] object-contain" /></div>
-                          </DialogContent>
-                        </Dialog>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                </div>
-              )}
             </div>
 
             <Dialog open={editModal.isOpen} onOpenChange={(open) => !isEditing && setEditModal({ isOpen: open, imageUrl: '', imageId: '' })}>
@@ -351,57 +306,54 @@ const Generate = () => {
                 </div>
               </DialogContent>
             </Dialog>
-
-            <div className="space-y-4">
-              <Card className="p-0 bg-card/50 backdrop-blur-xl shadow-lg overflow-hidden">
-                <div className="p-4 sm:p-6">
-                  <div className="flex items-center gap-2 p-1 bg-muted/30 rounded-lg">
-                    <Button type="button" variant={generationType === "image" ? "default" : "ghost"} size="sm" onClick={() => setGenerationType("image")} disabled={isLoading} className="flex-1 transition-all"><Image className="w-4 h-4 mr-2" />Imagem</Button>
-                    <Button type="button" variant={generationType === "text" ? "default" : "ghost"} size="sm" onClick={() => setGenerationType("text")} disabled={isLoading} className="flex-1 transition-all"><Sparkles className="w-4 h-4 mr-2" />Texto</Button>
+          </div>
+          
+          <div className="w-full max-w-3xl mx-auto mt-6 sticky bottom-6">
+            <div className="relative flex items-center gap-2 rounded-full bg-card/80 backdrop-blur-xl border border-border/50 p-2 shadow-lg">
+              <div className="relative">
+                <Input id="image-upload" type="file" accept=".jpg,.jpeg,.png" onChange={handleImageUpload} className="hidden" />
+                <label htmlFor="image-upload">
+                  <Button variant="ghost" size="icon" className="rounded-full" asChild disabled={isLoading}>
+                    <span><Upload className="w-5 h-5" /></span>
+                  </Button>
+                </label>
+                {uploadedImageUrl && (
+                  <div className="absolute -top-14 left-0 w-12 h-12 rounded-lg overflow-hidden border-2 border-primary shadow-md">
+                    <img src={uploadedImageUrl} alt="Preview" className="w-full h-full object-cover" />
+                    <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-5 w-5 rounded-full" onClick={removeUploadedImage} disabled={isLoading}>
+                      <X className="w-3 h-3" />
+                    </Button>
                   </div>
-                </div>
+                )}
+              </div>
 
-                <Accordion type="multiple" defaultValue={['item-1', 'item-2', 'item-3']} className="w-full">
-                  <AccordionItem value="item-1" className="border-t border-border/50">
-                    <AccordionTrigger className="px-4 sm:px-6 py-4 text-base font-semibold">{generationType === 'image' ? '1. Imagem Base' : '1. Descrição Principal'}</AccordionTrigger>
-                    <AccordionContent className="px-4 sm:px-6 pb-6">
-                      {generationType === "image" ? (
-                        <div className="space-y-2">
-                          <Input id="image-upload" type="file" accept=".jpg,.jpeg,.png" onChange={handleImageUpload} className="hidden" />
-                          <label htmlFor="image-upload">
-                            <Button variant="outline" className="w-full justify-start gap-2 h-auto py-3 border-dashed" asChild disabled={isLoading}>
-                              <span><Upload className="w-4 h-4" /><span className="text-sm">{uploadedImage ? uploadedImage.name : 'Carregar imagem do produto'}</span></span>
-                            </Button>
-                          </label>
-                          {uploadedImageUrl && (
-                            <div className="relative mt-2 rounded-lg overflow-hidden border">
-                              <img src={uploadedImageUrl} alt="Preview" className="w-full h-32 object-cover" />
-                              <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-8 w-8" onClick={removeUploadedImage} disabled={isLoading}><X className="w-3 h-3" /></Button>
-                            </div>
-                          )}
-                          <p className="text-xs text-muted-foreground flex items-center gap-1"><span>📎</span> Formatos: .jpg, .jpeg, .png</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          <Label htmlFor="description" className="font-semibold">Descrição da Imagem *</Label>
-                          <Textarea id="description" placeholder="Descreva a imagem que deseja criar em detalhes..." value={description} onChange={(e) => setDescription(e.target.value)} disabled={isLoading} className="min-h-[120px] resize-none" />
-                        </div>
-                      )}
-                    </AccordionContent>
-                  </AccordionItem>
-                  <AccordionItem value="item-2" className="border-t border-border/50">
-                    <AccordionTrigger className="px-4 sm:px-6 py-4 text-base font-semibold">2. Modelo e Estilo</AccordionTrigger>
-                    <AccordionContent className="px-4 sm:px-6 pb-6 space-y-4">
-                      {generationType === 'image' && (
-                        <div className="space-y-2">
-                          <Label htmlFor="description-optional" className="font-semibold">Descrição (Opcional)</Label>
-                          <Textarea id="description-optional" placeholder="Descreva o que você quer gerar..." value={description} onChange={(e) => setDescription(e.target.value)} disabled={isLoading} className="min-h-[80px] resize-none" />
-                        </div>
-                      )}
-                      <div className="space-y-2">
-                        <Label htmlFor="model" className="font-semibold">Modelo de IA</Label>
+              <Textarea
+                id="description"
+                placeholder={uploadedImageUrl ? "Descreva o que quer alterar ou adicionar..." : "Descreva a imagem que deseja criar..."}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                disabled={isLoading}
+                className="flex-1 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 resize-none text-base py-2.5"
+                rows={1}
+              />
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="icon" className="rounded-full" disabled={isLoading}>
+                    <SlidersHorizontal className="w-5 h-5" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 mb-2">
+                  <div className="grid gap-4">
+                    <div className="space-y-2">
+                      <h4 className="font-medium leading-none">Configurações</h4>
+                      <p className="text-sm text-muted-foreground">Ajuste os parâmetros da geração.</p>
+                    </div>
+                    <div className="grid gap-2">
+                      <div className="grid grid-cols-3 items-center gap-4">
+                        <Label htmlFor="model">Modelo</Label>
                         <Select value={modelo} onValueChange={setModelo} disabled={isLoading}>
-                          <SelectTrigger id="model"><SelectValue /></SelectTrigger>
+                          <SelectTrigger id="model" className="col-span-2 h-8"><SelectValue /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="Advision UGC">Advision UGC</SelectItem>
                             <SelectItem value="SocialBost">SocialBost</SelectItem>
@@ -410,36 +362,29 @@ const Generate = () => {
                           </SelectContent>
                         </Select>
                       </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                  <AccordionItem value="item-3" className="border-t border-border/50">
-                    <AccordionTrigger className="px-4 sm:px-6 py-4 text-base font-semibold">3. Ajustes Finais</AccordionTrigger>
-                    <AccordionContent className="px-4 sm:px-6 pb-6">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label className="font-semibold">Quantidade</Label>
-                          <Input type="number" min="1" max="10" value={quantity} onChange={(e) => setQuantity(Math.min(10, Math.max(1, parseInt(e.target.value) || 1)))} disabled={isLoading} className="text-center" />
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="font-semibold">Proporção</Label>
-                          <Select value={aspectRatio} onValueChange={setAspectRatio} disabled={isLoading}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="1:1">1:1</SelectItem>
-                              <SelectItem value="9:16">9:16</SelectItem>
-                              <SelectItem value="16:9">16:9</SelectItem>
-                              <SelectItem value="4:5">4:5</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
+                      <div className="grid grid-cols-3 items-center gap-4">
+                        <Label htmlFor="quantity">Quantidade</Label>
+                        <Input id="quantity" type="number" min="1" max="10" value={quantity} onChange={(e) => setQuantity(Math.min(10, Math.max(1, parseInt(e.target.value) || 1)))} disabled={isLoading} className="col-span-2 h-8" />
                       </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
-              </Card>
+                      <div className="grid grid-cols-3 items-center gap-4">
+                        <Label htmlFor="aspectRatio">Proporção</Label>
+                        <Select value={aspectRatio} onValueChange={setAspectRatio} disabled={isLoading}>
+                          <SelectTrigger id="aspectRatio" className="col-span-2 h-8"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1:1">1:1</SelectItem>
+                            <SelectItem value="9:16">9:16</SelectItem>
+                            <SelectItem value="16:9">16:9</SelectItem>
+                            <SelectItem value="4:5">4:5</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
 
-              <Button className="w-full h-11 sm:h-12 font-semibold text-sm sm:text-base gradient-primary glow-effect hover:scale-[1.02] transition-transform" size="lg" onClick={handleGenerate} disabled={isLoading || (generationType === "image" && !uploadedImageUrl) || (generationType === "text" && !description)}>
-                {isLoading ? (<><Loader2 className="w-4 h-4 animate-spin mr-2" />Gerando...</>) : (<><Sparkles className="w-4 h-4 mr-2" />Gerar Imagem</>)}
+              <Button size="icon" className="rounded-full w-10 h-10 gradient-primary glow-effect" onClick={handleGenerate} disabled={isLoading || (!uploadedImageUrl && !description)}>
+                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
               </Button>
             </div>
           </div>
