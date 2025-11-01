@@ -1,48 +1,34 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { PartyPopper, CheckCircle, Smartphone } from "lucide-react";
+import { PartyPopper } from "lucide-react";
 
 interface WelcomeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  isVerified?: boolean;
+  userName: string;
 }
 
-const WelcomeModal = ({ isOpen, onClose, isVerified = false }: WelcomeModalProps) => {
+const WelcomeModal = ({ isOpen, onClose, userName }: WelcomeModalProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <div className="flex justify-center mb-4">
             <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-              {isVerified ? (
-                <CheckCircle className="w-8 h-8 text-green-500" />
-              ) : (
-                <PartyPopper className="w-8 h-8 text-primary" />
-              )}
+              <PartyPopper className="w-8 h-8 text-primary" />
             </div>
           </div>
           <DialogTitle className="text-center text-2xl">
-            {isVerified ? "Bem-vindo, Verificado!" : "Bem-vindo ao Conversio Studio!"}
+            Conta Verificada, {userName}!
           </DialogTitle>
           <DialogDescription className="text-center pt-2">
-            {isVerified 
-              ? "Sua conta foi criada e verificada com sucesso. Você ganhou 50 créditos para começar a criar." 
-              : "Sua conta foi criada com sucesso. Você ganhou 50 créditos para começar a criar."
-            }
+            Você ganhou <strong>50 créditos</strong> para usar durante os próximos 2 dias. Explore todo o poder da nossa plataforma e comece a criar!
           </DialogDescription>
         </DialogHeader>
         
-        {isVerified && (
-          <div className="flex items-center justify-center gap-2 py-2">
-            <Smartphone className="w-4 h-4 text-green-500" />
-            <span className="text-sm text-green-600 font-medium">Número de WhatsApp Verificado</span>
-          </div>
-        )}
-        
         <DialogFooter>
           <Button onClick={onClose} className="w-full gradient-primary">
-            Iniciar Tour Rápido
+            Boas-vindas
           </Button>
         </DialogFooter>
       </DialogContent>

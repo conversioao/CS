@@ -10,9 +10,10 @@ import { toast } from 'sonner';
 interface VerificationModalProps {
   isOpen: boolean;
   userId: string;
+  onSuccess: () => void;
 }
 
-const VerificationModal = ({ isOpen, userId }: VerificationModalProps) => {
+const VerificationModal = ({ isOpen, userId, onSuccess }: VerificationModalProps) => {
   const [verificationCode, setVerificationCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -25,13 +26,8 @@ const VerificationModal = ({ isOpen, userId }: VerificationModalProps) => {
 
       if (error) throw error;
       if (!data.success) throw new Error(data.error || 'Falha na verificação');
-
-      toast.success("Conta verificada com sucesso!", {
-        description: "O seu acesso foi totalmente liberado.",
-      });
       
-      // Recarregar a página para atualizar o estado da sessão
-      window.location.reload();
+      onSuccess();
 
     } catch (error: any) {
       toast.error("Código de Verificação Inválido", {

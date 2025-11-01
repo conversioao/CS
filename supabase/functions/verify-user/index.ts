@@ -24,12 +24,21 @@ serve(async (req) => {
   }
 
   try {
-    const { userId } = await req.json();
+    const { userId, verificationCode } = await req.json();
     
-    if (!userId) {
+    if (!userId || !verificationCode) {
       // @ts-ignore
       return new Response(
-        JSON.stringify({ success: false, error: 'ID do utilizador é obrigatório' }),
+        JSON.stringify({ success: false, error: 'ID do utilizador e código são obrigatórios' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+
+    // Para fins de teste, o código é '123456'
+    if (verificationCode !== '123456') {
+      // @ts-ignore
+      return new Response(
+        JSON.stringify({ success: false, error: 'Código de verificação inválido.' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
@@ -40,9 +49,7 @@ serve(async (req) => {
       .update({ status: 'verified' })
       .eq('id', userId);
 
-    if (profileError) {
-      throw profileError;
-    }
+    if (profileError) throw profileError;
 
     // Confirmar o "e-mail" do utilizador na autenticação do Supabase
     const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(
@@ -50,9 +57,7 @@ serve(async (req) => {
       { email_confirm: true }
     );
 
-    if (authError) {
-      throw authError;
-    }
+    if (authError) throw authError;
 
     // @ts-ignore
     return new Response(

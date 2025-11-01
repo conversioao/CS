@@ -5,50 +5,63 @@ import WelcomeModal from "@/components/WelcomeModal";
 import DashboardTutorial from "@/components/DashboardTutorial";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import VerificationModal from "@/components/VerificationModal";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 import { useSession } from "@/contexts/SessionContext";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 const Dashboard = () => {
-  const { user, profile, loading } = useSession();
-  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const { user, profile } = useSession();
+  const [showPostVerificationWelcome, setShowPostVerificationWelcome] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
 
   const isVerified = profile?.status === 'verified';
 
-  useEffect(() => {
-    // Don't do anything until the session has loaded
-    if (loading) return;
+  const handleVerificationSuccess = async () => {
+    // Força a atualização da sessão para obter o novo status 'verified'
+    await supabase.auth.refreshSession(); 
+    // Recarrega a página para garantir que o contexto da sessão é atualizado
+    window.location.reload(); 
+  };
 
-    const isNewUser = localStorage.getItem('isNewUser');
-    // Show the welcome/tutorial flow ONLY if the user is new AND verified.
-    if (isNewUser === 'true' && isVerified) {
-      setShowWelcomeModal(true);
-    }
-  }, [isVerified, loading]);
-
-  const handleCloseModal = () => {
-    setShowWelcomeModal(false);
+  const handleStartTutorial = () => {
+    setShowPostVerificationWelcome(false);
     setShowTutorial(true);
   };
 
   const handleFinishTutorial = () => {
     setShowTutorial(false);
-    // Clear the flag so the tutorial doesn't show again.
     localStorage.removeItem('isNewUser');
   };
+  
+  // Efeito para mostrar a modal de boas-vindas após a verificação
+  useState(() => {
+    const isNewUser = localStorage.getItem('isNewUser');
+    if (isNewUser && isVerified) {
+      setShowPostVerificationWelcome(true);
+    }
+  });
 
   return (
     <>
-      {/* The Welcome Modal and Tutorial will only appear for newly verified users */}
-      {showWelcomeModal && <WelcomeModal isOpen={showWelcomeModal} onClose={handleCloseModal} isVerified={isVerified} />}
+      {showPostVerificationWelcome && (
+        <WelcomeModal 
+          isOpen={showPostVerificationWelcome} 
+          onClose={handleStartTutorial} 
+          userName={profile?.full_name?.split(' ')[0] || 'Criador'} 
+        />
+      )}
       {showTutorial && <DashboardTutorial onFinish={handleFinishTutorial} />}
-      
-      {/* The Verification Modal will only appear for unverified users */}
-      {user && !isVerified && <VerificationModal isOpen={!isVerified} userId={user.id} />}
+      {user && !isVerified && (
+        <VerificationModal 
+          isOpen={!isVerified} 
+          userId={user.id} 
+          onSuccess={handleVerificationSuccess} 
+        />
+      )}
 
       <div className="min-h-screen bg-background flex">
         <div className="hidden lg:block">
