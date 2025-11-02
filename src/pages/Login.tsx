@@ -19,14 +19,37 @@ const Login = () => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Supabase usa email para login com senha, então criamos um email "falso"
     const formattedWhatsapp = `+244${whatsapp.replace(/\s/g, '')}`;
     const dummyEmail = `${formattedWhatsapp}@conversio.studio`;
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email: dummyEmail, password });
+      const { data: loginData, error } = await supabase.auth.signInWithPassword({ email: dummyEmail, password });
       if (error) throw error;
-      navigate('/dashboard');
+
+      if (loginData.user) {
+        // Check user profile for account type
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('account_type')
+          .eq('id', loginData.user.id)
+          .single();
+
+        if (profileError) {
+          // If profile not found, default to user dashboard
+          console.error("Error fetching profile:", profileError);
+          navigate('/dashboard');
+          return;
+        }
+
+        if (profile.account_type === 'admin') {
+          navigate('/admin');
+        } else {
+          navigate('/dashboard');
+        }
+      } else {
+        navigate('/dashboard');
+      }
+
     } catch (error: any) {
       toast.error('Erro no Login', {
         description: 'Número de WhatsApp ou senha incorretos.',
