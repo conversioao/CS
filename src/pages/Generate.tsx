@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { ArrowLeft, Image, Sparkles, Download, Maximize2, Edit, Loader2, X, SlidersHorizontal, Camera, Square, RectangleVertical, RectangleHorizontal, ZoomIn, ZoomOut } from "lucide-react";
+import { ArrowLeft, Image, Sparkles, Download, Maximize2, Edit, Loader2, X, SlidersHorizontal, Camera, Square, RectangleVertical, RectangleHorizontal, ZoomIn, ZoomOut, Upload } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
