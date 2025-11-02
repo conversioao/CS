@@ -18,6 +18,7 @@ interface SessionContextValue {
   user: User | null;
   profile: Profile | null;
   loading: boolean;
+  refetchProfile: () => Promise<void>;
 }
 
 const SessionContext = createContext<SessionContextValue | undefined>(undefined);
@@ -28,24 +29,30 @@ export const SessionContextProvider = ({ children }: { children: React.ReactNode
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const fetchProfile = async (user: User) => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+
+    if (error) {
+      console.error('Error fetching profile:', error);
+      setProfile(null);
+    } else {
+      setProfile(data);
+    }
+  };
+
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       setLoading(true);
       setSession(session);
-      setUser(session?.user ?? null);
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
 
-      if (session?.user) {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-
-        if (error) {
-          console.error('Error fetching profile:', error);
-        } else {
-          setProfile(data);
-        }
+      if (currentUser) {
+        await fetchProfile(currentUser);
       } else {
         setProfile(null);
       }
@@ -57,11 +64,20 @@ export const SessionContextProvider = ({ children }: { children: React.ReactNode
     };
   }, []);
 
+  const refetchProfile = async () => {
+    if (user) {
+      setLoading(true);
+      await fetchProfile(user);
+      setLoading(false);
+    }
+  };
+
   const value = {
     session,
     user,
     profile,
     loading,
+    refetchProfile,
   };
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

@@ -11,19 +11,17 @@ import { Link } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 import { useSession } from "@/contexts/SessionContext";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
 
 const Dashboard = () => {
-  const { user, profile, loading } = useSession();
+  const { user, profile, loading, refetchProfile } = useSession();
   const [showPostVerificationWelcome, setShowPostVerificationWelcome] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
 
   const isVerified = profile?.status === 'verified';
 
   const handleVerificationSuccess = async () => {
-    // Força a atualização da sessão para obter o novo status 'verified'
-    // O listener onAuthStateChange no SessionContext irá tratar da atualização do estado.
-    await supabase.auth.refreshSession();
+    // Explicitly refetch the profile to get the 'verified' status
+    await refetchProfile();
   };
 
   const handleStartTutorial = () => {
@@ -36,7 +34,6 @@ const Dashboard = () => {
     localStorage.removeItem('isNewUser');
   };
   
-  // Efeito para mostrar a modal de boas-vindas após a verificação
   useEffect(() => {
     if (loading) return;
     const isNewUser = localStorage.getItem('isNewUser');
