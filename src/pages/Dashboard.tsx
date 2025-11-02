@@ -20,7 +20,7 @@ const Dashboard = () => {
   const isVerified = profile?.status === 'verified';
 
   const handleVerificationSuccess = async () => {
-    // Explicitly refetch the profile to get the 'verified' status
+    // A sessão já foi atualizada na modal, agora apenas buscamos o perfil atualizado.
     await refetchProfile();
   };
 

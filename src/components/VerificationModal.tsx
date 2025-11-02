@@ -2,8 +2,6 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Loader2, ShieldCheck } from "lucide-react";
 import { toast } from 'sonner';
 
@@ -14,35 +12,34 @@ interface VerificationModalProps {
 }
 
 const VerificationModal = ({ isOpen, userId, onSuccess }: VerificationModalProps) => {
-  const [verificationCode, setVerificationCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleVerify = async () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('verify-user', {
-        body: { userId, verificationCode }
+        body: { userId }
       });
 
       if (error) throw error;
       if (!data.success) throw new Error(data.error || 'Falha na verificação');
       
-      toast.success("Verificação bem-sucedida!", {
-        description: "A finalizar a configuração da sua conta...",
-      });
+      // Força a atualização da sessão do cliente para refletir o estado verificado
+      await supabase.auth.refreshSession();
 
-      // Aguarda 5 segundos para garantir que o backend propaga a atualização
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      toast.success("Conta ativada com sucesso!", {
+        description: "A preparar o seu estúdio criativo...",
+      });
 
       onSuccess();
 
     } catch (error: any) {
-      toast.error("Código de Verificação Inválido", {
-        description: error.message || "Por favor, verifique o código e tente novamente.",
+      toast.error("Erro na Ativação", {
+        description: error.message || "Não foi possível ativar a sua conta. Tente novamente.",
       });
-      setIsLoading(false); // Permite nova tentativa em caso de erro
+    } finally {
+      setIsLoading(false);
     }
-    // Em caso de sucesso, o isLoading não é desativado porque o componente será desmontado.
   };
 
   return (
@@ -56,23 +53,13 @@ const VerificationModal = ({ isOpen, userId, onSuccess }: VerificationModalProps
           </div>
           <DialogTitle className="text-center text-2xl">Ative a sua Conta</DialogTitle>
           <DialogDescription className="text-center pt-2">
-            Para desbloquear todas as funcionalidades, por favor, insira o código de verificação que enviámos para o seu WhatsApp.
+            Para desbloquear todas as funcionalidades, por favor, clique no botão abaixo para ativar a sua conta.
           </DialogDescription>
         </DialogHeader>
         
-        <div className="space-y-2 py-4">
-          <Label htmlFor="verification-code">Código de Verificação</Label>
-          <Input 
-            id="verification-code" 
-            placeholder="O código é 123456" 
-            value={verificationCode}
-            onChange={(e) => setVerificationCode(e.target.value)}
-          />
-        </div>
-        
-        <DialogFooter>
+        <DialogFooter className="pt-4">
           <Button onClick={handleVerify} className="w-full gradient-primary" disabled={isLoading}>
-            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verificar e Ativar"}
+            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Ativar Conta"}
           </Button>
         </DialogFooter>
       </DialogContent>

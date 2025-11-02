@@ -24,21 +24,12 @@ serve(async (req) => {
   }
 
   try {
-    const { userId, verificationCode } = await req.json();
+    const { userId } = await req.json();
     
-    if (!userId || !verificationCode) {
+    if (!userId) {
       // @ts-ignore
       return new Response(
-        JSON.stringify({ success: false, error: 'ID do utilizador e código são obrigatórios' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
-    }
-
-    // Para fins de teste, o código é '123456'
-    if (verificationCode !== '123456') {
-      // @ts-ignore
-      return new Response(
-        JSON.stringify({ success: false, error: 'Código de verificação inválido.' }),
+        JSON.stringify({ success: false, error: 'ID do utilizador é obrigatório' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
