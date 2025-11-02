@@ -6,9 +6,10 @@ import DashboardSidebar from "@/components/DashboardSidebar";
 import VerificationPromptModal from "@/components/VerificationPromptModal";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
-import { Sparkles } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
+import { Sparkles, Zap } from "lucide-react";
 import { useSession } from "@/contexts/SessionContext";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Dashboard = () => {
   const { profile, loading } = useSession();
@@ -75,6 +76,23 @@ const Dashboard = () => {
 
             <div className="space-y-12">
               <ToolsSection />
+              <Card className="bg-gradient-to-r from-green-500/10 to-cyan-500/10 border-green-500/20">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Zap className="w-6 h-6 text-green-400" />
+                    <span>Exclusivo: Geração de Imagens por WhatsApp</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <p className="text-muted-foreground">
+                    Ative a subscrição e crie imagens diretamente do seu WhatsApp. <br />
+                    Custo: <strong>15.000 créditos/mês</strong>.
+                  </p>
+                  <Link to="/account">
+                    <Button variant="outline" className="bg-card/50">Ativar Agora</Button>
+                  </Link>
+                </CardContent>
+              </Card>
               <RecentCreations />
             </div>
           </main>
