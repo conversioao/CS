@@ -86,10 +86,14 @@ const Credits = () => {
     }
     setIsSubmitting(true);
     try {
-      const uploadResponse = await fetch(`https://api.imgbb.com/1/upload?key=8360d0dc6e3b2243b4dc8a45b4040974`, { method: 'POST', body: new FormData().append('image', paymentProof) && new FormData() });
       const formData = new FormData();
       formData.append('image', paymentProof);
-      const response = await fetch('https://api.imgbb.com/1/upload?key=8360d0dc6e3b2243b4dc8a45b4040974', { method: 'POST', body: formData });
+      
+      const response = await fetch('https://api.imgbb.com/1/upload?key=8360d0dc6e3b2243b4dc8a45b4040974', { 
+        method: 'POST', 
+        body: formData 
+      });
+
       if (!response.ok) throw new Error('Erro ao fazer upload do comprovante');
       const uploadData = await response.json();
       const proofUrl = uploadData.data.url;
