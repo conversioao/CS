@@ -22,6 +22,7 @@ const transactions = [
 
 const Account = () => {
   const { user, profile, refetchProfile } = useSession();
+  const [verificationCode, setVerificationCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [logoSrc, setLogoSrc] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -62,11 +63,14 @@ const Account = () => {
   };
 
   const handleVerifyAccount = async () => {
-    if (!user) return;
+    if (!user || !verificationCode.trim()) {
+      toast.error("Código necessário", { description: "Por favor, insira o seu código de verificação." });
+      return;
+    }
     setIsVerifying(true);
     try {
       const { data, error } = await supabase.functions.invoke('verify-user', {
-        body: { userId: user.id }
+        body: { userId: user.id, verificationCode }
       });
       if (error) throw error;
       if (!data.success) throw new Error(data.error || 'Falha na verificação');
@@ -102,21 +106,40 @@ const Account = () => {
             </TabsList>
 
             <TabsContent value="profile">
-              {!isVerified && (
+              {!isVerified ? (
                 <Card className="mb-6 bg-yellow-500/10 border-yellow-500/30">
                   <CardHeader className="flex-row items-center gap-4 space-y-0">
                     <ShieldAlert className="w-8 h-8 text-yellow-600 flex-shrink-0" />
                     <div>
                       <CardTitle>Verifique a sua conta</CardTitle>
-                      <CardDescription>Para aceder a todas as ferramentas, verifique a sua conta.</CardDescription>
+                      <CardDescription>Insira o código recebido no WhatsApp para ativar todas as funcionalidades.</CardDescription>
                     </div>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="verification-code">Código de Verificação</Label>
+                      <Input 
+                        id="verification-code" 
+                        placeholder="Insira o código aqui" 
+                        value={verificationCode}
+                        onChange={(e) => setVerificationCode(e.target.value)}
+                      />
+                    </div>
                     <Button onClick={handleVerifyAccount} disabled={isVerifying} className="bg-yellow-500 hover:bg-yellow-600 text-black">
                       {isVerifying ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ShieldCheck className="w-4 h-4 mr-2" />}
-                      Verificar Agora
+                      Verificar Conta
                     </Button>
                   </CardContent>
+                </Card>
+              ) : (
+                 <Card className="mb-6 bg-green-500/10 border-green-500/30">
+                  <CardHeader className="flex-row items-center gap-4 space-y-0">
+                    <ShieldCheck className="w-8 h-8 text-green-600 flex-shrink-0" />
+                    <div>
+                      <CardTitle>Conta Verificada</CardTitle>
+                      <CardDescription>A sua conta está ativa. Todas as funcionalidades estão disponíveis.</CardDescription>
+                    </div>
+                  </CardHeader>
                 </Card>
               )}
               <Card className="bg-card/50 backdrop-blur-xl">

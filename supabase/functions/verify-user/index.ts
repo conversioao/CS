@@ -24,17 +24,26 @@ serve(async (req) => {
   }
 
   try {
-    const { userId } = await req.json();
+    const { userId, verificationCode } = await req.json();
     
-    if (!userId) {
+    if (!userId || !verificationCode) {
       // @ts-ignore
       return new Response(
-        JSON.stringify({ success: false, error: 'ID do utilizador é obrigatório' }),
+        JSON.stringify({ success: false, error: 'ID do utilizador e código de verificação são obrigatórios' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
 
-    // Atualizar o status no perfil para 'verified'
+    // A lógica de verificação principal: o código deve ser igual ao ID do utilizador.
+    if (userId !== verificationCode) {
+      // @ts-ignore
+      return new Response(
+        JSON.stringify({ success: false, error: 'Código de verificação inválido.' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+
+    // Se o código estiver correto, prossiga com a ativação.
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
       .update({ status: 'verified' })
@@ -42,7 +51,6 @@ serve(async (req) => {
 
     if (profileError) throw profileError;
 
-    // Confirmar o "e-mail" do utilizador na autenticação do Supabase
     const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(
       userId,
       { email_confirm: true }
