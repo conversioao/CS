@@ -1,64 +1,48 @@
 import DashboardHeader from "@/components/DashboardHeader";
 import ToolsSection from "@/components/ToolsSection";
 import RecentCreations from "@/components/RecentCreations";
-import WelcomeModal from "@/components/WelcomeModal";
 import DashboardTutorial from "@/components/DashboardTutorial";
 import DashboardSidebar from "@/components/DashboardSidebar";
-import VerificationModal from "@/components/VerificationModal";
+import VerificationPromptModal from "@/components/VerificationPromptModal";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 import { useSession } from "@/contexts/SessionContext";
-import { cn } from "@/lib/utils";
 
 const Dashboard = () => {
-  const { user, profile, loading, refetchProfile } = useSession();
-  const [showPostVerificationWelcome, setShowPostVerificationWelcome] = useState(false);
+  const { profile, loading } = useSession();
   const [showTutorial, setShowTutorial] = useState(false);
+  const [showVerificationPrompt, setShowVerificationPrompt] = useState(false);
+  const navigate = useNavigate();
 
   const isVerified = profile?.status === 'verified';
 
-  const handleVerificationSuccess = async () => {
-    // A sessão já foi atualizada na modal, agora apenas buscamos o perfil atualizado.
-    await refetchProfile();
-  };
-
-  const handleStartTutorial = () => {
-    setShowPostVerificationWelcome(false);
-    setShowTutorial(true);
-  };
+  useEffect(() => {
+    if (loading) return;
+    const isNewUser = localStorage.getItem('isNewUser');
+    if (isNewUser) {
+      setShowTutorial(true);
+    }
+  }, [loading]);
 
   const handleFinishTutorial = () => {
     setShowTutorial(false);
     localStorage.removeItem('isNewUser');
   };
-  
-  useEffect(() => {
-    if (loading) return;
-    const isNewUser = localStorage.getItem('isNewUser');
-    if (isNewUser && isVerified) {
-      setShowPostVerificationWelcome(true);
+
+  const handleNewCreationClick = () => {
+    if (!isVerified) {
+      setShowVerificationPrompt(true);
+    } else {
+      navigate('/generate');
     }
-  }, [isVerified, loading]);
+  };
 
   return (
     <>
-      {showPostVerificationWelcome && (
-        <WelcomeModal 
-          isOpen={showPostVerificationWelcome} 
-          onClose={handleStartTutorial} 
-          userName={profile?.full_name?.split(' ')[0] || 'Criador'} 
-        />
-      )}
       {showTutorial && <DashboardTutorial onFinish={handleFinishTutorial} />}
-      {user && !isVerified && (
-        <VerificationModal 
-          isOpen={!isVerified} 
-          userId={user.id} 
-          onSuccess={handleVerificationSuccess} 
-        />
-      )}
+      <VerificationPromptModal isOpen={showVerificationPrompt} onClose={() => setShowVerificationPrompt(false)} />
 
       <div className="min-h-screen bg-background flex">
         <div className="hidden lg:block">
@@ -83,15 +67,13 @@ const Dashboard = () => {
                   Vamos criar algo incrível hoje!
                 </p>
               </div>
-              <Link to="/generate">
-                <Button size="lg" className="gradient-primary glow-effect" disabled={!isVerified}>
-                  <Sparkles className="w-5 h-5 mr-2" />
-                  Nova Criação
-                </Button>
-              </Link>
+              <Button size="lg" className="gradient-primary glow-effect" onClick={handleNewCreationClick}>
+                <Sparkles className="w-5 h-5 mr-2" />
+                Nova Criação
+              </Button>
             </div>
 
-            <div className={cn("space-y-12", !isVerified && "opacity-20 pointer-events-none")}>
+            <div className="space-y-12">
               <ToolsSection />
               <RecentCreations />
             </div>

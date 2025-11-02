@@ -4,13 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { User, Upload, Settings, CreditCard, Bot, Palette, Copy, Banknote, History } from "lucide-react";
+import { User, Upload, Settings, CreditCard, Bot, Palette, Copy, Banknote, History, ShieldAlert, ShieldCheck, Loader2 } from "lucide-react";
 import { useState, useRef } from "react";
 import useColorThief from "use-color-thief";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useSession } from "@/contexts/SessionContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const transactions = [
   { id: "TRX001", date: "15/07/2024", description: "Pacote Pro", amount: "49.950 Kzs", status: "Aprovado" },
@@ -19,9 +21,13 @@ const transactions = [
 ];
 
 const Account = () => {
+  const { user, profile, refetchProfile } = useSession();
+  const [isVerifying, setIsVerifying] = useState(false);
   const [logoSrc, setLogoSrc] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
+
+  const isVerified = profile?.status === 'verified';
 
   const { palette } = useColorThief(logoSrc, {
     format: 'hex',
@@ -55,6 +61,27 @@ const Account = () => {
     toast.success("Cor copiada!", { description: text });
   };
 
+  const handleVerifyAccount = async () => {
+    if (!user) return;
+    setIsVerifying(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('verify-user', {
+        body: { userId: user.id }
+      });
+      if (error) throw error;
+      if (!data.success) throw new Error(data.error || 'Falha na verificação');
+      
+      await supabase.auth.refreshSession();
+      await refetchProfile();
+
+      toast.success("Conta verificada com sucesso!");
+    } catch (error: any) {
+      toast.error("Erro na verificação", { description: error.message });
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background flex">
       <div className="hidden lg:block"><DashboardSidebar /></div>
@@ -75,12 +102,29 @@ const Account = () => {
             </TabsList>
 
             <TabsContent value="profile">
+              {!isVerified && (
+                <Card className="mb-6 bg-yellow-500/10 border-yellow-500/30">
+                  <CardHeader className="flex-row items-center gap-4 space-y-0">
+                    <ShieldAlert className="w-8 h-8 text-yellow-600 flex-shrink-0" />
+                    <div>
+                      <CardTitle>Verifique a sua conta</CardTitle>
+                      <CardDescription>Para aceder a todas as ferramentas, verifique a sua conta.</CardDescription>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <Button onClick={handleVerifyAccount} disabled={isVerifying} className="bg-yellow-500 hover:bg-yellow-600 text-black">
+                      {isVerifying ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ShieldCheck className="w-4 h-4 mr-2" />}
+                      Verificar Agora
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
               <Card className="bg-card/50 backdrop-blur-xl">
                 <CardHeader><CardTitle>Informações Pessoais</CardTitle></CardHeader>
                 <CardContent className="space-y-6">
                   <div className="grid md:grid-cols-2 gap-6">
-                    <div className="space-y-2"><Label htmlFor="name">Nome Completo</Label><Input id="name" defaultValue="Usuário Conversio" /></div>
-                    <div className="space-y-2"><Label htmlFor="email">E-mail</Label><Input id="email" type="email" defaultValue="usuario@conversio.studio" /></div>
+                    <div className="space-y-2"><Label htmlFor="name">Nome Completo</Label><Input id="name" defaultValue={profile?.full_name || ''} /></div>
+                    <div className="space-y-2"><Label htmlFor="email">E-mail</Label><Input id="email" type="email" defaultValue={user?.email?.split('@')[0] || ''} readOnly /></div>
                   </div>
                   <Button><Settings className="w-4 h-4 mr-2" />Salvar Alterações</Button>
                 </CardContent>
@@ -151,7 +195,7 @@ const Account = () => {
                   <Card className="bg-card/50 backdrop-blur-xl">
                     <CardHeader><CardTitle className="flex items-center gap-2"><Banknote className="w-5 h-5" /> Créditos</CardTitle></CardHeader>
                     <CardContent className="space-y-4">
-                      <div className="bg-primary/10 rounded-lg p-6 text-center"><div className="text-5xl font-bold gradient-text mb-2">250</div><p className="text-sm text-muted-foreground">créditos disponíveis</p></div>
+                      <div className="bg-primary/10 rounded-lg p-6 text-center"><div className="text-5xl font-bold gradient-text mb-2">{profile?.credits ?? 0}</div><p className="text-sm text-muted-foreground">créditos disponíveis</p></div>
                       <Button className="w-full gradient-primary">Comprar Mais Créditos</Button>
                     </CardContent>
                   </Card>
