@@ -36,7 +36,9 @@ const AdminUsers = () => {
     }
     const { data, error } = await query.order('created_at', { ascending: false });
     if (error) {
-      toast.error("Erro ao buscar usuários.");
+      toast.error("Erro ao buscar usuários.", {
+        description: error.message,
+      });
     } else {
       setUsers(data as any);
     }
@@ -57,7 +59,9 @@ const AdminUsers = () => {
       .update({ credits: newCredits })
       .eq('id', editingUser.id);
     if (error) {
-      toast.error("Erro ao atualizar créditos.");
+      toast.error("Erro ao atualizar créditos.", {
+        description: error.message,
+      });
     } else {
       toast.success("Créditos atualizados com sucesso.");
       setEditingUser(null);
@@ -71,7 +75,9 @@ const AdminUsers = () => {
       .update({ status: newStatus })
       .eq('id', user.id);
     if (error) {
-      toast.error("Erro ao atualizar status.");
+      toast.error("Erro ao atualizar status.", {
+        description: error.message,
+      });
     } else {
       toast.success("Status do usuário atualizado.");
       fetchUsers();

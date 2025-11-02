@@ -47,7 +47,9 @@ const PaymentsTable = ({ statusFilter }: { statusFilter?: 'pending' | 'approved'
 
     if (error) {
       console.error("Error fetching payments:", error);
-      toast.error("Erro ao buscar pagamentos.");
+      toast.error("Erro ao buscar pagamentos.", {
+        description: error.message,
+      });
     } else {
       setPayments(data as any);
     }
@@ -65,7 +67,9 @@ const PaymentsTable = ({ statusFilter }: { statusFilter?: 'pending' | 'approved'
       .eq('id', id);
 
     if (error) {
-      toast.error(`Erro ao ${newStatus === 'approved' ? 'aprovar' : 'rejeitar'} o pagamento.`);
+      toast.error(`Erro ao ${newStatus === 'approved' ? 'aprovar' : 'rejeitar'} o pagamento.`, {
+        description: error.message,
+      });
     } else {
       toast.success(`Pagamento ${newStatus === 'approved' ? 'aprovado' : 'rejeitado'} com sucesso.`);
       fetchPayments();
