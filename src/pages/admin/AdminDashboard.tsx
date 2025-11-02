@@ -1,17 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, Users, CreditCard, Activity, ArrowUp, Image, Clock, BarChart as BarChartIcon } from "lucide-react";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Cell } from 'recharts';
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
 
 const monthlyRevenue = [
   { name: 'Jan', revenue: 4000 }, { name: 'Fev', revenue: 3000 },
   { name: 'Mar', revenue: 5000 }, { name: 'Abr', revenue: 4500 },
   { name: 'Mai', revenue: 6000 }, { name: 'Jun', revenue: 5500 },
-];
-
-const userGrowth = [
-  { name: 'Jan', users: 120 }, { name: 'Fev', users: 180 },
-  { name: 'Mar', users: 250 }, { name: 'Abr', users: 310 },
-  { name: 'Mai', users: 400 }, { name: 'Jun', users: 480 },
 ];
 
 const mostUsedModels = [
@@ -22,6 +19,54 @@ const mostUsedModels = [
 ];
 
 const AdminDashboard = () => {
+  const [stats, setStats] = useState({
+    totalRevenue: 0,
+    totalUsers: 0,
+    pendingPayments: 0,
+    pendingAmount: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      setLoading(true);
+      
+      // Total Revenue
+      const { data: revenueData, error: revenueError } = await supabase
+        .from('payments')
+        .select('amount')
+        .eq('status', 'approved');
+      const totalRevenue = revenueData?.reduce((sum, p) => sum + p.amount, 0) || 0;
+
+      // Total Users
+      const { count: usersCount, error: usersError } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true });
+
+      // Pending Payments
+      const { data: pendingData, count: pendingCount, error: pendingError } = await supabase
+        .from('payments')
+        .select('amount', { count: 'exact' })
+        .eq('status', 'pending');
+      const pendingAmount = pendingData?.reduce((sum, p) => sum + p.amount, 0) || 0;
+
+      if (!revenueError && !usersError && !pendingError) {
+        setStats({
+          totalRevenue,
+          totalUsers: usersCount || 0,
+          pendingPayments: pendingCount || 0,
+          pendingAmount,
+        });
+      }
+      setLoading(false);
+    };
+    fetchStats();
+  }, []);
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-full"><Loader2 className="w-8 h-8 animate-spin" /></div>;
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -29,15 +74,14 @@ const AdminDashboard = () => {
         <p className="text-muted-foreground">Uma visão geral do seu sistema.</p>
       </div>
       
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        <Card className="bg-card/50 backdrop-blur-xl border-border/50 hover:border-primary/50 transition-colors duration-300 xl:col-span-2">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <Card className="bg-card/50 backdrop-blur-xl border-border/50 hover:border-primary/50 transition-colors duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Faturação Total</CardTitle><DollarSign className="h-5 w-5 text-primary" /></CardHeader>
-          <CardContent><div className="text-3xl font-bold">1.250.000 Kzs</div><p className="text-xs text-green-400 flex items-center gap-1"><ArrowUp className="w-3 h-3" /> +20.1%</p></CardContent>
+          <CardContent><div className="text-3xl font-bold">{stats.totalRevenue.toLocaleString('pt-AO')} Kzs</div></CardContent>
         </Card>
-        <Card className="bg-card/50 backdrop-blur-xl border-border/50 hover:border-primary/50 transition-colors duration-300"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Total de Usuários</CardTitle><Users className="h-5 w-5 text-primary" /></CardHeader><CardContent><div className="text-3xl font-bold">+480</div><p className="text-xs text-green-400 flex items-center gap-1"><ArrowUp className="w-3 h-3" /> +18.1%</p></CardContent></Card>
-        <Card className="bg-card/50 backdrop-blur-xl border-border/50 hover:border-primary/50 transition-colors duration-300"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Imagens Geradas</CardTitle><Image className="h-5 w-5 text-primary" /></CardHeader><CardContent><div className="text-3xl font-bold">8,450</div><p className="text-xs text-green-400 flex items-center gap-1"><ArrowUp className="w-3 h-3" /> +32%</p></CardContent></Card>
-        <Card className="bg-card/50 backdrop-blur-xl border-border/50 hover:border-yellow-500/50 transition-colors duration-300"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Pagamentos Pendentes</CardTitle><Clock className="h-5 w-5 text-yellow-500" /></CardHeader><CardContent><div className="text-3xl font-bold">12</div><p className="text-xs text-muted-foreground">Aguardando aprovação</p></CardContent></Card>
-        <Card className="bg-card/50 backdrop-blur-xl border-border/50 hover:border-yellow-500/50 transition-colors duration-300"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Valor Pendente</CardTitle><Activity className="h-5 w-5 text-yellow-500" /></CardHeader><CardContent><div className="text-3xl font-bold">150.000 Kzs</div><p className="text-xs text-muted-foreground">Total em pagamentos</p></CardContent></Card>
+        <Card className="bg-card/50 backdrop-blur-xl border-border/50 hover:border-primary/50 transition-colors duration-300"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Total de Usuários</CardTitle><Users className="h-5 w-5 text-primary" /></CardHeader><CardContent><div className="text-3xl font-bold">+{stats.totalUsers}</div></CardContent></Card>
+        <Card className="bg-card/50 backdrop-blur-xl border-border/50 hover:border-yellow-500/50 transition-colors duration-300"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Pagamentos Pendentes</CardTitle><Clock className="h-5 w-5 text-yellow-500" /></CardHeader><CardContent><div className="text-3xl font-bold">{stats.pendingPayments}</div></CardContent></Card>
+        <Card className="bg-card/50 backdrop-blur-xl border-border/50 hover:border-yellow-500/50 transition-colors duration-300"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Valor Pendente</CardTitle><Activity className="h-5 w-5 text-yellow-500" /></CardHeader><CardContent><div className="text-3xl font-bold">{stats.pendingAmount.toLocaleString('pt-AO')} Kzs</div></CardContent></Card>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-5">
