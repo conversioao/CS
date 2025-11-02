@@ -45,8 +45,19 @@ export const SessionContextProvider = ({ children }: { children: React.ReactNode
   };
 
   useEffect(() => {
+    // Fetch the initial session only once
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      setSession(session);
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      if (currentUser) {
+        await fetchProfile(currentUser);
+      }
+      setLoading(false); // Initial load is complete
+    });
+
+    // Listen for subsequent auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setLoading(true);
       setSession(session);
       const currentUser = session?.user ?? null;
       setUser(currentUser);
@@ -56,7 +67,6 @@ export const SessionContextProvider = ({ children }: { children: React.ReactNode
       } else {
         setProfile(null);
       }
-      setLoading(false);
     });
 
     return () => {
@@ -66,9 +76,7 @@ export const SessionContextProvider = ({ children }: { children: React.ReactNode
 
   const refetchProfile = async () => {
     if (user) {
-      setLoading(true);
       await fetchProfile(user);
-      setLoading(false);
     }
   };
 
