@@ -10,8 +10,8 @@ import { toast } from "sonner";
 
 interface Payment {
   id: string;
-  user: { full_name: string };
-  package: { name: string };
+  profiles: { full_name: string };
+  credit_packages: { name: string };
   amount: number;
   payment_method: string;
   proof_url: string;
@@ -34,8 +34,8 @@ const PaymentsTable = ({ statusFilter }: { statusFilter?: 'pending' | 'approved'
         proof_url,
         status,
         created_at,
-        user:profiles (full_name),
-        package:credit_packages (name)
+        profiles (full_name),
+        credit_packages (name)
       `)
       .order('created_at', { ascending: false });
 
@@ -82,8 +82,8 @@ const PaymentsTable = ({ statusFilter }: { statusFilter?: 'pending' | 'approved'
         <TableBody>
           {payments.map(p => (
             <TableRow key={p.id}>
-              <TableCell>{p.user?.full_name || 'N/A'}</TableCell>
-              <TableCell>{p.package?.name || 'N/A'}</TableCell>
+              <TableCell>{p.profiles?.full_name || 'N/A'}</TableCell>
+              <TableCell>{p.credit_packages?.name || 'N/A'}</TableCell>
               <TableCell>{p.amount.toLocaleString('pt-AO')} Kzs</TableCell>
               <TableCell><Button variant="outline" size="sm" asChild><a href={p.proof_url} target="_blank" rel="noopener noreferrer"><FileText className="w-4 h-4 mr-2" />Ver</a></Button></TableCell>
               <TableCell><Badge variant={p.status === "approved" ? "default" : p.status === "pending" ? "secondary" : "destructive"}>{p.status}</Badge></TableCell>

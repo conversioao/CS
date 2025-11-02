@@ -12,9 +12,9 @@ interface SubscriptionRequest {
   whatsapp_number: string;
   status: string;
   created_at: string;
-  user: {
+  profiles: {
     full_name: string;
-    email: string;
+    whatsapp_number: string;
   }
 }
 
@@ -31,9 +31,9 @@ const AdminWhatsapp = () => {
         whatsapp_number,
         status,
         created_at,
-        user:profiles (
+        profiles (
           full_name,
-          email
+          whatsapp_number
         )
       `)
       .order('created_at', { ascending: false });
@@ -85,8 +85,8 @@ const AdminWhatsapp = () => {
                   {requests.map(req => (
                     <TableRow key={req.id}>
                       <TableCell>
-                        <div>{req.user.full_name}</div>
-                        <div className="text-xs text-muted-foreground">{req.user.email}</div>
+                        <div>{req.profiles.full_name}</div>
+                        <div className="text-xs text-muted-foreground">{req.profiles.whatsapp_number}</div>
                       </TableCell>
                       <TableCell>{req.whatsapp_number}</TableCell>
                       <TableCell>{new Date(req.created_at).toLocaleDateString('pt-AO')}</TableCell>
