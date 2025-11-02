@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useSession } from "@/contexts/SessionContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 const transactions = [
   { id: "TRX001", date: "15/07/2024", description: "Pacote Pro", amount: "49.950 Kzs", status: "Aprovado" },
@@ -22,6 +23,7 @@ const transactions = [
 
 const Account = () => {
   const { user, profile, refetchProfile } = useSession();
+  const navigate = useNavigate();
   const [verificationCode, setVerificationCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [logoSrc, setLogoSrc] = useState<string | null>(null);
@@ -77,7 +79,12 @@ const Account = () => {
       
       await refetchProfile();
 
-      toast.success("Conta verificada com sucesso!");
+      toast.success("Conta verificada com sucesso!", {
+        description: "A redirecionar para o seu painel..."
+      });
+      
+      navigate('/dashboard');
+
     } catch (error: any) {
       toast.error("Erro na verificação", { description: error.message });
     } finally {
