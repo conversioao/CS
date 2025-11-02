@@ -15,14 +15,12 @@ const Onboarding = () => {
   const [currentStep, setCurrentStep] = useState(0);
 
   useEffect(() => {
-    // Change loading message every 2.5 seconds
     const stepInterval = setInterval(() => {
       setCurrentStep((prevStep) => (prevStep + 1) % loadingSteps.length);
     }, 2500);
 
-    // Redirect after 10 seconds
     const redirectTimeout = setTimeout(() => {
-      navigate('/dashboard');
+      navigate('/theme-selection');
     }, 10000);
 
     return () => {
@@ -40,7 +38,7 @@ const Onboarding = () => {
         <BrainCircuit className="w-24 h-24 text-primary absolute animate-pulse" />
       </div>
 
-      <h1 className="text-2xl md:text-3xl font-bold mb-4 text-white transition-all duration-500">
+      <h1 className="text-2xl md:text-3xl font-bold mb-4 transition-all duration-500">
         A configurar o seu espaço criativo...
       </h1>
       <p className="text-muted-foreground max-w-md transition-opacity duration-500">

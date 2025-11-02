@@ -71,15 +71,16 @@ const AdminWhatsapp = () => {
         <h1 className="text-3xl font-bold">Subscrições WhatsApp</h1>
         <p className="text-muted-foreground">Gerencie as solicitações de integração com o WhatsApp.</p>
       </div>
-      <Card className="bg-card/50 backdrop-blur-xl border-border/50">
+      <Card>
         <CardHeader>
-          <CardTitle>Solicitações Pendentes e Histórico</CardTitle>
+          <CardTitle>Solicitações de Subscrição</CardTitle>
+          <CardDescription>Aprove ou rejeite as solicitações de integração.</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
             <div className="flex justify-center items-center h-40"><Loader2 className="w-8 h-8 animate-spin" /></div>
           ) : (
-            <div className="rounded-lg border border-border/50">
+            <div className="rounded-lg border">
               <Table>
                 <TableHeader><TableRow><TableHead>Usuário</TableHead><TableHead>Nº WhatsApp</TableHead><TableHead>Data</TableHead><TableHead>Status</TableHead><TableHead>Ações</TableHead></TableRow></TableHeader>
                 <TableBody>

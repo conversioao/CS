@@ -13,6 +13,7 @@ import { useSession } from "@/contexts/SessionContext";
 import { supabase } from "@/integrations/supabase/client";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { ThemeToggle } from "./ThemeToggle";
 
 const DashboardHeader = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -32,10 +33,9 @@ const DashboardHeader = () => {
   };
 
   return (
-    <header className="sticky top-0 z-30 bg-background/30 backdrop-blur-lg border-b border-border/20">
+    <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-lg border-b border-border">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Mobile Menu Trigger */}
           <div className="lg:hidden">
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
@@ -51,8 +51,8 @@ const DashboardHeader = () => {
           
           <div className="flex-1" />
 
-          {/* User Info and Actions */}
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             <NotificationBell />
             <div id="dashboard-nav-credits" className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-full">
               <CreditCard className="w-4 h-4 text-primary" />

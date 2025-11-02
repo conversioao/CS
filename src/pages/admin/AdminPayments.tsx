@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText, Check, X, Loader2 } from "lucide-react";
@@ -77,7 +77,7 @@ const PaymentsTable = ({ statusFilter }: { statusFilter?: 'pending' | 'approved'
   }
 
   return (
-    <div className="rounded-lg border border-border/50">
+    <div className="rounded-lg border">
       <Table>
         <TableHeader><TableRow><TableHead>Usuário</TableHead><TableHead>Pacote</TableHead><TableHead>Valor</TableHead><TableHead>Comprovativo</TableHead><TableHead>Status</TableHead><TableHead>Ações</TableHead></TableRow></TableHeader>
         <TableBody>
@@ -111,8 +111,8 @@ const AdminPayments = () => {
         <h1 className="text-3xl font-bold">Pagamentos</h1>
         <p className="text-muted-foreground">Gerencie todas as transações da plataforma.</p>
       </div>
-      <Card className="bg-card/50 backdrop-blur-xl border-border/50">
-        <CardHeader><CardTitle>Histórico de Pagamentos</CardTitle></CardHeader>
+      <Card>
+        <CardHeader><CardTitle>Histórico de Pagamentos</CardTitle><CardDescription>Aprove ou rejeite pagamentos pendentes.</CardDescription></CardHeader>
         <CardContent>
           <Tabs defaultValue="pending">
             <TabsList className="mb-4">
