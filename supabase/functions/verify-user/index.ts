@@ -51,13 +51,6 @@ serve(async (req) => {
 
     if (profileError) throw profileError;
 
-    const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(
-      userId,
-      { email_confirm: true }
-    );
-
-    if (authError) throw authError;
-
     // @ts-ignore
     return new Response(
       JSON.stringify({ success: true, message: 'Utilizador verificado com sucesso!' }),

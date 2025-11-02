@@ -75,7 +75,6 @@ const Account = () => {
       if (error) throw error;
       if (!data.success) throw new Error(data.error || 'Falha na verificação');
       
-      await supabase.auth.refreshSession();
       await refetchProfile();
 
       toast.success("Conta verificada com sucesso!");
