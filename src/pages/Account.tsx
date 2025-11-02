@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useSession } from "@/contexts/SessionContext";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 const transactions = [
@@ -23,6 +23,7 @@ const transactions = [
 const Account = () => {
   const { user, profile, refetchProfile } = useSession();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [verificationCode, setVerificationCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [isSubscribing, setIsSubscribing] = useState(false);
@@ -32,6 +33,7 @@ const Account = () => {
 
   const isVerified = profile?.status === 'verified';
   const subscriptionCost = 15000;
+  const defaultTab = searchParams.get("tab") || "profile";
 
   useEffect(() => {
     const fetchSubscription = async () => {
@@ -110,7 +112,7 @@ const Account = () => {
         <DashboardHeader />
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 relative">
           <div className="mb-8"><h1 className="text-4xl md:text-5xl font-bold mb-2 gradient-text">Minha Conta</h1><p className="text-muted-foreground text-lg">Gerencie suas informações e preferências</p></div>
-          <Tabs defaultValue="profile" className="w-full">
+          <Tabs defaultValue={defaultTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-6"><TabsTrigger value="profile"><User className="w-4 h-4 mr-2" />Perfil</TabsTrigger><TabsTrigger value="brand"><Palette className="w-4 h-4 mr-2" />Marca</TabsTrigger><TabsTrigger value="billing"><CreditCard className="w-4 h-4 mr-2" />Faturação</TabsTrigger><TabsTrigger value="integrations"><Bot className="w-4 h-4 mr-2" />Integrações</TabsTrigger></TabsList>
             <TabsContent value="profile">
               {!isVerified ? (

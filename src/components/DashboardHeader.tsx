@@ -28,7 +28,7 @@ const DashboardHeader = () => {
     name: profile?.full_name || "Usuário",
     credits: profile?.credits ?? 0,
     avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${profile?.full_name || 'U'}`,
-    isVerified: localStorage.getItem('userVerified') === 'true',
+    isVerified: profile?.status === 'verified',
   };
 
   return (

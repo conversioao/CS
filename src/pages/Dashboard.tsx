@@ -1,6 +1,5 @@
 import DashboardHeader from "@/components/DashboardHeader";
 import ToolsSection from "@/components/ToolsSection";
-import RecentCreations from "@/components/RecentCreations";
 import DashboardTutorial from "@/components/DashboardTutorial";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import VerificationPromptModal from "@/components/VerificationPromptModal";
@@ -88,12 +87,11 @@ const Dashboard = () => {
                     Ative a subscrição e crie imagens diretamente do seu WhatsApp. <br />
                     Custo: <strong>15.000 créditos/mês</strong>.
                   </p>
-                  <Link to="/account">
+                  <Link to="/account?tab=integrations">
                     <Button variant="outline" className="bg-card/50">Ativar Agora</Button>
                   </Link>
                 </CardContent>
               </Card>
-              <RecentCreations />
             </div>
           </main>
         </div>
