@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Bot, Sparkles, Wand2, Video, Music, Combine, Loader2 } from "lucide-react";
+import { Bot, Sparkles, Wand2, Video, Music, Combine, Loader2, AudioLines } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -20,6 +20,7 @@ const toolIcons: { [key: string]: React.ElementType } = {
   combine_image: Combine,
   generate_video: Video,
   generate_music: Music,
+  generate_voice: AudioLines,
 };
 
 const AdminModels = () => {
