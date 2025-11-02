@@ -27,15 +27,22 @@ const VerificationModal = ({ isOpen, userId, onSuccess }: VerificationModalProps
       if (error) throw error;
       if (!data.success) throw new Error(data.error || 'Falha na verificação');
       
+      toast.success("Verificação bem-sucedida!", {
+        description: "A finalizar a configuração da sua conta...",
+      });
+
+      // Aguarda 5 segundos para garantir que o backend propaga a atualização
+      await new Promise(resolve => setTimeout(resolve, 5000));
+
       onSuccess();
 
     } catch (error: any) {
       toast.error("Código de Verificação Inválido", {
         description: error.message || "Por favor, verifique o código e tente novamente.",
       });
-    } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Permite nova tentativa em caso de erro
     }
+    // Em caso de sucesso, o isLoading não é desativado porque o componente será desmontado.
   };
 
   return (
