@@ -2,7 +2,7 @@ import DashboardHeader from "@/components/DashboardHeader";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, Sparkles, Upload, Image, Video, Wand2, Combine, Music, Clock } from "lucide-react";
+import { Check, Sparkles, Upload, Image, Video, Wand2, Combine, Music, Clock, AudioLines, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -13,20 +13,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/contexts/SessionContext";
 
-const transactions = [
-  { date: "2024-07-15", description: "Pacote Starter", amount: "14.950 Kzs", credits: "+100", status: "Aprovado" },
-  { date: "2024-06-28", description: "Pacote Pro", amount: "49.950 Kzs", credits: "+500", status: "Aprovado" },
-  { date: "2024-07-20", description: "Pacote Starter", amount: "14.950 Kzs", credits: "+100", status: "Pendente" },
-];
-
-const usageDetails = [
-  { tool: "Gerar Imagens", icon: Image, credits: 128 },
-  { tool: "Gerar Vídeos", icon: Video, credits: 45 },
-  { tool: "Editar Imagem", icon: Wand2, credits: 22 },
-  { tool: "Combinar Imagens", icon: Combine, credits: 15 },
-  { tool: "Gerar Músicas", icon: Music, credits: 50 },
-];
-
 interface CreditPackage {
   id: string;
   name: string;
@@ -36,9 +22,34 @@ interface CreditPackage {
   is_active: boolean;
 }
 
+interface Transaction {
+  created_at: string;
+  description: string;
+  amount: number;
+  transaction_type: string;
+  payments: { status: string } | null;
+}
+
+interface UsageDetail {
+  tool_name: string;
+  total_credits: number;
+}
+
+const toolIcons: { [key: string]: React.ElementType } = {
+  "Geração de Imagem": Image,
+  "Geração de Vídeo": Video,
+  "Edição de Imagem": Wand2,
+  "Combinação de Imagens": Combine,
+  "Geração de Música": Music,
+  "Geração de Voz": AudioLines,
+};
+
 const Credits = () => {
   const { user } = useSession();
   const [plans, setPlans] = useState<CreditPackage[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [usageDetails, setUsageDetails] = useState<UsageDetail[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<CreditPackage | null>(null);
   const [paymentMethod, setPaymentMethod] = useState("");
@@ -47,21 +58,31 @@ const Credits = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    const fetchPackages = async () => {
-      const { data, error } = await supabase
-        .from('credit_packages')
-        .select('*')
-        .eq('is_active', true)
-        .order('price', { ascending: true });
-      
-      if (error) {
-        toast.error("Erro ao carregar pacotes de créditos.");
-      } else {
-        setPlans(data);
-      }
+    const fetchData = async () => {
+      if (!user) return;
+      setLoading(true);
+
+      // Fetch Packages
+      const { data: packagesData, error: packagesError } = await supabase
+        .from('credit_packages').select('*').eq('is_active', true).order('price', { ascending: true });
+      if (packagesError) toast.error("Erro ao carregar pacotes de créditos.");
+      else setPlans(packagesData);
+
+      // Fetch Transactions
+      const { data: transactionsData, error: transactionsError } = await supabase
+        .from('credit_transactions').select('*, payments(status)').eq('user_id', user.id).order('created_at', { ascending: false });
+      if (transactionsError) toast.error("Erro ao carregar histórico de transações.");
+      else setTransactions(transactionsData as any);
+
+      // Fetch Usage Details
+      const { data: usageData, error: usageError } = await supabase.rpc('get_user_tool_usage', { p_user_id: user.id });
+      if (usageError) toast.error("Erro ao carregar detalhes de uso.");
+      else setUsageDetails(usageData || []);
+
+      setLoading(false);
     };
-    fetchPackages();
-  }, []);
+    fetchData();
+  }, [user]);
 
   const handlePurchase = (plan: CreditPackage) => {
     setSelectedPlan(plan);
@@ -99,8 +120,11 @@ const Credits = () => {
 
       if (insertError) throw insertError;
 
-      toast.success("Pagamento enviado!", { description: "Seu pagamento está pendente de aprovação." });
+      toast.success("Pagamento enviado com sucesso!", { description: "Iremos aprovar o seu pagamento em 15 minutos ou menos, se tudo estiver conforme." });
       setIsDialogOpen(false);
+      setPaymentMethod("");
+      setPaymentProof(null);
+      setPhoneNumber("");
     } catch (error) {
       console.error(error);
       toast.error("Erro ao processar pagamento", { description: "Ocorreu um problema. Por favor, tente novamente." });
@@ -118,8 +142,8 @@ const Credits = () => {
           <div className="absolute inset-0 pointer-events-none z-[-1] bg-dot-pattern opacity-20" />
           <div className="text-center mb-12"><h1 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">Pacotes de Créditos</h1><p className="text-muted-foreground text-lg">Escolha o pacote ideal para suas necessidades criativas</p></div>
           <div className="grid md:grid-cols-3 gap-6 mb-16">
-            {plans.map((plan, index) => (
-              <div key={index} className={`relative bg-secondary/20 border rounded-xl p-8 border-border`}>
+            {plans.map((plan) => (
+              <div key={plan.id} className={`relative bg-secondary/20 border rounded-xl p-8 border-border`}>
                 <div className="flex justify-center mb-6"><div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center"><Sparkles className="w-8 h-8 text-primary" /></div></div>
                 <h3 className="text-2xl font-bold text-center mb-2">{plan.name}</h3>
                 <div className="text-center mb-2"><span className="text-4xl font-bold gradient-text">{plan.price.toLocaleString('pt-AO')} Kzs</span></div>
@@ -130,8 +154,31 @@ const Credits = () => {
             ))}
           </div>
           <div className="grid lg:grid-cols-2 gap-8">
-            <Card className="bg-card/50 backdrop-blur-xl"><CardHeader><CardTitle className="flex items-center gap-2"><Clock className="w-5 h-5 text-primary" />Histórico de Transações</CardTitle></CardHeader><CardContent><div className="space-y-4">{transactions.map((t, i) => (<div key={i} className="flex items-center justify-between p-3 rounded-lg bg-secondary/30"><div className="flex flex-col"><p className="font-semibold">{t.description}</p><p className="text-xs text-muted-foreground">{t.date} - {t.amount}</p></div><div className="text-right"><Badge variant={t.status === "Aprovado" ? "default" : "secondary"} className={t.status === "Aprovado" ? "bg-green-500/20 text-green-400" : ""}>{t.status}</Badge><p className={`text-sm font-bold ${t.credits.startsWith('+') ? 'text-green-400' : 'text-red-400'}`}>{t.credits}</p></div></div>))}</div></CardContent></Card>
-            <Card className="bg-card/50 backdrop-blur-xl"><CardHeader><CardTitle className="flex items-center gap-2"><Sparkles className="w-5 h-5 text-primary" />Detalhes de Uso</CardTitle></CardHeader><CardContent><div className="space-y-3">{usageDetails.map((u, i) => { const Icon = u.icon; return (<div key={i} className="flex items-center justify-between p-3 rounded-lg bg-secondary/30"><div className="flex items-center gap-3"><Icon className="w-5 h-5 text-muted-foreground" /><p className="font-semibold">{u.tool}</p></div><p className="font-bold">{u.credits} <span className="text-xs text-muted-foreground">créditos</span></p></div>);})}</div></CardContent></Card>
+            <Card className="bg-card/50 backdrop-blur-xl"><CardHeader><CardTitle className="flex items-center gap-2"><Clock className="w-5 h-5 text-primary" />Histórico de Transações</CardTitle></CardHeader><CardContent>
+              {loading ? <div className="flex justify-center items-center h-40"><Loader2 className="w-8 h-8 animate-spin" /></div> : (
+                <div className="space-y-4">
+                  {transactions.map((t, i) => (
+                    <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-secondary/30">
+                      <div className="flex flex-col">
+                        <p className="font-semibold">{t.description}</p>
+                        <p className="text-xs text-muted-foreground">{new Date(t.created_at).toLocaleString('pt-AO')}</p>
+                      </div>
+                      <div className="text-right">
+                        {t.transaction_type === 'purchase' && t.payments && <Badge variant={t.payments.status === "approved" ? "default" : "secondary"} className={t.payments.status === "approved" ? "bg-green-500/20 text-green-400" : ""}>{t.payments.status}</Badge>}
+                        <p className={`text-sm font-bold ${t.amount > 0 ? 'text-green-400' : 'text-red-400'}`}>{t.amount > 0 ? `+${t.amount}` : t.amount} créditos</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent></Card>
+            <Card className="bg-card/50 backdrop-blur-xl"><CardHeader><CardTitle className="flex items-center gap-2"><Sparkles className="w-5 h-5 text-primary" />Detalhes de Uso</CardTitle></CardHeader><CardContent>
+              {loading ? <div className="flex justify-center items-center h-40"><Loader2 className="w-8 h-8 animate-spin" /></div> : (
+                <div className="space-y-3">
+                  {usageDetails.map((u, i) => { const Icon = toolIcons[u.tool_name] || Sparkles; return (<div key={i} className="flex items-center justify-between p-3 rounded-lg bg-secondary/30"><div className="flex items-center gap-3"><Icon className="w-5 h-5 text-muted-foreground" /><p className="font-semibold">{u.tool_name}</p></div><p className="font-bold">{u.total_credits} <span className="text-xs text-muted-foreground">créditos</span></p></div>);})}
+                </div>
+              )}
+            </CardContent></Card>
           </div>
         </main>
       </div>
