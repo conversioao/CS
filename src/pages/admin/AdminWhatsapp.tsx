@@ -15,7 +15,7 @@ interface SubscriptionRequest {
   profiles: {
     full_name: string;
     whatsapp_number: string;
-  }
+  } | null;
 }
 
 const AdminWhatsapp = () => {
@@ -31,7 +31,7 @@ const AdminWhatsapp = () => {
         whatsapp_number,
         status,
         created_at,
-        profiles (
+        profiles:user_id (
           full_name,
           whatsapp_number
         )
@@ -39,6 +39,7 @@ const AdminWhatsapp = () => {
       .order('created_at', { ascending: false });
 
     if (error) {
+      console.error("Error fetching subscriptions:", error);
       toast.error("Erro ao buscar solicitações.");
     } else {
       setRequests(data as any);
@@ -85,8 +86,8 @@ const AdminWhatsapp = () => {
                   {requests.map(req => (
                     <TableRow key={req.id}>
                       <TableCell>
-                        <div>{req.profiles.full_name}</div>
-                        <div className="text-xs text-muted-foreground">{req.profiles.whatsapp_number}</div>
+                        <div>{req.profiles?.full_name || 'N/A'}</div>
+                        <div className="text-xs text-muted-foreground">{req.profiles?.whatsapp_number || 'N/A'}</div>
                       </TableCell>
                       <TableCell>{req.whatsapp_number}</TableCell>
                       <TableCell>{new Date(req.created_at).toLocaleDateString('pt-AO')}</TableCell>

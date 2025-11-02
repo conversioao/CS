@@ -10,8 +10,8 @@ import { toast } from "sonner";
 
 interface Payment {
   id: string;
-  profiles: { full_name: string };
-  credit_packages: { name: string };
+  profiles: { full_name: string } | null;
+  credit_packages: { name: string } | null;
   amount: number;
   payment_method: string;
   proof_url: string;
@@ -34,8 +34,8 @@ const PaymentsTable = ({ statusFilter }: { statusFilter?: 'pending' | 'approved'
         proof_url,
         status,
         created_at,
-        profiles (full_name),
-        credit_packages (name)
+        profiles:user_id (full_name),
+        credit_packages:package_id (name)
       `)
       .order('created_at', { ascending: false });
 
@@ -46,6 +46,7 @@ const PaymentsTable = ({ statusFilter }: { statusFilter?: 'pending' | 'approved'
     const { data, error } = await query;
 
     if (error) {
+      console.error("Error fetching payments:", error);
       toast.error("Erro ao buscar pagamentos.");
     } else {
       setPayments(data as any);
