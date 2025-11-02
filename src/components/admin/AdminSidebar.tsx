@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, CreditCard, Settings, Bot, FileText, MessageSquare } from "lucide-react";
+import { LayoutDashboard, Users, CreditCard, Settings, Bot, FileText, MessageSquare, Package } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { cn } from "@/lib/utils";
 
@@ -8,6 +8,7 @@ const navLinks = [
   { to: "/admin/users", icon: Users, label: "Usuários" },
   { to: "/admin/payments", icon: CreditCard, label: "Pagamentos" },
   { to: "/admin/whatsapp", icon: MessageSquare, label: "WhatsApp" },
+  { to: "/admin/credit-packages", icon: Package, label: "Pacotes" },
   { to: "/admin/models", icon: Bot, label: "Modelos e Custos" },
   { to: "/admin/reports", icon: FileText, label: "Relatórios" },
   { to: "/admin/settings", icon: Settings, label: "Configurações" },

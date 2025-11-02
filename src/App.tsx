@@ -36,6 +36,7 @@ import AdminSettings from "./pages/admin/AdminSettings";
 import AdminReports from "./pages/admin/AdminReports";
 import AffiliateDashboard from "./pages/AffiliateDashboard";
 import AdminWhatsapp from "./pages/admin/AdminWhatsapp";
+import AdminCreditPackages from "./pages/admin/AdminCreditPackages";
 
 const queryClient = new QueryClient();
 
@@ -81,6 +82,7 @@ const App = () => (
                   <Route path="users" element={<AdminUsers />} />
                   <Route path="payments" element={<AdminPayments />} />
                   <Route path="whatsapp" element={<AdminWhatsapp />} />
+                  <Route path="credit-packages" element={<AdminCreditPackages />} />
                   <Route path="models" element={<AdminModels />} />
                   <Route path="settings" element={<AdminSettings />} />
                   <Route path="reports" element={<AdminReports />} />
