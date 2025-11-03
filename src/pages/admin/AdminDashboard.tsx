@@ -62,25 +62,25 @@ const AdminDashboard = () => {
 
   return (
     <div className="space-y-6">
-      <Card className="bg-gradient-to-br from-purple-600 via-fuchsia-500 to-pink-500 text-white p-6">
+      <div>
         <h1 className="text-3xl font-bold">Dashboard</h1>
-        <p className="text-purple-200">Uma visão geral e atualizada da sua plataforma.</p>
-      </Card>
+        <p className="text-muted-foreground">Uma visão geral e atualizada da sua plataforma.</p>
+      </div>
       
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-card"><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground">Faturação Total</CardTitle></CardHeader><CardContent><div className="text-3xl font-bold">{stats.totalRevenue.toLocaleString('pt-AO')} Kzs</div><p className="text-xs text-muted-foreground flex items-center gap-1">{stats.revenueChange > 0 ? <ArrowUp className="w-4 h-4 text-green-500" /> : <ArrowDown className="w-4 h-4 text-red-500" />} {stats.revenueChange}% em relação ao mês passado</p></CardContent></Card>
-        <Card className="bg-card"><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground">Total de Usuários</CardTitle></CardHeader><CardContent><div className="text-3xl font-bold">+{stats.totalUsers}</div><p className="text-xs text-muted-foreground">+10 no último mês</p></CardContent></Card>
-        <Card className="bg-card"><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground">Pagamentos Pendentes</CardTitle></CardHeader><CardContent><div className="text-3xl font-bold">{stats.pendingPayments}</div><p className="text-xs text-muted-foreground">Aguardando aprovação</p></CardContent></Card>
-        <Card className="bg-card"><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground">Taxa de Conversão</CardTitle></CardHeader><CardContent><div className="text-3xl font-bold">12.5%</div><p className="text-xs text-muted-foreground">+2.1% em relação à semana passada</p></CardContent></Card>
+        <Card className="bg-card/50 backdrop-blur-xl"><CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Faturação Total</CardTitle><DollarSign className="h-5 w-5 text-primary" /></CardHeader><CardContent><div className="text-2xl font-bold">{stats.totalRevenue.toLocaleString('pt-AO')} Kzs</div><p className="text-xs text-muted-foreground flex items-center gap-1">{stats.revenueChange > 0 ? <ArrowUp className="w-4 h-4 text-green-500" /> : <ArrowDown className="w-4 h-4 text-red-500" />} {stats.revenueChange}% em relação ao mês passado</p></CardContent></Card>
+        <Card className="bg-card/50 backdrop-blur-xl"><CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Total de Usuários</CardTitle><Users className="h-5 w-5 text-primary" /></CardHeader><CardContent><div className="text-2xl font-bold">+{stats.totalUsers}</div><p className="text-xs text-muted-foreground">+10 no último mês</p></CardContent></Card>
+        <Card className="bg-card/50 backdrop-blur-xl"><CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Pagamentos Pendentes</CardTitle><CreditCard className="h-5 w-5 text-yellow-500" /></CardHeader><CardContent><div className="text-2xl font-bold">{stats.pendingPayments}</div><p className="text-xs text-muted-foreground">Aguardando aprovação</p></CardContent></Card>
+        <Card className="bg-card/50 backdrop-blur-xl"><CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Taxa de Conversão</CardTitle><DollarSign className="h-5 w-5 text-green-500" /></CardHeader><CardContent><div className="text-2xl font-bold">12.5%</div><p className="text-xs text-muted-foreground">+2.1% em relação à semana passada</p></CardContent></Card>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="bg-card lg:col-span-2">
+      <div className="grid gap-6 lg:grid-cols-5">
+        <Card className="bg-card/50 backdrop-blur-xl lg:col-span-3">
           <CardHeader><CardTitle>Estatísticas de Faturação</CardTitle></CardHeader>
           <CardContent className="pl-2"><ResponsiveContainer width="100%" height={350}><LineChart data={monthlyRevenue}><CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" /><XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} /><YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value/1000}K`} /><Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }} cursor={{ fill: 'hsl(var(--primary) / 0.1)' }} /><Line type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4, fill: 'hsl(var(--primary))' }} activeDot={{ r: 8 }} /></LineChart></ResponsiveContainer></CardContent>
         </Card>
         
-        <Card className="bg-card lg:col-span-2">
+        <Card className="bg-card/50 backdrop-blur-xl lg:col-span-2">
           <CardHeader><CardTitle>Transações Recentes</CardTitle></CardHeader>
           <CardContent>
             <Table>
