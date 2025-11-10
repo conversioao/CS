@@ -49,36 +49,42 @@ const Community = () => {
   const fetchSubmissions = async () => {
     setLoading(true);
     
-    // Fetch approved submissions ordered by score
-    const { data: approvedData, error: approvedError } = await supabase
-      .from('community_submissions')
-      .select('*, profiles(full_name)')
-      .eq('status', 'approved')
-      .order('score', { ascending: false })
-      .limit(20);
-
-    if (approvedError) {
-      console.error('Error fetching approved submissions:', approvedError);
-    } else {
-      setSubmissions(approvedData || []);
-    }
-
-    // Fetch user's submissions
-    if (user) {
-      const { data: userData, error: userError } = await supabase
+    try {
+      // Fetch approved submissions ordered by score
+      const { data: approvedData, error: approvedError } = await supabase
         .from('community_submissions')
         .select('*, profiles(full_name)')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .eq('status', 'approved')
+        .order('score', { ascending: false })
+        .limit(20);
 
-      if (userError) {
-        console.error('Error fetching user submissions:', userError);
+      if (approvedError) {
+        console.error('Error fetching approved submissions:', approvedError);
+        toast.error("Erro ao carregar criações da comunidade");
       } else {
-        setMySubmissions(userData || []);
+        setSubmissions(approvedData || []);
       }
-    }
 
-    setLoading(false);
+      // Fetch user's submissions
+      if (user) {
+        const { data: userData, error: userError } = await supabase
+          .from('community_submissions')
+          .select('*, profiles(full_name)')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (userError) {
+          console.error('Error fetching user submissions:', userError);
+        } else {
+          setMySubmissions(userData || []);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching submissions:', error);
+      toast.error("Erro ao carregar dados da comunidade");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -135,9 +141,9 @@ const Community = () => {
       setSelectedFile(null);
       setPreviewUrl(null);
       fetchSubmissions();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading submission:', error);
-      toast.error("Erro ao enviar criação. Tente novamente.");
+      toast.error("Erro ao enviar criação: " + error.message);
     } finally {
       setUploading(false);
     }

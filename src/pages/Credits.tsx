@@ -2,7 +2,7 @@ import DashboardHeader from "@/components/DashboardHeader";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, Sparkles, Upload, Loader2, CheckCircle, ArrowUp, ArrowDown, Gift } from "lucide-react";
+import { Check, Sparkles, Upload, Loader2, CheckCircle, ArrowUp, ArrowDown, Gift, CreditCard, Wallet, TrendingUp } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -138,49 +138,112 @@ const Credits = () => {
           <DashboardHeader />
           <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 relative">
             <div className="absolute inset-0 pointer-events-none z-[-1] bg-dot-pattern opacity-20" />
-            <div className="text-center mb-12"><h1 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">Pacotes de Créditos</h1><p className="text-muted-foreground text-lg">Escolha o pacote ideal para as suas necessidades criativas</p></div>
+            <div className="text-center mb-12">
+              <h1 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">Pacotes de Créditos</h1>
+              <p className="text-muted-foreground text-lg">Escolha o pacote ideal para as suas necessidades criativas</p>
+            </div>
             
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-              <div className="lg:col-span-3">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2">
                 <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {plans.map((plan) => (
-                    <Card key={plan.id} className="bg-card/50 backdrop-blur-xl border-border/50 flex flex-col">
+                    <Card key={plan.id} className="bg-card/50 backdrop-blur-xl border-border/50 flex flex-col hover:shadow-xl transition-all duration-300">
                       <CardHeader className="text-center">
-                        <div className="flex justify-center mb-4"><div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center"><Sparkles className="w-8 h-8 text-primary" /></div></div>
+                        <div className="flex justify-center mb-4">
+                          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                            <Sparkles className="w-8 h-8 text-primary" />
+                          </div>
+                        </div>
                         <CardTitle className="text-2xl">{plan.name}</CardTitle>
                         <p className="text-muted-foreground">{plan.credits_amount} créditos</p>
                       </CardHeader>
                       <CardContent className="flex flex-col flex-1">
-                        <div className="text-center mb-6"><span className="text-4xl font-bold gradient-text">{plan.price.toLocaleString('pt-AO')}</span> <span className="text-sm text-muted-foreground">Kzs</span></div>
-                        <ul className="space-y-3 mb-8 flex-1">{(plan.description || '').split(',').map((feature, i) => (<li key={i} className="flex items-start gap-3 text-sm"><Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" /><span>{feature.trim()}</span></li>))}</ul>
-                        <Button className="w-full mt-auto gradient-primary" size="lg" onClick={() => handlePurchase(plan)}>Adquirir Créditos</Button>
+                        <div className="text-center mb-6">
+                          <span className="text-4xl font-bold gradient-text">{plan.price.toLocaleString('pt-AO')}</span> 
+                          <span className="text-sm text-muted-foreground"> Kzs</span>
+                        </div>
+                        <ul className="space-y-3 mb-8 flex-1">
+                          {(plan.description || '').split(',').map((feature, i) => (
+                            <li key={i} className="flex items-start gap-3 text-sm">
+                              <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                              <span>{feature.trim()}</span>
+                            </li>
+                          ))}
+                        </ul>
+                        <Button className="w-full mt-auto gradient-primary" size="lg" onClick={() => handlePurchase(plan)}>
+                          Adquirir Créditos
+                        </Button>
                       </CardContent>
                     </Card>
                   ))}
                 </div>
               </div>
 
-              <div className="lg:col-span-2">
-                <Card className="bg-card/50 backdrop-blur-xl h-full">
-                  <CardHeader><CardTitle>Últimas Transações</CardTitle></CardHeader>
+              <div className="space-y-6">
+                <Card className="bg-gradient-to-br from-primary/10 to-secondary/10 border-primary/20">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Wallet className="w-5 h-5 text-primary" />
+                      Seus Créditos
+                    </CardTitle>
+                  </CardHeader>
                   <CardContent>
-                    {loading ? <div className="flex justify-center items-center h-40"><Loader2 className="w-8 h-8 animate-spin" /></div> : (
+                    <div className="text-center py-6">
+                      <div className="text-5xl font-bold gradient-text mb-2">{profile?.credits || 0}</div>
+                      <p className="text-muted-foreground">Créditos disponíveis</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-card/50 backdrop-blur-xl">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <TrendingUp className="w-5 h-5 text-primary" />
+                      Últimas Transações
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {loading ? (
+                      <div className="flex justify-center items-center h-40">
+                        <Loader2 className="w-8 h-8 animate-spin" />
+                      </div>
+                    ) : (
                       <div className="space-y-4">
                         {transactions.length > 0 ? transactions.map((t) => (
                           <div key={t.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/30">
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-card flex items-center justify-center">{getTransactionIcon(t.transaction_type, t.amount)}</div>
+                              <div className="w-10 h-10 rounded-full bg-card flex items-center justify-center">
+                                {getTransactionIcon(t.transaction_type, t.amount)}
+                              </div>
                               <div>
-                                <p className="font-semibold">{t.description}</p>
-                                <p className="text-xs text-muted-foreground">{new Date(t.created_at).toLocaleString('pt-AO')}</p>
+                                <p className="font-semibold text-sm">{t.description}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {new Date(t.created_at).toLocaleString('pt-AO')}
+                                </p>
                               </div>
                             </div>
                             <div className="text-right">
-                              <p className={cn("font-bold", t.amount > 0 ? 'text-green-400' : 'text-red-400')}>{t.amount > 0 ? `+${t.amount}` : t.amount}</p>
-                              {t.payments && <Badge variant={t.payments.status === "approved" ? "default" : "secondary"} className={cn(t.payments.status === "approved" && "bg-green-500/20 text-green-400", t.payments.status === "rejected" && "bg-red-500/20 text-red-400")}>{t.payments.status}</Badge>}
+                              <p className={cn("font-bold text-sm", t.amount > 0 ? 'text-green-400' : 'text-red-400')}>
+                                {t.amount > 0 ? `+${t.amount}` : t.amount}
+                              </p>
+                              {t.payments && (
+                                <Badge 
+                                  variant={t.payments.status === "approved" ? "default" : "secondary"} 
+                                  className={cn(
+                                    t.payments.status === "approved" && "bg-green-500/20 text-green-400",
+                                    t.payments.status === "rejected" && "bg-red-500/20 text-red-400"
+                                  )}
+                                >
+                                  {t.payments.status}
+                                </Badge>
+                              )}
                             </div>
                           </div>
-                        )) : <p className="text-sm text-muted-foreground text-center py-8">Nenhuma transação encontrada.</p>}
+                        )) : (
+                          <p className="text-sm text-muted-foreground text-center py-8">
+                            Nenhuma transação encontrada.
+                          </p>
+                        )}
                       </div>
                     )}
                   </CardContent>
@@ -192,10 +255,96 @@ const Credits = () => {
       </div>
 
       {/* Purchase Modal */}
-      <Dialog open={isPurchaseModalOpen} onOpenChange={setIsPurchaseModalOpen}><DialogContent className="max-w-md"><DialogHeader><DialogTitle>Finalizar Compra - {selectedPlan?.name}</DialogTitle></DialogHeader><div className="space-y-4 py-4"><div className="bg-primary/10 rounded-lg p-4 space-y-1"><p className="text-sm text-muted-foreground">Pacote:</p><p className="text-lg font-bold">{selectedPlan?.name}</p><p className="text-2xl font-bold gradient-text">{selectedPlan?.price.toLocaleString('pt-AO')} Kzs</p></div><div className="space-y-2"><Label htmlFor="payment-method">Método de Pagamento</Label><Select value={paymentMethod} onValueChange={setPaymentMethod}><SelectTrigger id="payment-method"><SelectValue placeholder="Selecione o método" /></SelectTrigger><SelectContent><SelectItem value="transferencia">Transferência Bancária</SelectItem><SelectItem value="multicaixa">Multicaixa Express</SelectItem><SelectItem value="kwik">Kwik</SelectItem></SelectContent></Select></div>{paymentMethod && (<div className="bg-muted/50 rounded-lg p-4 text-sm space-y-1"><p className="font-semibold">Dados para pagamento:</p>{paymentMethod === "transferencia" && <p>IBAN: AO06...</p>}{paymentMethod === "multicaixa" && <p>Ref: 987 654 321</p>}{paymentMethod === "kwik" && <p>Nº: +244 923 456 789</p>}</div>)}<div className="space-y-2"><Label htmlFor="phone">Nº de Telefone</Label><Input id="phone" type="tel" placeholder="+244 9XX XXX XXX" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} /></div><div className="space-y-2"><Label htmlFor="payment-proof">Comprovante</Label><Input id="payment-proof" type="file" accept="image/*" onChange={(e) => setPaymentProof(e.target.files?.[0] || null)} className="hidden" /><label htmlFor="payment-proof"><Button variant="outline" className="w-full justify-start gap-2" asChild><span><Upload className="w-4 h-4" />{paymentProof ? paymentProof.name : 'Fazer upload'}</span></Button></label></div><Button className="w-full" onClick={handleSubmitPayment} disabled={isSubmitting}>{isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : "Enviar Pagamento"}</Button></div></DialogContent></Dialog>
+      <Dialog open={isPurchaseModalOpen} onOpenChange={setIsPurchaseModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Finalizar Compra - {selectedPlan?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="bg-primary/10 rounded-lg p-4 space-y-1">
+              <p className="text-sm text-muted-foreground">Pacote:</p>
+              <p className="text-lg font-bold">{selectedPlan?.name}</p>
+              <p className="text-2xl font-bold gradient-text">{selectedPlan?.price.toLocaleString('pt-AO')} Kzs</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="payment-method">Método de Pagamento</Label>
+              <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                <SelectTrigger id="payment-method">
+                  <SelectValue placeholder="Selecione o método" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="transferencia">Transferência Bancária</SelectItem>
+                  <SelectItem value="multicaixa">Multicaixa Express</SelectItem>
+                  <SelectItem value="kwik">Kwik</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {paymentMethod && (
+              <div className="bg-muted/50 rounded-lg p-4 text-sm space-y-1">
+                <p className="font-semibold">Dados para pagamento:</p>
+                {paymentMethod === "transferencia" && <p>IBAN: AO06...</p>}
+                {paymentMethod === "multicaixa" && <p>Ref: 987 654 321</p>}
+                {paymentMethod === "kwik" && <p>Nº: +244 923 456 789</p>}
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="phone">Nº de Telefone</Label>
+              <Input 
+                id="phone" 
+                type="tel" 
+                placeholder="+244 9XX XXX XXX" 
+                value={phoneNumber} 
+                onChange={(e) => setPhoneNumber(e.target.value)} 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="payment-proof">Comprovante</Label>
+              <Input 
+                id="payment-proof" 
+                type="file" 
+                accept="image/*" 
+                onChange={(e) => setPaymentProof(e.target.files?.[0] || null)} 
+                className="hidden" 
+              />
+              <label htmlFor="payment-proof">
+                <Button variant="outline" className="w-full justify-start gap-2" asChild>
+                  <span>
+                    <Upload className="w-4 h-4" />
+                    {paymentProof ? paymentProof.name : 'Fazer upload'}
+                  </span>
+                </Button>
+              </label>
+            </div>
+            <Button 
+              className="w-full" 
+              onClick={handleSubmitPayment} 
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  Enviando...
+                </>
+              ) : (
+                "Enviar Pagamento"
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Confirmation Modal */}
-      <Dialog open={isConfirmationModalOpen} onOpenChange={setIsConfirmationModalOpen}><DialogContent className="max-w-sm text-center"><div className="flex flex-col items-center gap-4 py-8"><CheckCircle className="w-20 h-20 text-green-500" /><h2 className="text-2xl font-bold">Pagamento Enviado!</h2><p className="text-muted-foreground">Iremos aprovar o seu pagamento em 15 minutos ou menos, se tudo estiver conforme.</p></div></DialogContent></Dialog>
+      <Dialog open={isConfirmationModalOpen} onOpenChange={setIsConfirmationModalOpen}>
+        <DialogContent className="max-w-sm text-center">
+          <div className="flex flex-col items-center gap-4 py-8">
+            <CheckCircle className="w-20 h-20 text-green-500" />
+            <h2 className="text-2xl font-bold">Pagamento Enviado!</h2>
+            <p className="text-muted-foreground">
+              Iremos aprovar o seu pagamento em 15 minutos ou menos, se tudo estiver conforme.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

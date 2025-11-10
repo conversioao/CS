@@ -6,14 +6,21 @@ import VerificationPromptModal from "@/components/VerificationPromptModal";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate, Link } from "react-router-dom";
-import { Sparkles, Zap } from "lucide-react";
+import { Sparkles, Image, Video, AudioLines, Music, Users, CreditCard, TrendingUp } from "lucide-react";
 import { useSession } from "@/contexts/SessionContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
 
 const Dashboard = () => {
   const { profile, loading } = useSession();
   const [showTutorial, setShowTutorial] = useState(false);
   const [showVerificationPrompt, setShowVerificationPrompt] = useState(false);
+  const [stats, setStats] = useState({
+    images: 0,
+    videos: 0,
+    audio: 0,
+    music: 0
+  });
   const navigate = useNavigate();
 
   const isVerified = profile?.status === 'verified';
@@ -24,7 +31,32 @@ const Dashboard = () => {
     if (isNewUser) {
       setShowTutorial(true);
     }
+    calculateUserStats();
   }, [loading]);
+
+  const calculateUserStats = async () => {
+    if (!profile) return;
+    
+    try {
+      // Get image count from localStorage
+      const imageHistory = JSON.parse(localStorage.getItem('image_history') || '[]');
+      
+      // Get video count from localStorage
+      const videoHistory = JSON.parse(localStorage.getItem('video_history') || '[]');
+      
+      // Get audio count from localStorage
+      const audioHistory = JSON.parse(localStorage.getItem('audio_history') || '[]');
+      
+      setStats({
+        images: imageHistory.length,
+        videos: videoHistory.length,
+        audio: audioHistory.length,
+        music: 0 // Placeholder for music count
+      });
+    } catch (error) {
+      console.error('Error calculating stats:', error);
+    }
+  };
 
   const handleFinishTutorial = () => {
     setShowTutorial(false);
@@ -38,6 +70,15 @@ const Dashboard = () => {
       navigate('/generate');
     }
   };
+
+  const statItems = [
+    { icon: Image, label: "Imagens", value: stats.images, color: "text-blue-500" },
+    { icon: Video, label: "Vídeos", value: stats.videos, color: "text-purple-500" },
+    { icon: AudioLines, label: "Áudios", value: stats.audio, color: "text-green-500" },
+    { icon: Music, label: "Músicas", value: stats.music, color: "text-pink-500" },
+    { icon: CreditCard, label: "Créditos", value: profile?.credits || 0, color: "text-yellow-500" },
+    { icon: Users, label: "Indicações", value: 0, color: "text-cyan-500" }
+  ];
 
   return (
     <>
@@ -58,40 +99,36 @@ const Dashboard = () => {
               <div className="absolute bottom-[-30%] right-[-15%] w-[50rem] h-[50rem] bg-secondary/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
             </div>
 
-            <div className="mb-12 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <h1 className="text-4xl font-bold mb-2">
-                  Olá, <span className="gradient-text">{profile?.full_name?.split(' ')[0] || 'Usuário'}</span>
-                </h1>
-                <p className="text-muted-foreground text-lg">
-                  Vamos criar algo incrível hoje!
-                </p>
-              </div>
-              <Button size="lg" className="gradient-primary glow-effect" onClick={handleNewCreationClick}>
-                <Sparkles className="w-5 h-5 mr-2" />
-                Nova Criação
-              </Button>
+            <div className="mb-8">
+              <h1 className="text-3xl md:text-4xl font-bold mb-2">
+                Olá, <span className="gradient-text">{profile?.full_name?.split(' ')[0] || 'Usuário'}</span>
+              </h1>
+              <p className="text-muted-foreground text-lg">
+                Bem-vindo ao seu painel criativo
+              </p>
             </div>
 
-            <div className="space-y-12">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+              {statItems.map((stat, index) => {
+                const Icon = stat.icon;
+                return (
+                  <Card key={index} className="bg-card/50 backdrop-blur-xl border-border/50 hover:shadow-lg transition-all">
+                    <CardContent className="p-4 text-center">
+                      <div className="flex justify-center mb-2">
+                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                          <Icon className={`w-6 h-6 ${stat.color}`} />
+                        </div>
+                      </div>
+                      <div className="text-2xl font-bold">{stat.value}</div>
+                      <div className="text-xs text-muted-foreground">{stat.label}</div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+
+            <div className="space-y-8">
               <ToolsSection />
-              <Card className="bg-gradient-to-r from-green-500/10 to-cyan-500/10 border-green-500/20">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Zap className="w-6 h-6 text-green-400" />
-                    <span>Exclusivo: Geração de Imagens por WhatsApp</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <p className="text-muted-foreground">
-                    Ative a subscrição e crie imagens diretamente do seu WhatsApp. <br />
-                    Custo: <strong>15.000 créditos/mês</strong>.
-                  </p>
-                  <Link to="/account?tab=integrations">
-                    <Button variant="outline" className="bg-card/50">Ativar Agora</Button>
-                  </Link>
-                </CardContent>
-              </Card>
             </div>
           </main>
         </div>
