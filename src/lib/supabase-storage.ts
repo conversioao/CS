@@ -23,11 +23,11 @@ export const storeMediaInSupabase = async (
     console.log(`[Supabase Storage] Storing ${urls.length} ${mediaType}(s) for user ${user.id}`);
     console.log(`[Supabase Storage] URLs to store:`, urls);
     
-    const response = await fetch('https://xlvyqizsgyowcovwyjbr.supabase.co/functions/v1/store-generated-media', {
+    const response = await fetch('https://lpvwyczyjriesvfxavil.supabase.co/functions/v1/store-generated-media', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh4bHZ5cWl6c2d5b3djb3Z3eWpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjc0Njg5MjgsImV4cCI6MjA0MzA0NDkyOH0.0YwTW8FQgY2J2wRnEWyJxEy5GUjf6KaAe-8fCIHyxqE',
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxwdnd5Y3p5anJpZXN2ZnhhdmlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3ODkwMDMsImV4cCI6MjA3ODM2NTAwM30.j5yHt_FLtc2vef_n0ESwXr-1KKJVln1gCB0vuw5-7Uw',
       },
       body: JSON.stringify({
         urls: urls,
