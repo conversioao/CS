@@ -61,19 +61,27 @@ const Account = () => {
       toast.error("Código de verificação é obrigatório.");
       return;
     }
+    
     setIsVerifying(true);
+    
     try {
-      // A lógica de verificação é que o código deve ser o ID do usuário
-      // Esta é uma simulação para o processo de verificação via WhatsApp
-      const { data, error } = await supabase.functions.invoke('verify-user', {
-        body: { userId: user.id, verificationCode },
-      });
-
-      if (error) throw error;
-      if (!data.success) throw new Error(data.error || 'Falha na verificação');
-
-      toast.success("Conta verificada com sucesso!");
-      await refetchProfile(); // Re-fetch profile to update status
+      // Verifica se o código inserido é igual ao ID do usuário
+      if (verificationCode === user.id) {
+        // Atualiza o status do perfil para 'verified'
+        const { error } = await supabase
+          .from('profiles')
+          .update({ status: 'verified' })
+          .eq('id', user.id);
+        
+        if (error) throw error;
+        
+        // Atualiza o estado local
+        await refetchProfile();
+        
+        toast.success("Conta verificada com sucesso!");
+      } else {
+        toast.error("Código de verificação inválido.");
+      }
     } catch (error: any) {
       toast.error("Erro na verificação", { description: error.message });
     } finally {
