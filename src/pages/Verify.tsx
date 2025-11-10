@@ -50,18 +50,18 @@ const Verify = () => {
     }
 
     try {
+      // The mock verification logic requires the code to be the user's ID
+      const verificationCode = userId;
+
       const { data, error: functionError } = await supabase.functions.invoke('verify-user', {
-        body: { userId }
+        body: { userId, verificationCode },
       });
 
       if (functionError) throw functionError;
       if (!data.success) throw new Error(data.error || 'Falha na verificação');
-
-      await supabase.auth.refreshSession();
       
       localStorage.removeItem('pendingUserId');
-      localStorage.setItem('userVerified', 'true');
-      localStorage.setItem('isNewUser', 'true');
+      localStorage.setItem('isNewUser', 'true'); // For the tutorial
       
       setIsVerified(true);
 

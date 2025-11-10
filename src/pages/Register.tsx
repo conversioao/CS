@@ -55,24 +55,18 @@ const Register = () => {
       if (signUpError) throw signUpError;
       if (!signUpData.user) throw new Error('Falha ao criar conta. Tente novamente.');
 
-      // 2. Autenticar o utilizador para criar uma sessão
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: dummyEmail,
-        password,
-      });
-
-      if (signInError) throw signInError;
-
+      // Store user ID for verification and redirect
+      localStorage.setItem('pendingUserId', signUpData.user.id);
+      
       toast.success('Conta criada com sucesso!', {
-        description: 'Vamos configurar o seu espaço criativo.',
+        description: 'Agora, vamos verificar a sua conta.',
       });
       
-      localStorage.setItem('isNewUser', 'true');
-      navigate('/onboarding');
+      navigate('/verify');
 
     } catch (error: any) {
       toast.error('Erro no Cadastro', {
-        description: error.message || 'Não foi possível criar a sua conta. Tente novamente.',
+        description: error.message || 'Não foi possível criar a sua conta. Verifique se o número de WhatsApp já não está em uso.',
       });
     } finally {
       setIsLoading(false);
