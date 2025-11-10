@@ -33,7 +33,7 @@ interface Transaction {
 }
 
 const Credits = () => {
-  const { user } = useSession();
+  const { user, profile } = useSession();
   const [plans, setPlans] = useState<CreditPackage[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);

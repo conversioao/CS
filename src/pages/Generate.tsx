@@ -102,7 +102,7 @@ const Generate = () => {
       }
       
       toast.info("A gerar imagens...", { description: `Isso pode levar até ${quantity * 30} segundos.` });
-      const response = await fetch('https://n8n.conversio.ao/webhook-test/criar-imagem', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image_url: imageUrl, description, quantidade: quantity.toString(), proporcao: aspectRatio, modelo }) });
+      const response = await fetch('https://n8n.conversio.ao/webhook-test/Gerar_Modelos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image_url: imageUrl, description, quantidade: quantity.toString(), proporcao: aspectRatio, modelo }) });
       if (!response.ok) throw new Error('Erro ao gerar imagem');
       const webhookResponse = await response.json();
       if (webhookResponse && Array.isArray(webhookResponse)) {

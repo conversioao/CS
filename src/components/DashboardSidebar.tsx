@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Grid3x3, Image, Users, CreditCard, User, ChevronLeft, ChevronRight, DollarSign, MessageSquare } from "lucide-react";
+import { Home, Grid3x3, Image, Users, CreditCard, User, ChevronLeft, ChevronRight } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import logo from "@/assets/logo.png";
 import { cn } from "@/lib/utils";
@@ -12,7 +12,6 @@ const navLinks = [
   { to: "/gallery", icon: Image, label: "Galeria" },
   { to: "/community", icon: Users, label: "Comunidade" },
   { to: "/credits", icon: CreditCard, label: "Créditos" },
-  { to: "/account?tab=integrations", icon: MessageSquare, label: "WhatsApp" },
 ];
 
 const DashboardSidebar = () => {
