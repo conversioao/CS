@@ -53,7 +53,8 @@ export const SessionContextProvider = ({ children }: { children: React.ReactNode
       if (currentUser) {
         await fetchProfile(currentUser);
       }
-      setLoading(false); // Initial load is complete
+    }).finally(() => {
+      setLoading(false); // This will run regardless of success or failure
     });
 
     // Listen for subsequent auth changes

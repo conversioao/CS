@@ -65,23 +65,16 @@ const Account = () => {
     setIsVerifying(true);
     
     try {
-      // Call the edge function to verify the user
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-user`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
-        },
-        body: JSON.stringify({
+      const { data: result, error } = await supabase.functions.invoke('verify-user', {
+        body: {
           userId: user.id,
           verificationCode: verificationCode
-        })
+        }
       });
 
-      const result = await response.json();
+      if (error) throw error;
       
       if (result.success) {
-        // Atualiza o estado local
         await refetchProfile();
         toast.success("Conta verificada com sucesso!");
       } else {
