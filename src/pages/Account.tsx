@@ -160,17 +160,31 @@ const Account = () => {
             <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-6"><TabsTrigger value="profile"><User className="w-4 h-4 mr-2" />Perfil</TabsTrigger><TabsTrigger value="brand"><Palette className="w-4 h-4 mr-2" />Marca</TabsTrigger><TabsTrigger value="billing"><CreditCard className="w-4 h-4 mr-2" />Faturação</TabsTrigger><TabsTrigger value="integrations"><Bot className="w-4 h-4 mr-2" />Integrações</TabsTrigger></TabsList>
             <TabsContent value="profile">
               {!isProfileVerified ? (
-                <Card className="mb-6 bg-yellow-500/10 border-yellow-500/30"><CardHeader className="flex-row items-center gap-4 space-y-0"><ShieldAlert className="w-8 h-8 text-yellow-600 flex-shrink-0" /><div><CardTitle>Verifique a sua conta</CardTitle><CardDescription>Use o seu ID de usuário como código de verificação para ativar todas as funcionalidades.</CardDescription></div></CardHeader><CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Seu ID de Verificação</Label>
-                    <div className="flex items-center gap-2">
-                      <Input value={user?.id || ''} readOnly className="font-mono bg-background/50" />
-                      <Button variant="outline" size="icon" onClick={handleCopy}>
-                        {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-                      </Button>
+                <Card className="mb-6 bg-yellow-500/10 border-yellow-500/30">
+                  <CardHeader className="flex-row items-start gap-4 space-y-0">
+                    <ShieldAlert className="w-8 h-8 text-yellow-600 flex-shrink-0 mt-1" />
+                    <div>
+                      <CardTitle>Verifique a sua conta</CardTitle>
+                      <CardDescription className="flex items-center flex-wrap">
+                        Para ativar as funcionalidades, use o seu ID de usuário como código. Clique para copiar:
+                        <Button variant="ghost" size="sm" onClick={handleCopy} className="font-mono ml-2 px-2 h-7">
+                          {user?.id.substring(0, 8)}...
+                          {copied ? <Check className="w-4 h-4 text-green-500 ml-2" /> : <Copy className="w-4 h-4 ml-2" />}
+                        </Button>
+                      </CardDescription>
                     </div>
-                  </div>
-                  <div className="space-y-2"><Label htmlFor="verification-code">Código de Verificação</Label><Input id="verification-code" placeholder="Copie seu ID e cole aqui" value={verificationCode} onChange={(e) => setVerificationCode(e.target.value)} /></div><Button onClick={handleVerifyAccount} disabled={isVerifying} className="bg-yellow-500 hover:bg-yellow-600 text-black">{isVerifying ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ShieldCheck className="w-4 h-4 mr-2" />}Verificar Conta</Button></CardContent></Card>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="verification-code">Código de Verificação</Label>
+                      <Input id="verification-code" placeholder="Cole o seu ID de usuário aqui" value={verificationCode} onChange={(e) => setVerificationCode(e.target.value)} />
+                    </div>
+                    <Button onClick={handleVerifyAccount} disabled={isVerifying} className="bg-yellow-500 hover:bg-yellow-600 text-black">
+                      {isVerifying ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ShieldCheck className="w-4 h-4 mr-2" />}
+                      Verificar Conta
+                    </Button>
+                  </CardContent>
+                </Card>
               ) : (
                  <Card className="mb-6 bg-green-500/10 border-green-500/30"><CardHeader className="flex-row items-center gap-4 space-y-0"><ShieldCheck className="w-8 h-8 text-green-600 flex-shrink-0" /><div><CardTitle>Conta Verificada</CardTitle><CardDescription>A sua conta está ativa. Todas as funcionalidades estão disponíveis.</CardDescription></div></CardHeader></Card>
               )}

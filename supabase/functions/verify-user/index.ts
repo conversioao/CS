@@ -18,9 +18,10 @@ const supabaseAdmin = createClient(
 
 // @ts-ignore
 serve(async (req) => {
+  // This is needed if you're planning to invoke your function from a browser.
   if (req.method === 'OPTIONS') {
     // @ts-ignore
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
