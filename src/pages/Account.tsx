@@ -73,30 +73,50 @@ const Account = () => {
     }
   
     setIsVerifying(true);
+    console.log(`[Verification] Iniciando verificação para o utilizador: ${user.id}`);
   
     try {
-      // Client-side check as requested
+      // 1. Verificação do lado do cliente
       if (verificationCode !== user.id) {
+        console.warn(`[Verification] Falha: Código inválido. Fornecido: '${verificationCode}', Esperado: '${user.id}'`);
         throw new Error("Código de verificação inválido. Certifique-se de que corresponde ao seu ID de usuário.");
       }
-  
-      // Update the profile directly in the database
-      const { error: updateError } = await supabase
+      console.log("[Verification] Código verificado com sucesso no lado do cliente.");
+
+      // 2. Atualizar o perfil na base de dados e retornar a linha atualizada
+      const { data: updatedProfile, error: updateError } = await supabase
         .from('profiles')
         .update({ status: 'verified' })
-        .eq('id', user.id);
+        .eq('id', user.id)
+        .select()
+        .single();
   
-      if (updateError) throw updateError;
-  
-      await refetchProfile();
-      toast.success("Conta verificada com sucesso!");
+      if (updateError) {
+        console.error("[Verification] Erro ao atualizar o perfil no Supabase:", updateError);
+        throw updateError;
+      }
+
+      console.log("[Verification] Perfil atualizado com sucesso no Supabase:", updatedProfile);
+
+      // 3. Verificar se a atualização foi bem-sucedida
+      if (updatedProfile && updatedProfile.status === 'verified') {
+        console.log("[Verification] A atualização foi confirmada. A recarregar o perfil na aplicação.");
+        await refetchProfile(); // Atualiza o estado global
+        toast.success("Conta verificada com sucesso!", {
+          description: "As funcionalidades da sua conta foram ativadas.",
+        });
+      } else {
+        console.error("[Verification] Falha: A atualização não retornou o status esperado.", updatedProfile);
+        throw new Error("A verificação falhou no servidor. Por favor, tente novamente.");
+      }
   
     } catch (error: any) {
-      console.error("Detailed Verification Error:", error); // More specific logging
+      console.error("[Verification] Erro detalhado no processo de verificação:", error);
       toast.error("Erro na verificação", { 
         description: error.message || "Ocorreu um problema ao tentar verificar sua conta." 
       });
     } finally {
+      console.log("[Verification] Processo de verificação finalizado.");
       setIsVerifying(false);
     }
   };
