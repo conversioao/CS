@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Grid3x3, Image, Users, CreditCard, User, ChevronLeft, ChevronRight, DollarSign } from "lucide-react";
+import { Home, Grid3x3, Image, Users, CreditCard, User, ChevronLeft, ChevronRight } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import logo from "@/assets/logo.png";
 import { cn } from "@/lib/utils";
@@ -62,28 +62,6 @@ const DashboardSidebar = () => {
               </Tooltip>
             );
           })}
-          {profile?.account_type === 'affiliate' && (
-            <Tooltip delayDuration={0}>
-              <TooltipTrigger asChild>
-                <Link
-                  to="/affiliate/dashboard"
-                  className={cn(
-                    "flex items-center gap-4 p-3 rounded-lg transition-all duration-200 group relative",
-                    "text-muted-foreground hover:text-foreground hover:bg-primary/10",
-                    location.pathname === "/affiliate/dashboard" && "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/30"
-                  )}
-                >
-                  <DollarSign className="w-5 h-5 flex-shrink-0" />
-                  {!isCollapsed && <span className="truncate">Afiliado</span>}
-                </Link>
-              </TooltipTrigger>
-              {isCollapsed && (
-                <TooltipContent side="right" align="center">
-                  <p>Afiliado</p>
-                </TooltipContent>
-              )}
-            </Tooltip>
-          )}
         </nav>
 
         <div className="px-3 py-6 mt-auto">

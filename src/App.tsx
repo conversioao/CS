@@ -34,7 +34,6 @@ import AdminPayments from "./pages/admin/AdminPayments";
 import AdminModels from "./pages/admin/AdminModels";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminReports from "./pages/admin/AdminReports";
-import AffiliateDashboard from "./pages/AffiliateDashboard";
 import AdminWhatsapp from "./pages/admin/AdminWhatsapp";
 import AdminCreditPackages from "./pages/admin/AdminCreditPackages";
 
@@ -72,7 +71,6 @@ const App = () => (
                 <Route path="/community" element={<Community />} />
                 <Route path="/credits" element={<Credits />} />
                 <Route path="/account" element={<Account />} />
-                <Route path="/affiliate/dashboard" element={<AffiliateDashboard />} />
               </Route>
 
               {/* Protected Admin Routes */}
