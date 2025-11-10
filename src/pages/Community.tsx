@@ -3,110 +3,170 @@ import DashboardSidebar from "@/components/DashboardSidebar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Heart, MessageCircle, Sparkles, Trophy, TrendingUp, Users, Award } from "lucide-react";
-import { useState } from "react";
+import { Heart, MessageCircle, Sparkles, Trophy, TrendingUp, Users, Award, Upload, Eye, ThumbsUp } from "lucide-react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useSession } from "@/contexts/SessionContext";
+import { Card, CardContent } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
-const posts = [
-  {
-    image: "https://images.unsplash.com/photo-1618556450994-a6a128ef0d9d?w=600&h=600&fit=crop",
-    title: "Uma moça negra sentada no céu",
-    author: "Maria Silva",
-    time: "Há 2 horas",
-    likes: 1250,
-    comments: 24,
-    trending: true
-  },
-  {
-    image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&h=600&fit=crop",
-    title: "Retrato profissional estilo editorial",
-    author: "João Santos",
-    time: "Há 5 horas",
-    likes: 890,
-    comments: 18
-  },
-  {
-    image: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=600&h=600&fit=crop",
-    title: "Mulher com cabelo cacheado em fundo roxo",
-    author: "Ana Costa",
-    time: "Há 8 horas",
-    likes: 1580,
-    comments: 32,
-    trending: true
-  },
-  {
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=600&fit=crop",
-    title: "Homem atlético em cenário urbano",
-    author: "Pedro Lima",
-    time: "Há 12 horas",
-    likes: 0,
-    comments: 0
-  },
-  {
-    image: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=600&h=600&fit=crop",
-    title: "Retrato masculino com luz natural",
-    author: "Lucas Oliveira",
-    time: "Há 1 dia",
-    likes: 1120,
-    comments: 27
-  },
-  {
-    image: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=600&h=600&fit=crop",
-    title: "Foto profissional para perfil",
-    author: "Carla Mendes",
-    time: "Há 1 dia",
-    likes: 2340,
-    comments: 41
-  },
-];
-
-const challenges = [
-  {
-    title: "Desafio Semanal",
-    description: "Crie uma imagem usando o modelo FashionFit",
-    reward: "500 créditos",
-    participants: 234,
-    endsIn: "3 dias",
-    icon: Trophy,
-    color: "from-yellow-500 to-orange-500"
-  },
-  {
-    title: "Trending Creator",
-    description: "Consiga 1000 curtidas em suas criações",
-    reward: "1000 créditos",
-    participants: 156,
-    endsIn: "7 dias",
-    icon: TrendingUp,
-    color: "from-pink-500 to-purple-500"
-  },
-  {
-    title: "Colaboração",
-    description: "Compartilhe e comente em 10 posts",
-    reward: "300 créditos",
-    participants: 567,
-    endsIn: "5 dias",
-    icon: Users,
-    color: "from-blue-500 to-cyan-500"
-  },
-];
-
-const topCreators = [
-  { name: "Ana Silva", points: 15420, rank: 1, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=ana" },
-  { name: "João Pedro", points: 12890, rank: 2, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=joao" },
-  { name: "Maria Costa", points: 11340, rank: 3, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=maria" },
-  { name: "Pedro Santos", points: 9876, rank: 4, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=pedro" },
-  { name: "Sofia Lima", points: 8654, rank: 5, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=sofia" },
-];
+interface CommunitySubmission {
+  id: string;
+  user_id: string;
+  media_url: string;
+  title: string;
+  description: string;
+  likes: number;
+  views: number;
+  score: number;
+  status: string;
+  created_at: string;
+  profiles: {
+    full_name: string;
+  } | null;
+}
 
 const Community = () => {
-  const [likedPosts, setLikedPosts] = useState<number[]>([]);
+  const { user, profile } = useSession();
+  const [submissions, setSubmissions] = useState<CommunitySubmission[]>([]);
+  const [mySubmissions, setMySubmissions] = useState<CommunitySubmission[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  const handleLike = (index: number) => {
-    setLikedPosts(prev => 
-      prev.includes(index) 
-        ? prev.filter(i => i !== index)
-        : [...prev, index]
-    );
+  useEffect(() => {
+    fetchSubmissions();
+  }, []);
+
+  const fetchSubmissions = async () => {
+    setLoading(true);
+    
+    // Fetch approved submissions ordered by score
+    const { data: approvedData, error: approvedError } = await supabase
+      .from('community_submissions')
+      .select('*, profiles(full_name)')
+      .eq('status', 'approved')
+      .order('score', { ascending: false })
+      .limit(20);
+
+    if (approvedError) {
+      console.error('Error fetching approved submissions:', approvedError);
+    } else {
+      setSubmissions(approvedData || []);
+    }
+
+    // Fetch user's submissions
+    if (user) {
+      const { data: userData, error: userError } = await supabase
+        .from('community_submissions')
+        .select('*, profiles(full_name)')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (userError) {
+        console.error('Error fetching user submissions:', userError);
+      } else {
+        setMySubmissions(userData || []);
+      }
+    }
+
+    setLoading(false);
   };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile || !title || !user) {
+      toast.error("Por favor, preencha todos os campos obrigatórios");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      // Upload file to Supabase Storage
+      const fileExt = selectedFile.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('community-submissions')
+        .upload(fileName, selectedFile);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('community-submissions')
+        .getPublicUrl(fileName);
+
+      // Insert submission record
+      const { error: insertError } = await supabase
+        .from('community_submissions')
+        .insert({
+          user_id: user.id,
+          media_url: publicUrl,
+          title,
+          description,
+          score: 0 // Initial score
+        });
+
+      if (insertError) throw insertError;
+
+      toast.success("Criação enviada com sucesso! Aguarde a aprovação.");
+      setTitle("");
+      setDescription("");
+      setSelectedFile(null);
+      setPreviewUrl(null);
+      fetchSubmissions();
+    } catch (error) {
+      console.error('Error uploading submission:', error);
+      toast.error("Erro ao enviar criação. Tente novamente.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleLike = async (id: string) => {
+    // In a real implementation, this would update the like count
+    // and track which users have liked which submissions
+    toast.info("Sistema de curtidas em desenvolvimento");
+  };
+
+  const calculateScore = (submission: CommunitySubmission) => {
+    // Simple scoring algorithm: views + (likes * 2)
+    return submission.views + (submission.likes * 2);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex">
+        <div className="hidden lg:block"><DashboardSidebar /></div>
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <DashboardHeader />
+          <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 flex items-center justify-center">
+            <Loader2 className="w-8 h-8 animate-spin" />
+          </main>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -131,172 +191,351 @@ const Community = () => {
                 Compartilhe, inspire-se e ganhe recompensas
               </p>
             </div>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button className="gradient-primary">
+                  <Upload className="w-4 h-4 mr-2" />
+                  Enviar Criação
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Enviar para a Comunidade</h3>
+                  <div className="space-y-2">
+                    <Label htmlFor="title">Título *</Label>
+                    <Input
+                      id="title"
+                      placeholder="Dê um título criativo à sua criação"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Descrição</Label>
+                    <Textarea
+                      id="description"
+                      placeholder="Conte-nos sobre sua criação..."
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="file">Imagem *</Label>
+                    <Input
+                      id="file"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                    />
+                  </div>
+                  {previewUrl && (
+                    <div className="relative">
+                      <img
+                        src={previewUrl}
+                        alt="Preview"
+                        className="w-full h-48 object-cover rounded-lg"
+                      />
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="absolute top-2 right-2"
+                        onClick={() => {
+                          setSelectedFile(null);
+                          setPreviewUrl(null);
+                        }}
+                      >
+                        Remover
+                      </Button>
+                    </div>
+                  )}
+                  <Button
+                    className="w-full"
+                    onClick={handleUpload}
+                    disabled={uploading || !selectedFile || !title}
+                  >
+                    {uploading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Enviando...
+                      </>
+                    ) : (
+                      "Enviar para Aprovação"
+                    )}
+                  </Button>
+                  <p className="text-xs text-muted-foreground">
+                    Todas as criações são revisadas antes de serem publicadas.
+                  </p>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
 
           <Tabs defaultValue="feed" className="space-y-6">
             <TabsList className="grid w-full max-w-md grid-cols-3">
               <TabsTrigger value="feed">Feed</TabsTrigger>
-              <TabsTrigger value="challenges">Desafios</TabsTrigger>
-              <TabsTrigger value="ranking">Ranking</TabsTrigger>
+              <TabsTrigger value="trending">Em Alta</TabsTrigger>
+              <TabsTrigger value="my">Minhas</TabsTrigger>
             </TabsList>
 
             <TabsContent value="feed" className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {posts.map((post, index) => (
+                {submissions.map((submission) => (
                   <div
-                    key={index}
+                    key={submission.id}
                     className="group relative overflow-hidden rounded-xl border border-border bg-secondary/20 hover:border-primary/50 transition-all duration-300"
                   >
-                    {post.trending && (
-                      <Badge className="absolute top-4 left-4 bg-gradient-to-r from-yellow-500 to-orange-500 z-10">
-                        <TrendingUp className="w-3 h-3 mr-1" />
-                        Em Alta
-                      </Badge>
-                    )}
                     <div className="relative aspect-square overflow-hidden">
-                      {post.likes > 0 && (
-                        <div className="absolute top-4 right-4 bg-background/80 backdrop-blur-sm px-3 py-1 rounded-full flex items-center gap-1 z-10">
-                          <Sparkles className="w-3 h-3 text-primary" />
-                          <span className="text-sm font-semibold">{post.likes}</span>
-                        </div>
-                      )}
                       <img
-                        src={post.image}
-                        alt={post.title}
+                        src={submission.media_url}
+                        alt={submission.title}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                       />
+                      <div className="absolute top-4 right-4 flex gap-2">
+                        <div className="bg-black/50 backdrop-blur-sm px-2 py-1 rounded-full flex items-center gap-1">
+                          <Eye className="w-4 h-4 text-white" />
+                          <span className="text-white text-xs">{submission.views}</span>
+                        </div>
+                        <div className="bg-black/50 backdrop-blur-sm px-2 py-1 rounded-full flex items-center gap-1">
+                          <ThumbsUp className="w-4 h-4 text-white" />
+                          <span className="text-white text-xs">{submission.likes}</span>
+                        </div>
+                      </div>
                     </div>
                     <div className="p-4">
-                      <h3 className="font-semibold mb-2 line-clamp-2">{post.title}</h3>
-                      <div className="flex items-center justify-between text-sm text-muted-foreground mb-3">
-                        <span>por {post.author}</span>
-                        <span>{post.time}</span>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <button 
-                          onClick={() => handleLike(index)}
-                          className={`flex items-center gap-2 transition-colors ${
-                            likedPosts.includes(index) 
-                              ? 'text-primary' 
-                              : 'text-muted-foreground hover:text-primary'
-                          }`}
-                        >
-                          <Heart className={`w-4 h-4 ${likedPosts.includes(index) ? 'fill-primary' : ''}`} />
-                          <span className="text-sm">{post.likes > 0 ? post.likes : ''}</span>
-                        </button>
-                        <button className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
-                          <MessageCircle className="w-4 h-4" />
-                          <span className="text-sm">{post.comments > 0 ? post.comments : ''}</span>
-                        </button>
+                      <h3 className="font-semibold mb-2 line-clamp-2">{submission.title}</h3>
+                      <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                        {submission.description}
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-xs text-primary-foreground font-bold">
+                            {submission.profiles?.full_name?.charAt(0) || 'U'}
+                          </div>
+                          <span className="text-sm font-medium">
+                            {submission.profiles?.full_name || 'Usuário'}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="gap-1"
+                            onClick={() => handleLike(submission.id)}
+                          >
+                            <Heart className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="gap-1">
+                            <MessageCircle className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
 
-              <div className="text-center">
-                <Button variant="outline" size="lg">
-                  Carregar Mais
-                </Button>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="challenges" className="space-y-6">
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {challenges.map((challenge, index) => {
-                  const Icon = challenge.icon;
-                  return (
-                    <div
-                      key={index}
-                      className="bg-secondary/20 border border-border rounded-xl p-6 hover:border-primary/50 transition-all duration-300"
-                    >
-                      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${challenge.color} flex items-center justify-center mb-4`}>
-                        <Icon className="w-6 h-6 text-white" />
-                      </div>
-                      
-                      <h3 className="text-xl font-semibold mb-2">{challenge.title}</h3>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        {challenge.description}
-                      </p>
-                      
-                      <div className="space-y-2 mb-4">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">Recompensa:</span>
-                          <Badge className="bg-primary">{challenge.reward}</Badge>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">Participantes:</span>
-                          <span className="font-semibold">{challenge.participants}</span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">Termina em:</span>
-                          <span className="font-semibold">{challenge.endsIn}</span>
-                        </div>
-                      </div>
-                      
-                      <Button className="w-full gradient-primary">
-                        Participar
-                      </Button>
-                    </div>
-                  );
-                })}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="ranking" className="space-y-6">
-              <div className="bg-secondary/20 border border-border rounded-xl p-6">
-                <div className="flex items-center gap-2 mb-6">
-                  <Award className="w-6 h-6 text-primary" />
-                  <h2 className="text-2xl font-bold">Top Criadores do Mês</h2>
+              {submissions.length === 0 && (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground">Nenhuma criação publicada ainda.</p>
                 </div>
-                
-                <div className="space-y-4">
-                  {topCreators.map((creator, index) => (
+              )}
+            </TabsContent>
+
+            <TabsContent value="trending" className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...submissions]
+                  .sort((a, b) => calculateScore(b) - calculateScore(a))
+                  .slice(0, 6)
+                  .map((submission) => (
                     <div
-                      key={index}
-                      className={`flex items-center gap-4 p-4 rounded-lg transition-all ${
-                        creator.rank <= 3 
-                          ? 'bg-primary/10 border border-primary/30' 
-                          : 'bg-secondary/50 hover:bg-secondary'
-                      }`}
+                      key={submission.id}
+                      className="group relative overflow-hidden rounded-xl border border-border bg-secondary/20 hover:border-primary/50 transition-all duration-300"
                     >
-                      <div className="relative">
-                        <div className={`text-2xl font-bold ${
-                          creator.rank === 1 ? 'text-yellow-500' :
-                          creator.rank === 2 ? 'text-gray-400' :
-                          creator.rank === 3 ? 'text-orange-600' :
-                          'text-muted-foreground'
-                        }`}>
-                          #{creator.rank}
+                      <div className="relative aspect-square overflow-hidden">
+                        <img
+                          src={submission.media_url}
+                          alt={submission.title}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                        <div className="absolute top-4 right-4 bg-primary/90 backdrop-blur-sm px-2 py-1 rounded-full flex items-center gap-1">
+                          <TrendingUp className="w-4 h-4 text-white" />
+                          <span className="text-white text-xs font-bold">
+                            {calculateScore(submission)}
+                          </span>
                         </div>
                       </div>
-                      
-                      <img 
-                        src={creator.avatar} 
-                        alt={creator.name}
-                        className="w-12 h-12 rounded-full border-2 border-primary"
-                      />
-                      
-                      <div className="flex-1">
-                        <h3 className="font-semibold">{creator.name}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {creator.points.toLocaleString('pt-BR')} pontos
+                      <div className="p-4">
+                        <h3 className="font-semibold mb-2 line-clamp-2">{submission.title}</h3>
+                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                          {submission.description}
                         </p>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-xs text-primary-foreground font-bold">
+                              {submission.profiles?.full_name?.charAt(0) || 'U'}
+                            </div>
+                            <span className="text-sm font-medium">
+                              {submission.profiles?.full_name || 'Usuário'}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="gap-1"
+                              onClick={() => handleLike(submission.id)}
+                            >
+                              <Heart className="w-4 h-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm" className="gap-1">
+                              <MessageCircle className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
                       </div>
-                      
-                      {creator.rank <= 3 && (
-                        <Badge className={
-                          creator.rank === 1 ? 'bg-gradient-to-r from-yellow-500 to-orange-500' :
-                          creator.rank === 2 ? 'bg-gradient-to-r from-gray-400 to-gray-600' :
-                          'bg-gradient-to-r from-orange-600 to-orange-800'
-                        }>
-                          {creator.rank === 1 ? '🏆' : creator.rank === 2 ? '🥈' : '🥉'}
-                        </Badge>
-                      )}
                     </div>
                   ))}
-                </div>
               </div>
+
+              {submissions.length === 0 && (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground">Nenhuma criação em alta ainda.</p>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="my" className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {mySubmissions.map((submission) => (
+                  <div
+                    key={submission.id}
+                    className="group relative overflow-hidden rounded-xl border border-border bg-secondary/20 transition-all duration-300"
+                  >
+                    <div className="relative aspect-square overflow-hidden">
+                      <img
+                        src={submission.media_url}
+                        alt={submission.title}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                      />
+                      <div className="absolute top-4 right-4">
+                        <Badge
+                          variant={
+                            submission.status === 'approved'
+                              ? 'default'
+                              : submission.status === 'pending'
+                              ? 'secondary'
+                              : 'destructive'
+                          }
+                        >
+                          {submission.status === 'approved'
+                            ? 'Aprovado'
+                            : submission.status === 'pending'
+                            ? 'Pendente'
+                            : 'Rejeitado'}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-semibold mb-2 line-clamp-2">{submission.title}</h3>
+                      <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                        {submission.description}
+                      </p>
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>
+                          {new Date(submission.created_at).toLocaleDateString('pt-BR')}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="flex items-center gap-1">
+                            <Eye className="w-3 h-3" />
+                            {submission.views}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Heart className="w-3 h-3" />
+                            {submission.likes}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {mySubmissions.length === 0 && (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground">Você ainda não enviou nenhuma criação.</p>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button className="mt-4">Enviar Primeira Criação</Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-md">
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-semibold">Enviar para a Comunidade</h3>
+                        <div className="space-y-2">
+                          <Label htmlFor="title">Título *</Label>
+                          <Input
+                            id="title"
+                            placeholder="Dê um título criativo à sua criação"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="description">Descrição</Label>
+                          <Textarea
+                            id="description"
+                            placeholder="Conte-nos sobre sua criação..."
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="file">Imagem *</Label>
+                          <Input
+                            id="file"
+                            type="file"
+                            accept="image/*"
+                            onChange={handleFileChange}
+                          />
+                        </div>
+                        {previewUrl && (
+                          <div className="relative">
+                            <img
+                              src={previewUrl}
+                              alt="Preview"
+                              className="w-full h-48 object-cover rounded-lg"
+                            />
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              className="absolute top-2 right-2"
+                              onClick={() => {
+                                setSelectedFile(null);
+                                setPreviewUrl(null);
+                              }}
+                            >
+                              Remover
+                            </Button>
+                          </div>
+                        )}
+                        <Button
+                          className="w-full"
+                          onClick={handleUpload}
+                          disabled={uploading || !selectedFile || !title}
+                        >
+                          {uploading ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Enviando...
+                            </>
+                          ) : (
+                            "Enviar para Aprovação"
+                          )}
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              )}
             </TabsContent>
           </Tabs>
         </main>
