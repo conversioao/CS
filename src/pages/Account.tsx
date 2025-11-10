@@ -71,27 +71,31 @@ const Account = () => {
       toast.error("Código de verificação é obrigatório.");
       return;
     }
-    
+  
     setIsVerifying(true);
-    
+  
     try {
-      const { data: result, error } = await supabase.functions.invoke('verify-user', {
-        body: {
-          userId: user.id,
-          verificationCode: verificationCode
-        }
-      });
-
-      if (error) throw error;
-      
-      if (result.success) {
-        await refetchProfile();
-        toast.success("Conta verificada com sucesso!");
-      } else {
-        toast.error("Erro na verificação", { description: result.error });
+      // Client-side check as requested
+      if (verificationCode !== user.id) {
+        throw new Error("Código de verificação inválido. Certifique-se de que corresponde ao seu ID de usuário.");
       }
+  
+      // Update the profile directly in the database
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ status: 'verified' })
+        .eq('id', user.id);
+  
+      if (updateError) throw updateError;
+  
+      await refetchProfile();
+      toast.success("Conta verificada com sucesso!");
+  
     } catch (error: any) {
-      toast.error("Erro na verificação", { description: error.message });
+      console.error("Detailed Verification Error:", error); // More specific logging
+      toast.error("Erro na verificação", { 
+        description: error.message || "Ocorreu um problema ao tentar verificar sua conta." 
+      });
     } finally {
       setIsVerifying(false);
     }
