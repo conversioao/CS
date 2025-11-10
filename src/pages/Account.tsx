@@ -56,7 +56,30 @@ const Account = () => {
     fetchData();
   }, [user]);
 
-  const handleVerifyAccount = async () => { /* ... existing code ... */ };
+  const handleVerifyAccount = async () => {
+    if (!user || !verificationCode) {
+      toast.error("Código de verificação é obrigatório.");
+      return;
+    }
+    setIsVerifying(true);
+    try {
+      // A lógica de verificação é que o código deve ser o ID do usuário
+      // Esta é uma simulação para o processo de verificação via WhatsApp
+      const { data, error } = await supabase.functions.invoke('verify-user', {
+        body: { userId: user.id, verificationCode },
+      });
+
+      if (error) throw error;
+      if (!data.success) throw new Error(data.error || 'Falha na verificação');
+
+      toast.success("Conta verificada com sucesso!");
+      await refetchProfile(); // Re-fetch profile to update status
+    } catch (error: any) {
+      toast.error("Erro na verificação", { description: error.message });
+    } finally {
+      setIsVerifying(false);
+    }
+  };
 
   const handleActivateSubscription = async () => {
     if (!user || !whatsappNumber.match(/^(9[1-5]|99)\d{7}$/) || !selectedToolId) {
