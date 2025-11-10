@@ -37,7 +37,6 @@ const Register = () => {
     const dummyEmail = `${formattedWhatsapp}@conversio.studio`;
 
     try {
-      // 1. Criar o utilizador
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: dummyEmail,
         password,
@@ -55,14 +54,15 @@ const Register = () => {
       if (signUpError) throw signUpError;
       if (!signUpData.user) throw new Error('Falha ao criar conta. Tente novamente.');
 
-      // Store user ID for verification and redirect
-      localStorage.setItem('pendingUserId', signUpData.user.id);
+      // Set flag for new user tutorial
+      localStorage.setItem('isNewUser', 'true');
       
       toast.success('Conta criada com sucesso!', {
-        description: 'Agora, vamos verificar a sua conta.',
+        description: 'A preparar o seu estúdio criativo...',
       });
       
-      navigate('/verify');
+      // Redirect to onboarding
+      navigate('/onboarding');
 
     } catch (error: any) {
       toast.error('Erro no Cadastro', {
