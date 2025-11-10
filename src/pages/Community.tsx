@@ -111,6 +111,32 @@ const Community = () => {
       const fileExt = selectedFile.name.split('.').pop();
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
       
+      // Check if bucket exists, if not create it
+      const { data: buckets, error: bucketError } = await supabase.storage.listBuckets();
+      if (bucketError) {
+        console.error('Error listing buckets:', bucketError);
+        // Try to create the bucket
+        const { error: createError } = await supabase.storage.createBucket('community-submissions', {
+          public: true
+        });
+        if (createError) {
+          console.error('Error creating bucket:', createError);
+          throw createError;
+        }
+      } else {
+        // Check if bucket exists
+        const bucketExists = buckets.some(bucket => bucket.name === 'community-submissions');
+        if (!bucketExists) {
+          const { error: createError } = await supabase.storage.createBucket('community-submissions', {
+            public: true
+          });
+          if (createError) {
+            console.error('Error creating bucket:', createError);
+            throw createError;
+          }
+        }
+      }
+
       const { error: uploadError } = await supabase.storage
         .from('community-submissions')
         .upload(fileName, selectedFile);
@@ -143,7 +169,7 @@ const Community = () => {
       fetchSubmissions();
     } catch (error: any) {
       console.error('Error uploading submission:', error);
-      toast.error("Erro ao enviar criação: " + error.message);
+      toast.error("Erro ao enviar criação: " + (error.message || "Erro desconhecido"));
     } finally {
       setUploading(false);
     }

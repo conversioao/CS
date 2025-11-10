@@ -65,22 +65,27 @@ const Account = () => {
     setIsVerifying(true);
     
     try {
-      // Verifica se o código inserido é igual ao ID do usuário
-      if (verificationCode === user.id) {
-        // Atualiza o status do perfil para 'verified'
-        const { error } = await supabase
-          .from('profiles')
-          .update({ status: 'verified' })
-          .eq('id', user.id);
-        
-        if (error) throw error;
-        
+      // Call the edge function to verify the user
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-user`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          verificationCode: verificationCode
+        })
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
         // Atualiza o estado local
         await refetchProfile();
-        
         toast.success("Conta verificada com sucesso!");
       } else {
-        toast.error("Código de verificação inválido.");
+        toast.error("Erro na verificação", { description: result.error });
       }
     } catch (error: any) {
       toast.error("Erro na verificação", { description: error.message });
