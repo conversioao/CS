@@ -77,6 +77,7 @@ const Register = () => {
         description: 'Você será redirecionado para o painel principal.',
       });
       
+      // Redireciona DIRETAMENTE para o dashboard, onde o sistema de verificação está ativo
       setTimeout(() => {
         navigate('/dashboard');
       }, 2000);
