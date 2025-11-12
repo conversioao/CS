@@ -13,26 +13,13 @@ import { toast } from "sonner";
 const Verify = () => {
   const { profile, refetchProfile } = useSession();
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(true);
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
 
-  // Extrai as 6 últimas letras do ID do usuário para exibir como exemplo
   const lastSixLetters = profile?.id ? profile.id.slice(-6) : '';
-  
-  // Oculta as últimas 6 letras do ID para exibição
-  const maskedId = profile?.id ? `${profile.id.slice(0, -6)}****` : 'N/A';
+  const maskedId = profile?.id ? `${profile.id.slice(0, -6)}******` : 'N/A';
 
-  useEffect(() => {
-    const checkVerificationStatus = async () => {
-      setIsLoading(true);
-      if (profile && profile.status === 'verified') {
-        navigate('/dashboard');
-      }
-      setIsLoading(false);
-    };
-    checkVerificationStatus();
-  }, [profile, navigate]);
+  // Este useEffect foi removido para evitar loops. A lógica agora está no ProtectedRoute.
 
   const handleVerify = async () => {
     if (!profile || !verificationCode) {
@@ -42,12 +29,10 @@ const Verify = () => {
 
     setIsVerifying(true);
     try {
-      // Verifica se o código digitado corresponde às 6 últimas letras do ID
       if (verificationCode !== lastSixLetters) {
         throw new Error("Código de verificação incorreto. Tente novamente.");
       }
 
-      // Se o código for válido, marcar o perfil como verificado
       const { error } = await supabase
         .from('profiles')
         .update({ status: 'verified' })
@@ -55,11 +40,11 @@ const Verify = () => {
 
       if (error) throw error;
 
-      // Atualizar o estado local do perfil
+      toast.success("Conta verificada com sucesso! Redirecionando...");
+      
+      // Após verificar, atualizamos o perfil e o ProtectedRoute cuidará do redirecionamento.
       await refetchProfile();
-
-      toast.success("Conta verificada com sucesso!");
-      setTimeout(() => navigate('/dashboard'), 1500);
+      // O navigate foi removido daqui para evitar conflitos.
 
     } catch (error: any) {
       toast.error("Falha na verificação", { description: error.message });
@@ -68,7 +53,8 @@ const Verify = () => {
     }
   };
 
-  if (isLoading) {
+  // Se o perfil ainda não carregou, mostramos um loader.
+  if (!profile) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
