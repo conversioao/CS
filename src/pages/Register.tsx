@@ -93,13 +93,14 @@ const Register = () => {
       if (signUpError) throw signUpError;
       if (!signUpData.user) throw new Error('Falha ao criar conta. Tente novamente.');
       
-      toast.success('Código de verificação enviado!', {
-        description: 'Enviamos o código de verificação para o seu WhatsApp. Em alguns segundos você será redirecionado.',
+      toast.success('Conta criada com sucesso!', {
+        description: 'Você será redirecionado para o painel principal.',
       });
       
+      // Redireciona diretamente para o dashboard, onde o sistema de verificação está ativo
       setTimeout(() => {
-        navigate('/onboarding');
-      }, 3000);
+        navigate('/dashboard');
+      }, 2000);
 
     } catch (error: any) {
       toast.error('Erro no Cadastro', {
