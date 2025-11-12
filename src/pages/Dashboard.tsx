@@ -1,8 +1,9 @@
 import DashboardHeader from "@/components/DashboardHeader";
 import ToolsSection from "@/components/ToolsSection";
+import DashboardTutorial from "@/components/DashboardTutorial";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import VerificationPromptModal from "@/components/VerificationPromptModal";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate, Link } from "react-router-dom";
 import { Sparkles, Zap } from "lucide-react";
@@ -10,11 +11,25 @@ import { useSession } from "@/contexts/SessionContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Dashboard = () => {
-  const { profile } = useSession();
+  const { profile, loading } = useSession();
+  const [showTutorial, setShowTutorial] = useState(false);
   const [showVerificationPrompt, setShowVerificationPrompt] = useState(false);
   const navigate = useNavigate();
 
   const isVerified = profile?.status === 'verified';
+
+  useEffect(() => {
+    if (loading) return;
+    const isNewUser = localStorage.getItem('isNewUser');
+    if (isNewUser) {
+      setShowTutorial(true);
+    }
+  }, [loading]);
+
+  const handleFinishTutorial = () => {
+    setShowTutorial(false);
+    localStorage.removeItem('isNewUser');
+  };
 
   const handleNewCreationClick = () => {
     if (!isVerified) {
@@ -26,6 +41,7 @@ const Dashboard = () => {
 
   return (
     <>
+      {showTutorial && <DashboardTutorial onFinish={handleFinishTutorial} />}
       <VerificationPromptModal isOpen={showVerificationPrompt} onClose={() => setShowVerificationPrompt(false)} />
 
       <div className="min-h-screen bg-background flex">
