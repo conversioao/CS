@@ -1,34 +1,106 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ShieldAlert } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ShieldCheck, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface VerificationPromptModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onVerify?: () => void; // Callback for successful verification
 }
 
-const VerificationPromptModal = ({ isOpen, onClose }: VerificationPromptModalProps) => {
+const VerificationPromptModal = ({ isOpen, onClose, onVerify }: VerificationPromptModalProps) => {
+  const [verificationCode, setVerificationCode] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+
+  const handleVerify = async () => {
+    if (!verificationCode) {
+      toast.error("Por favor, insira o código de verificação.");
+      return;
+    }
+
+    setIsVerifying(true);
+    try {
+      // The verification code should match the user's ID
+      // This is a simplified version for demonstration
+      const { data: { user }, error } = await supabase.auth.getUser();
+      
+      if (error || !user) {
+        throw new Error("Usuário não encontrado.");
+      }
+
+      if (user.id === verificationCode) {
+        // Update profile status to verified
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ status: 'verified' })
+          .eq('id', user.id);
+
+        if (updateError) throw updateError;
+
+        toast.success("Conta verificada com sucesso!");
+        onClose();
+        onVerify?.(); // Call the callback if provided
+      } else {
+        toast.error("Código de verificação inválido.");
+      }
+    } catch (error: any) {
+      toast.error("Erro na verificação", { description: error.message });
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-              <ShieldAlert className="w-8 h-8 text-primary" />
-            </div>
-          </div>
-          <DialogTitle className="text-center text-2xl">Verificação Necessária</DialogTitle>
-          <DialogDescription className="text-center pt-2">
-            Para utilizar as ferramentas de IA, precisa de verificar a sua conta nas configurações.
+          <DialogTitle className="flex items-center gap-2">
+            <ShieldCheck className="w-5 h-5 text-primary" />
+            Verifique a sua conta
+          </DialogTitle>
+          <DialogDescription>
+            Para acessar todas as ferramentas, por favor, verifique a sua conta.
+            O código de verificação é o mesmo que o seu ID de utilizador.
           </DialogDescription>
         </DialogHeader>
-        <DialogFooter className="sm:justify-center gap-2 pt-4">
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Link to="/account">
-            <Button className="gradient-primary">Ir para Configurações</Button>
-          </Link>
-        </DialogFooter>
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="verification-code">Código de Verificação</Label>
+            <Input
+              id="verification-code"
+              placeholder="Digite o seu código"
+              value={verificationCode}
+              onChange={(e) => setVerificationCode(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              O código é o mesmo que o seu ID de utilizador.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={onClose} className="flex-1">
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleVerify} 
+              disabled={isVerifying}
+              className="flex-1 gradient-primary"
+            >
+              {isVerifying ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  Verificando...
+                </>
+              ) : (
+                "Verificar"
+              )}
+            </Button>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
