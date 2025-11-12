@@ -8,16 +8,13 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const Register = () => {
   const navigate = useNavigate();
   const [fullName, setFullName] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const [password, setPassword] = useState('');
-  const [userType, setUserType] = useState('');
-  const [accountType, setAccountType] = useState('user');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [searchParams] = useSearchParams();
   const [refCode, setRefCode] = useState<string | null>(null);
@@ -29,11 +26,54 @@ const Register = () => {
     }
   }, [searchParams]);
 
+  const validateWhatsapp = (value: string) => {
+    // Remove all non-digit characters
+    const digits = value.replace(/\D/g, '');
+    // Limit to 9 digits
+    return digits.slice(0, 9);
+  };
+
+  const formatWhatsapp = (value: string) => {
+    const digits = validateWhatsapp(value);
+    if (digits.length === 0) return '';
+    
+    // Format as XXX XXX XXX
+    let formatted = '';
+    for (let i = 0; i < digits.length; i++) {
+      if (i === 3 || i === 6) formatted += ' ';
+      formatted += digits[i];
+    }
+    return formatted;
+  };
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const whatsappDigits = whatsapp.replace(/\D/g, '');
+    if (whatsappDigits.length !== 9) {
+      toast.error('Número de WhatsApp inválido', {
+        description: 'O número deve conter exatamente 9 dígitos.',
+      });
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      toast.error('Senhas não coincidem', {
+        description: 'As senhas digitadas não são iguais.',
+      });
+      return;
+    }
+
+    if (password.length < 6) {
+      toast.error('Senha muito curta', {
+        description: 'A senha deve ter pelo menos 6 caracteres.',
+      });
+      return;
+    }
+
     setIsLoading(true);
 
-    const formattedWhatsapp = `+244${whatsapp.replace(/\s/g, '')}`;
+    const formattedWhatsapp = `+244${whatsappDigits}`;
     const dummyEmail = `${formattedWhatsapp}@conversio.studio`;
 
     try {
@@ -44,8 +84,7 @@ const Register = () => {
           data: {
             full_name: fullName,
             whatsapp_number: formattedWhatsapp,
-            user_type: userType,
-            account_type: accountType,
+            account_type: 'user', // Default to user
             ref_code: refCode,
           },
         },
@@ -54,22 +93,21 @@ const Register = () => {
       if (signUpError) throw signUpError;
       if (!signUpData.user) throw new Error('Falha ao criar conta. Tente novamente.');
 
-      // Set flag for new user tutorial
       localStorage.setItem('isNewUser', 'true');
       
-      toast.success('Conta criada com sucesso!', {
-        description: 'A preparar o seu estúdio criativo...',
+      toast.success('Código de verificação enviado!', {
+        description: 'Enviamos o código de verificação para o seu WhatsApp. Em alguns segundos você será redirecionado.',
       });
       
-      // Redirect to onboarding
-      navigate('/onboarding');
+      setTimeout(() => {
+        navigate('/onboarding');
+      }, 3000);
 
     } catch (error: any) {
       toast.error('Erro no Cadastro', {
         description: error.message || 'Não foi possível criar a sua conta. Verifique se o número de WhatsApp já não está em uso.',
       });
-    } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Only stop loading on error
     }
   };
 
@@ -90,14 +128,91 @@ const Register = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleRegister} className="space-y-4">
-            <div className="space-y-2"><Label htmlFor="fullName">Nome Completo</Label><Input id="fullName" placeholder="Seu nome completo" required value={fullName} onChange={(e) => setFullName(e.target.value)} /></div>
-            <div className="space-y-2"><Label htmlFor="whatsapp">Nº de WhatsApp</Label><div className="flex items-center gap-2"><div className="px-3 py-2 bg-muted rounded-md text-sm">+244</div><Input id="whatsapp" type="tel" placeholder="9XX XXX XXX" required value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} /></div></div>
-            <div className="space-y-2"><Label htmlFor="password">Senha</Label><Input id="password" type="password" placeholder="Pelo menos 6 caracteres" required value={password} onChange={(e) => setPassword(e.target.value)} /></div>
-            <div className="space-y-2"><Label htmlFor="userType">Eu sou</Label><Select required onValueChange={setUserType}><SelectTrigger id="userType"><SelectValue placeholder="Selecione o seu perfil..." /></SelectTrigger><SelectContent><SelectItem value="designer">Designer</SelectItem><SelectItem value="empreendedor">Empreendedor</SelectItem></SelectContent></Select></div>
-            <div className="space-y-2"><Label>Tipo de Conta</Label><RadioGroup defaultValue="user" onValueChange={setAccountType} className="flex gap-4"><div className="flex items-center space-x-2"><RadioGroupItem value="user" id="r1" /><Label htmlFor="r1">Usuário</Label></div><div className="flex items-center space-x-2"><RadioGroupItem value="affiliate" id="r2" /><Label htmlFor="r2">Afiliado</Label></div></RadioGroup></div>
-            <Button type="submit" className="w-full gradient-primary" disabled={isLoading}>{isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Criar Conta Grátis'}</Button>
+            <div className="space-y-2">
+              <Label htmlFor="fullName">Nome Completo</Label>
+              <Input 
+                id="fullName" 
+                placeholder="Seu nome completo" 
+                required 
+                value={fullName} 
+                onChange={(e) => setFullName(e.target.value)} 
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="whatsapp">Nº de WhatsApp</Label>
+              <div className="flex items-center gap-2">
+                <div className="px-3 py-2 bg-muted rounded-md text-sm">+244</div>
+                <Input 
+                  id="whatsapp" 
+                  type="tel" 
+                  placeholder="9XX XXX XXX" 
+                  required 
+                  value={formatWhatsapp(whatsapp)} 
+                  onChange={(e) => setWhatsapp(e.target.value)}
+                  maxLength={11}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Digite um número de WhatsApp válido com 9 dígitos (ex: 912 345 678)
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password">Senha</Label>
+              <Input 
+                id="password" 
+                type="password" 
+                placeholder="Pelo menos 6 caracteres" 
+                required 
+                value={password} 
+                onChange={(e) => setPassword(e.target.value)}
+                minLength={6}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirmar Senha</Label>
+              <Input 
+                id="confirmPassword" 
+                type="password" 
+                placeholder="Repita a senha" 
+                required 
+                value={confirmPassword} 
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                minLength={6}
+              />
+            </div>
+
+            <Button 
+              type="submit" 
+              className="w-full gradient-primary" 
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  Criando Conta...
+                </>
+              ) : (
+                'Criar Conta Grátis'
+              )}
+            </Button>
           </form>
-          <div className="mt-4 text-center text-sm">Já tem uma conta?{' '}<Link to="/login" className="underline text-primary">Entre</Link></div>
+          
+          <div className="mt-6 space-y-2">
+            <div className="text-xs text-muted-foreground text-center">
+              Ao criar a conta, você concorda com nossos{' '}
+              <Link to="/terms" className="underline text-primary">Termos de Serviço</Link>
+              {' '}e{' '}
+              <Link to="/privacy" className="underline text-primary">Política de Privacidade</Link>
+            </div>
+          </div>
+          
+          <div className="mt-4 text-center text-sm">
+            Já tem uma conta?{' '}
+            <Link to="/login" className="underline text-primary">Entre</Link>
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -6,25 +6,25 @@ const tutorialSteps = [
   {
     elementId: 'tools-section',
     title: 'Ferramentas Principais',
-    description: 'Aqui você encontra todas as nossas ferramentas de IA para gerar imagens, vídeos e muito mais.',
+    description: 'Aqui você encontra todas as nossas ferramentas de IA para gerar imagens, vídeos e muito mais. Explore cada uma e descubra o que elas podem fazer por você.',
     position: 'bottom',
   },
   {
     elementId: 'recent-creations-section',
     title: 'Criações Recentes',
-    description: 'Suas últimas 8 criações aparecerão aqui para acesso rápido.',
+    description: 'Suas últimas 8 criações aparecerão aqui para acesso rápido. Cada imagem representa horas de trabalho que foram transformadas em segundos pela IA.',
     position: 'top',
   },
   {
     elementId: 'dashboard-nav-credits',
     title: 'Seus Créditos',
-    description: 'Acompanhe seus créditos aqui. Cada ação consome créditos, então fique de olho!',
+    description: 'Acompanhe seus créditos aqui. Cada ação consome créditos, então fique de olho! Você pode adquirir mais créditos na seção de Pacotes quando precisar.',
     position: 'bottom',
   },
   {
     elementId: 'dashboard-nav-account',
     title: 'Sua Conta',
-    description: 'Acesse as configurações da sua conta e gerencie seu perfil aqui.',
+    description: 'Acesse as configurações da sua conta e gerencie seu perfil aqui. É onde você pode atualizar informações, mudar preferências e muito mais.',
     position: 'bottom',
   },
 ];
@@ -81,9 +81,17 @@ const DashboardTutorial = ({ onFinish }: DashboardTutorialProps) => {
     const height = (highlightStyle.height as number) || 0;
 
     if (currentStep.position === 'bottom') {
-      return { top: top + height + 10, left: left + width / 2 - 160 };
+      return { 
+        top: top + height + 10, 
+        left: left + width / 2,
+        transform: 'translateX(-50%)'
+      };
     }
-    return { top: top - 10, left: left + width / 2 - 160, transform: 'translateY(-100%)' };
+    return { 
+      top: top - 10, 
+      left: left + width / 2, 
+      transform: 'translate(-50%, -100%)' 
+    };
   };
 
   return (
@@ -97,24 +105,51 @@ const DashboardTutorial = ({ onFinish }: DashboardTutorialProps) => {
         className="absolute bg-card p-6 rounded-lg shadow-2xl w-80 z-[101] transition-all duration-300"
         style={getTooltipPosition()}
       >
-        <h3 className="text-lg font-bold mb-2">{currentStep.title}</h3>
-        <p className="text-sm text-muted-foreground mb-4">{currentStep.description}</p>
+        <div className="flex items-start justify-between mb-4">
+          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+            <span className="text-lg font-bold text-primary">
+              {stepIndex + 1}
+            </span>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-muted-foreground hover:bg-muted/50"
+            onClick={handleSkip}
+          >
+            <X className="w-5 h-5" />
+          </Button>
+        </div>
+        
+        <h3 className="text-lg font-bold mb-3">{currentStep.title}</h3>
+        <p className="text-sm text-muted-foreground mb-4 leading-relaxed">{currentStep.description}</p>
+        
         <div className="flex justify-between items-center">
-          <span className="text-xs text-muted-foreground">{stepIndex + 1} / {tutorialSteps.length}</span>
-          <Button onClick={handleNext} size="sm">
+          <div className="flex items-center gap-2">
+            <div className="flex gap-1">
+              {tutorialSteps.map((_, index) => (
+                <div
+                  key={index}
+                  className={`w-2 h-2 rounded-full transition-all duration-200 ${
+                    index <= stepIndex ? 'bg-primary' : 'bg-muted'
+                  }`}
+                />
+              ))}
+            </div>
+            <span className="text-xs text-muted-foreground">
+              {stepIndex + 1} / {tutorialSteps.length}
+            </span>
+          </div>
+          
+          <Button 
+            onClick={handleNext} 
+            size="sm"
+            className="gradient-primary"
+          >
             {stepIndex === tutorialSteps.length - 1 ? 'Finalizar' : 'Próximo'}
           </Button>
         </div>
       </div>
-
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute top-4 right-4 text-white hover:bg-white/10"
-        onClick={handleSkip}
-      >
-        <X className="w-5 h-5" />
-      </Button>
     </div>
   );
 };
