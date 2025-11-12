@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Mail, ShieldCheck, ArrowRight, RefreshCw } from "lucide-react";
+import { Loader2, Mail, ShieldCheck, ArrowRight, RefreshCw, AlertCircle, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
 
@@ -16,16 +16,19 @@ const Verify = () => {
   const [verificationCode, setVerificationCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleNextStep = () => {
     console.log(`📍 Avançando para etapa ${currentStep + 1}`);
     setCurrentStep(currentStep + 1);
+    setError(null); // Limpa erro ao avançar
   };
 
   const handleResendCode = async () => {
     if (!user) return;
     
     setIsResending(true);
+    setError(null);
     console.log('🔄 Reenviando código de verificação...');
     
     try {
@@ -34,14 +37,14 @@ const Verify = () => {
       console.log('🔑 Novo código gerado:', newCode);
 
       // Atualiza o código no banco de dados
-      const { error } = await supabase
+      const { error: updateError } = await supabase
         .from('profiles')
         .update({ verification_code: newCode })
         .eq('id', user.id);
 
-      if (error) {
-        console.error('❌ Erro ao atualizar código:', error);
-        throw error;
+      if (updateError) {
+        console.error('❌ Erro ao atualizar código:', updateError);
+        throw updateError;
       }
 
       console.log('✅ Código atualizado no banco de dados');
@@ -54,6 +57,7 @@ const Verify = () => {
 
     } catch (error: any) {
       console.error('❌ Erro ao reenviar código:', error);
+      setError('Erro ao reenviar código. Tente novamente.');
       toast.error('Erro ao reenviar código', {
         description: 'Tente novamente em alguns instantes.',
       });
@@ -63,22 +67,30 @@ const Verify = () => {
   };
 
   const handleVerify = async () => {
+    console.log('🔍 Iniciando processo de verificação...');
+    
+    // Validações iniciais
     if (!user || !profile) {
-      toast.error("Sessão não encontrada. Por favor, faça login novamente.");
+      const errorMsg = "Sessão não encontrada. Por favor, faça login novamente.";
+      console.error('❌', errorMsg);
+      setError(errorMsg);
       return;
     }
 
     if (!verificationCode || verificationCode.length !== 6) {
-      toast.error("Por favor, insira o código de 6 dígitos.");
+      const errorMsg = "Por favor, insira o código de 6 dígitos.";
+      console.error('❌', errorMsg);
+      setError(errorMsg);
       return;
     }
 
     setIsVerifying(true);
-    console.log('🔍 Iniciando verificação...');
+    setError(null);
     console.log('📝 Código digitado:', verificationCode);
 
     try {
-      // Busca o código de verificação salvo no banco de dados
+      // Etapa 1: Buscar o perfil e o código de verificação
+      console.log('📡 Buscando perfil do usuário...');
       const { data: profileData, error: fetchError } = await supabase
         .from('profiles')
         .select('verification_code')
@@ -87,20 +99,22 @@ const Verify = () => {
 
       if (fetchError) {
         console.error('❌ Erro ao buscar perfil:', fetchError);
-        throw new Error('⚠️ Erro ao buscar seus dados. Tente novamente.');
+        throw new Error(`Erro ao buscar seus dados: ${fetchError.message}`);
       }
 
-      console.log('🔑 Código salvo no banco:', profileData.verification_code);
+      console.log('✅ Perfil encontrado. Código salvo:', profileData.verification_code);
 
-      // Compara o código digitado com o código salvo
+      // Etapa 2: Comparar os códigos
+      console.log('🔍 Comparando códigos...');
       if (verificationCode !== profileData.verification_code) {
         console.warn('⚠️ Código incorreto');
-        throw new Error('❌ Código incorreto. Verifique e tente novamente.');
+        throw new Error('Código incorreto. Verifique e tente novamente.');
       }
 
       console.log('✅ Código correto! Atualizando status...');
 
-      // Atualiza o status para 'verified' e remove o código de verificação
+      // Etapa 3: Atualizar o status para 'verified' e remover o código
+      console.log('📡 Atualizando status do usuário...');
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ 
@@ -111,25 +125,31 @@ const Verify = () => {
 
       if (updateError) {
         console.error('❌ Erro ao atualizar status:', updateError);
-        throw new Error('⚠️ Erro ao atualizar seu status. Tente novamente.');
+        throw new Error(`Erro ao atualizar seu status: ${updateError.message}`);
       }
 
       console.log('✅ Status atualizado com sucesso!');
-      toast.success('✅ Conta verificada com sucesso!');
       
       // Atualiza o perfil no contexto
+      console.log('🔄 Recarregando perfil...');
       await refetchProfile();
 
-      console.log('🔄 Recarregando página para aplicar mudanças...');
+      console.log('🎉 Verificação concluída com sucesso!');
+      toast.success('✅ Conta verificada com sucesso!');
       
       // Força reload para garantir que o ProtectedRoute leia o novo status
-      window.location.href = '/onboarding';
+      console.log('🔄 Redirecionando para onboarding...');
+      setTimeout(() => {
+        window.location.href = '/onboarding';
+      }, 1000);
 
     } catch (error: any) {
       console.error('❌ Falha na verificação:', error);
+      setError(error.message || 'Ocorreu um erro inesperado ao verificar sua conta.');
       toast.error('Falha na verificação', { 
         description: error.message || 'Ocorreu um erro inesperado.' 
       });
+    } finally {
       setIsVerifying(false);
     }
   };
@@ -137,7 +157,10 @@ const Verify = () => {
   if (!user || !profile) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
+          <p>Carregando...</p>
+        </div>
       </div>
     );
   }
@@ -187,6 +210,17 @@ const Verify = () => {
                 />
               ))}
             </div>
+
+            {/* Mensagem de erro */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-2">
+                <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-red-800">Erro</p>
+                  <p className="text-xs text-red-600">{error}</p>
+                </div>
+              </div>
+            )}
 
             {/* Etapa 1: Informação */}
             {currentStep === 1 && (
