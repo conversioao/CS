@@ -10,28 +10,31 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, CheckCircle, AlertCircle, Smartphone, Key } from "lucide-react";
 import { toast } from "sonner";
 
+// Define os tipos para o passo atual
+type VerificationStep = 'initial' | 'entering_code' | 'manual_fallback';
+
 const Verify = () => {
   const { profile, refetchProfile } = useSession();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
-  const [verificationMethod, setVerificationMethod] = useState<'whatsapp' | 'manual'>('whatsapp');
-  const [whatsappNumber, setWhatsappNumber] = useState('');
-  const [verificationCode, setVerificationCode] = useState('');
+  const [step, setStep] = useState<VerificationStep>('initial');
   const [isSendingCode, setIsSendingCode] = useState(false);
   const [isVerifyingCode, setIsVerifyingCode] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
   const [countdown, setCountdown] = useState(0);
 
-  // Verificar se o utilizador já está verificado ou se tem uma sessão
+  // Extrai o número de WhatsApp do perfil
+  const whatsappNumber = profile?.whatsapp_number ? profile.whatsapp_number.replace('+244', '') : '';
+
+  // Verificar se o utilizador já está verificado
   useEffect(() => {
     const checkVerificationStatus = async () => {
       setIsLoading(true);
       if (profile && profile.status === 'verified') {
-        // Se já estiver verificado, redirecionar para o dashboard
         navigate('/dashboard');
       }
       setIsLoading(false);
     };
-
     checkVerificationStatus();
   }, [profile, navigate]);
 
@@ -44,24 +47,22 @@ const Verify = () => {
   }, [countdown]);
 
   const handleSendCode = async () => {
-    const whatsappDigits = whatsappNumber.replace(/\D/g, '');
-    if (whatsappDigits.length !== 9) {
-      toast.error('Número de WhatsApp inválido', { description: 'O número deve conter 9 dígitos (ex: 912345678).' });
+    if (!whatsappNumber) {
+      toast.error('Número de WhatsApp não encontrado no seu perfil.');
       return;
     }
 
     setIsSendingCode(true);
     try {
       // Em um sistema real, aqui você chamaria uma função edge para enviar o código via WhatsApp API
-      // Para este exemplo, vamos simular o envio e gerar um código aleatório
       const mockCode = Math.floor(100000 + Math.random() * 900000).toString();
       
-      // Armazenar o código temporariamente (em um sistema real, isso seria feito de forma segura no servidor)
+      // Armazenar o código temporariamente
       localStorage.setItem(`verification_code_${profile?.id}`, mockCode);
       localStorage.setItem(`verification_code_sent_at_${profile?.id}`, Date.now().toString());
 
-      toast.success(`Código enviado para +244${whatsappNumber}!`);
-      setVerificationMethod('whatsapp'); // Muda para a tela de inserção do código
+      toast.success(`Código enviado para +244${whatsappNumber}! Verifique suas mensagens.`);
+      setStep('entering_code'); // Avança para o passo de inserção do código
     } catch (error: any) {
       toast.error("Erro ao enviar código", { description: error.message });
     } finally {
@@ -84,7 +85,6 @@ const Verify = () => {
         throw new Error("Código não encontrado. Por favor, solicite um novo.");
       }
 
-      // Verifica se o código está correto e se não expirou (ex: 5 minutos)
       if (storedCode === verificationCode) {
         const now = Date.now();
         const fiveMinutesInMs = 5 * 60 * 1000;
@@ -92,7 +92,6 @@ const Verify = () => {
           throw new Error("Código expirado. Por favor, solicite um novo.");
         }
 
-        // Se tudo estiver correto, atualiza o status no banco de dados
         const { error } = await supabase
           .from('profiles')
           .update({ status: 'verified' })
@@ -100,17 +99,12 @@ const Verify = () => {
 
         if (error) throw error;
 
-        // Limpa o código temporário
         localStorage.removeItem(`verification_code_${profile?.id}`);
         localStorage.removeItem(`verification_code_sent_at_${profile?.id}`);
 
         await refetchProfile();
         toast.success("Conta verificada com sucesso!");
-        
-        // Redireciona para o dashboard após um curto delay
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 1500);
+        setTimeout(() => navigate('/dashboard'), 1500);
 
       } else {
         throw new Error("Código de verificação incorreto.");
@@ -122,12 +116,15 @@ const Verify = () => {
     }
   };
 
+  const handleManualFallback = () => {
+    setStep('manual_fallback');
+  };
+
   const handleManualVerify = async () => {
     if (!profile) return;
     
     setIsVerifyingCode(true);
     try {
-      // A verificação manual usa o ID do utilizador como código
       const { error } = await supabase
         .from('profiles')
         .update({ status: 'verified' })
@@ -137,10 +134,7 @@ const Verify = () => {
 
       await refetchProfile();
       toast.success("Conta verificada com sucesso!");
-      
-      setTimeout(() => {
-        navigate('/dashboard');
-      }, 1500);
+      setTimeout(() => navigate('/dashboard'), 1500);
 
     } catch (error: any) {
       toast.error("Falha na verificação", { description: error.message });
@@ -169,37 +163,26 @@ const Verify = () => {
             </div>
             <CardTitle className="text-2xl">Verifique a sua conta</CardTitle>
             <CardDescription>
-              Para garantir a segurança e acessar todas as funcionalidades, por favor, verifique o seu número.
+              Enviamos um código para o seu WhatsApp para garantir a segurança da sua conta.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {verificationMethod === 'whatsapp' && !verificationCode && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
-                  <Smartphone className="w-5 h-5 text-primary" />
-                  <div>
-                    <p className="font-medium">Verificação por WhatsApp</p>
-                    <p className="text-sm text-muted-foreground">Recomendado e mais rápido</p>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="whatsapp">Seu Nº de WhatsApp</Label>
-                  <div className="flex items-center gap-2">
-                    <div className="px-3 py-2 bg-muted rounded-md text-sm">+244</div>
-                    <Input
-                      id="whatsapp"
-                      type="tel"
-                      placeholder="9XXXXXXXX"
-                      value={whatsappNumber}
-                      onChange={(e) => setWhatsappNumber(e.target.value.replace(/\D/g, '').slice(0, 9))}
-                      maxLength={9}
-                    />
+            {/* Passo 1: Inicial - Exibir WhatsApp e botão de envio */}
+            {step === 'initial' && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-center p-4 bg-muted/50 rounded-lg">
+                  <Smartphone className="w-5 h-5 text-primary mr-3" />
+                  <div className="text-center">
+                    <p className="font-medium">Número de WhatsApp</p>
+                    <Badge variant="secondary" className="mt-1 text-lg">
+                      +244 {whatsappNumber}
+                    </Badge>
                   </div>
                 </div>
                 <Button 
                   onClick={handleSendCode} 
-                  className="w-full" 
-                  disabled={isSendingCode || whatsappNumber.length !== 9}
+                  className="w-full gradient-primary" 
+                  disabled={isSendingCode}
                 >
                   {isSendingCode ? (
                     <>
@@ -207,36 +190,40 @@ const Verify = () => {
                       Enviando...
                     </>
                   ) : (
-                    'Enviar Código por WhatsApp'
+                    <>
+                      <Smartphone className="w-4 h-4 mr-2" />
+                      Enviar Código por WhatsApp
+                    </>
                   )}
                 </Button>
-                <div className="text-center">
-                  <Button variant="ghost" size="sm" onClick={() => setVerificationMethod('manual')} className="text-muted-foreground">
-                    Verificar manualmente
-                  </Button>
-                </div>
               </div>
             )}
 
-            {verificationMethod === 'whatsapp' && verificationCode && (
-              <div className="space-y-4">
+            {/* Passo 2: Inserir o Código */}
+            {step === 'entering_code' && (
+              <div className="space-y-6">
                 <div className="text-center">
-                  <p className="text-sm text-muted-foreground">Enviamos um código para <span className="font-medium">+244{whatsappNumber}</span></p>
-                  <p className="text-xs text-muted-foreground">O código expira em 5 minutos.</p>
+                  <p className="text-sm text-muted-foreground">
+                    Enviamos um código de 6 dígitos para <span className="font-medium">+244 {whatsappNumber}</span>
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    O código expira em 5 minutos.
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="code">Código de Verificação</Label>
                   <Input
                     id="code"
                     type="text"
-                    placeholder="Digite o código de 6 dígitos"
+                    placeholder="Digite o código"
                     value={verificationCode}
                     onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                     maxLength={6}
+                    autoFocus
                   />
                 </div>
-                <div className="flex gap-2">
-                  <Button onClick={handleVerifyCode} className="flex-1" disabled={isVerifyingCode || verificationCode.length !== 6}>
+                <div className="flex flex-col gap-2">
+                  <Button onClick={handleVerifyCode} className="w-full gradient-primary" disabled={isVerifyingCode || verificationCode.length !== 6}>
                     {isVerifyingCode ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -246,59 +233,79 @@ const Verify = () => {
                       'Verificar Código'
                     )}
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => {
-                    setVerificationCode('');
-                    setVerificationMethod('whatsapp');
-                  }}>
-                    Alterar Nº
-                  </Button>
-                </div>
-                {countdown === 0 && (
+                  
+                  {/* Link para fallback manual */}
                   <div className="text-center">
-                    <Button variant="ghost" size="sm" onClick={() => {
-                      setCountdown(60);
-                      handleSendCode();
-                    }}>
-                      Reenviar Código
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={handleManualFallback}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      Não recebeu o código? Verifique manualmente
                     </Button>
                   </div>
-                )}
-                {countdown > 0 && (
-                  <p className="text-center text-xs text-muted-foreground">
-                    Pode reenviar em {countdown}s
-                  </p>
-                )}
+
+                  {countdown === 0 && (
+                    <div className="text-center">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => {
+                          setCountdown(60);
+                          handleSendCode();
+                        }}
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        Reenviar Código
+                      </Button>
+                    </div>
+                  )}
+                  {countdown > 0 && (
+                    <p className="text-center text-xs text-muted-foreground">
+                      Pode reenviar em {countdown}s
+                    </p>
+                  )}
+                </div>
               </div>
             )}
 
-            {verificationMethod === 'manual' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
-                  <Key className="w-5 h-5 text-primary" />
-                  <div>
+            {/* Passo 3: Fallback Manual */}
+            {step === 'manual_fallback' && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-center p-4 bg-muted/50 rounded-lg">
+                  <Key className="w-5 h-5 text-primary mr-3" />
+                  <div className="text-center">
                     <p className="font-medium">Verificação Manual</p>
-                    <p className="text-sm text-muted-foreground">Use o seu ID de utilizador como código</p>
+                    <p className="text-sm text-muted-foreground">
+                      Use o seu ID de utilizador como código de verificação.
+                    </p>
                   </div>
                 </div>
                 <div className="bg-muted/30 p-4 rounded-lg text-center">
-                  <p className="text-sm mb-2">O seu código de verificação é:</p>
+                  <p className="text-sm mb-2">O seu ID de utilizador é:</p>
                   <Badge variant="secondary" className="text-lg font-mono p-2">
                     {profile?.id || 'N/A'}
                   </Badge>
                 </div>
-                <Button onClick={handleManualVerify} className="w-full" disabled={isVerifyingCode}>
+                <Button onClick={handleManualVerify} className="w-full gradient-primary" disabled={isVerifyingCode}>
                   {isVerifyingCode ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin mr-2" />
                       Verificando...
                     </>
                   ) : (
-                    'Verificar Conta'
+                    'Verificar Conta Manualmente'
                   )}
                 </Button>
                 <div className="text-center">
-                  <Button variant="ghost" size="sm" onClick={() => setVerificationMethod('whatsapp')} className="text-muted-foreground">
-                    Tentar por WhatsApp
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setStep('entering_code')}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    Voltar para verificação por WhatsApp
                   </Button>
                 </div>
               </div>
