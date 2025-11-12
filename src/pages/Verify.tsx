@@ -71,21 +71,18 @@ const Verify = () => {
   };
 
   const handleVerifyCode = async () => {
-    if (!verificationCode || verificationCode.length !== 6) {
-      toast.error("Por favor, insira o código de 6 dígitos.");
+    if (!verificationCode) {
+      toast.error("Por favor, insira a sua API Key.");
       return;
     }
 
     setIsVerifyingCode(true);
     try {
+      // Verificar se é o código de 6 dígitos (WhatsApp)
       const storedCode = localStorage.getItem(`verification_code_${profile?.id}`);
       const sentAt = localStorage.getItem(`verification_code_sent_at_${profile?.id}`);
 
-      if (!storedCode || !sentAt) {
-        throw new Error("Código não encontrado. Por favor, solicite um novo.");
-      }
-
-      if (storedCode === verificationCode) {
+      if (storedCode && sentAt && verificationCode === storedCode) {
         const now = Date.now();
         const fiveMinutesInMs = 5 * 60 * 1000;
         if (now - parseInt(sentAt) > fiveMinutesInMs) {
@@ -105,9 +102,21 @@ const Verify = () => {
         await refetchProfile();
         toast.success("Conta verificada com sucesso!");
         setTimeout(() => navigate('/dashboard'), 1500);
+      } 
+      // Verificar se é o ID do usuário (fallback manual)
+      else if (profile && verificationCode === profile.id) {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ status: 'verified' })
+          .eq('id', profile.id);
 
+        if (error) throw error;
+
+        await refetchProfile();
+        toast.success("Conta verificada com sucesso!");
+        setTimeout(() => navigate('/dashboard'), 1500);
       } else {
-        throw new Error("Código de verificação incorreto.");
+        throw new Error("API Key inválida. Verifique e tente novamente.");
       }
     } catch (error: any) {
       toast.error("Falha na verificação", { description: error.message });
@@ -163,7 +172,7 @@ const Verify = () => {
             </div>
             <CardTitle className="text-2xl">Verifique a sua conta</CardTitle>
             <CardDescription>
-              Enviamos um código para o seu WhatsApp para garantir a segurança da sua conta.
+              Enviamos uma API Key para o seu WhatsApp para garantir a segurança da sua conta.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -192,45 +201,47 @@ const Verify = () => {
                   ) : (
                     <>
                       <Smartphone className="w-4 h-4 mr-2" />
-                      Enviar Código por WhatsApp
+                      Enviar API Key por WhatsApp
                     </>
                   )}
                 </Button>
               </div>
             )}
 
-            {/* Passo 2: Inserir o Código */}
+            {/* Passo 2: Inserir a API Key */}
             {step === 'entering_code' && (
               <div className="space-y-6">
                 <div className="text-center">
                   <p className="text-sm text-muted-foreground">
-                    Enviamos um código de 6 dígitos para <span className="font-medium">+244 {whatsappNumber}</span>
+                    Enviamos uma API Key para <span className="font-medium">+244 {whatsappNumber}</span>
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    O código expira em 5 minutos.
+                    A API Key expira em 5 minutos.
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="code">Código de Verificação</Label>
+                  <Label htmlFor="api-key">API Key</Label>
                   <Input
-                    id="code"
+                    id="api-key"
                     type="text"
-                    placeholder="Digite o código"
+                    placeholder="Digite a sua API Key"
                     value={verificationCode}
-                    onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    maxLength={6}
+                    onChange={(e) => setVerificationCode(e.target.value)}
                     autoFocus
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Pode ser o código de 6 dígitos ou o seu ID de usuário.
+                  </p>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <Button onClick={handleVerifyCode} className="w-full gradient-primary" disabled={isVerifyingCode || verificationCode.length !== 6}>
+                  <Button onClick={handleVerifyCode} className="w-full gradient-primary" disabled={isVerifyingCode || !verificationCode}>
                     {isVerifyingCode ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin mr-2" />
                         Verificando...
                       </>
                     ) : (
-                      'Verificar Código'
+                      'Verificar API Key'
                     )}
                   </Button>
                   
@@ -242,7 +253,7 @@ const Verify = () => {
                       onClick={handleManualFallback}
                       className="text-muted-foreground hover:text-foreground"
                     >
-                      Não recebeu o código? Verifique manualmente
+                      Não recebeu a API Key? Verifique manualmente
                     </Button>
                   </div>
 
@@ -257,7 +268,7 @@ const Verify = () => {
                         }}
                         className="text-muted-foreground hover:text-foreground"
                       >
-                        Reenviar Código
+                        Reenviar API Key
                       </Button>
                     </div>
                   )}
@@ -278,7 +289,7 @@ const Verify = () => {
                   <div className="text-center">
                     <p className="font-medium">Verificação Manual</p>
                     <p className="text-sm text-muted-foreground">
-                      Use o seu ID de utilizador como código de verificação.
+                      Use o seu ID de utilizador como API Key.
                     </p>
                   </div>
                 </div>
