@@ -1,2 +1,18 @@
-[functions.store-generated-media]
-verify_jwt = false
+# supabase/config.toml
+
+# For more information, see https://supabase.com/docs/reference/cli/config
+
+[project]
+id = "lpvwyczyjriesvfxavil"
+
+[api]
+port = 54321
+schemas = ["public", "storage"]
+extra_search_path = ["extensions"]
+
+[db]
+port = 54322
+major_version = 15
+
+[studio]
+port = 54323
