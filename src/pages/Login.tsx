@@ -30,24 +30,28 @@ const Login = () => {
         // Check user profile for account type
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('account_type')
+          .select('account_type, status')
           .eq('id', loginData.user.id)
           .single();
 
-        if (profileError) {
-          // If profile not found, default to user dashboard
+        if (profileError && profileError.code !== 'PGRST116') { // PGRST116 = no rows returned
           console.error("Error fetching profile:", profileError);
-          navigate('/dashboard');
+          navigate('/verify'); // Redireciona para verificação se houver erro
           return;
         }
 
-        if (profile.account_type === 'admin') {
+        // Se for admin, vai para o admin dashboard
+        if (profile?.account_type === 'admin') {
           navigate('/admin');
-        } else {
+        } 
+        // Se for usuário e já estiver verificado, vai para o dashboard
+        else if (profile?.status === 'verified') {
           navigate('/dashboard');
         }
-      } else {
-        navigate('/dashboard');
+        // Se for usuário e NÃO estiver verificado, vai para a página de verificação
+        else {
+          navigate('/verify');
+        }
       }
 
     } catch (error: any) {

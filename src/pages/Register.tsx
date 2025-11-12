@@ -73,14 +73,10 @@ const Register = () => {
       if (signUpError) throw signUpError;
       if (!signUpData.user) throw new Error('Falha ao criar conta. Tente novamente.');
       
-      toast.success('Conta criada com sucesso!', {
-        description: 'Você será redirecionado para o painel principal.',
-      });
+      toast.success('Conta criada com sucesso! Por favor, verifique o seu número.');
       
-      // Redireciona DIRETAMENTE para o dashboard, onde o sistema de verificação está ativo
-      setTimeout(() => {
-        navigate('/dashboard');
-      }, 2000);
+      // Redireciona para a página de verificação
+      navigate('/verify');
 
     } catch (error: any) {
       toast.error('Erro no Cadastro', {
@@ -129,7 +125,6 @@ const Register = () => {
                   required 
                   value={whatsapp} 
                   onChange={(e) => {
-                    // Remove all non-digit characters and limit to 9
                     const value = e.target.value.replace(/\D/g, '').slice(0, 9);
                     setWhatsapp(value);
                   }}

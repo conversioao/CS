@@ -37,6 +37,7 @@ import AdminReports from "./pages/admin/AdminReports";
 import AffiliateDashboard from "./pages/AffiliateDashboard";
 import AdminWhatsapp from "./pages/admin/AdminWhatsapp";
 import AdminCreditPackages from "./pages/admin/AdminCreditPackages";
+import Verify from "./pages/Verify"; // NOVA ROTA
 
 const queryClient = new QueryClient();
 
@@ -57,8 +58,12 @@ const App = () => (
               <Route path="/theme-selection" element={<ThemeSelection />} />
               <Route path="/model/:slug" element={<ModelDetail />} />
 
-              {/* Protected User Routes */}
+              {/* Protected Routes */}
               <Route element={<ProtectedRoute />}>
+                {/* Rota de Verificação Obrigatória */}
+                <Route path="/verify" element={<Verify />} />
+                
+                {/* Rotas do Dashboard (só acessíveis após verificação) */}
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/generate" element={<Generate />} />
                 <Route path="/generate-video" element={<GenerateVideo />} />
