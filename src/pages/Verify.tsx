@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Mail, ShieldCheck, ArrowRight, RefreshCw, AlertCircle, CheckCircle } from "lucide-react";
+import { Mail, ShieldCheck, ArrowRight, RefreshCw, AlertCircle, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
 
@@ -14,21 +14,17 @@ const Verify = () => {
   const { user, profile, refetchProfile } = useSession();
   const [currentStep, setCurrentStep] = useState(1);
   const [verificationCode, setVerificationCode] = useState('');
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [isResending, setIsResending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isVerified, setIsVerified] = useState(false);
 
   const handleNextStep = () => {
     console.log(`📍 Avançando para etapa ${currentStep + 1}`);
     setCurrentStep(currentStep + 1);
-    setError(null); // Limpa erro ao avançar
+    setError(null);
   };
 
   const handleResendCode = async () => {
     if (!user) return;
     
-    setIsResending(true);
     setError(null);
     console.log('🔄 Reenviando código de verificação...');
     
@@ -53,22 +49,17 @@ const Verify = () => {
         description: 'Verifique seu WhatsApp para o novo código.',
       });
 
-      // Simula o envio do código (em produção, você enviaria via WhatsApp API)
-      console.log(`📱 [SIMULAÇÃO] Código ${newCode} enviado para ${profile?.whatsapp_number}`);
-
     } catch (error: any) {
       console.error('❌ Erro ao reenviar código:', error);
       setError('Erro ao reenviar código. Tente novamente.');
       toast.error('Erro ao reenviar código', {
         description: 'Tente novamente em alguns instantes.',
       });
-    } finally {
-      setIsResending(false);
     }
   };
 
   const handleVerify = async () => {
-    console.log('🔍 Iniciando processo de verificação...');
+    console.log('🔍 Iniciando verificação...');
     
     // Validações iniciais
     if (!user || !profile) {
@@ -85,18 +76,11 @@ const Verify = () => {
       return;
     }
 
-    // Impede múltiplos cliques
-    if (isVerifying) {
-      console.log('⚠️ Verificação já em andamento, ignorando clique duplicado');
-      return;
-    }
-
-    setIsVerifying(true);
     setError(null);
     console.log('📝 Código digitado:', verificationCode);
 
     try {
-      // Etapa 1: Buscar o perfil e o código de verificação
+      // Buscar o perfil e o código de verificação
       console.log('📡 Buscando perfil do usuário...');
       const { data: profileData, error: fetchError } = await supabase
         .from('profiles')
@@ -115,7 +99,6 @@ const Verify = () => {
       // Verifica se já está verificado
       if (profileData.status === 'verified') {
         console.log('✅ Usuário já está verificado!');
-        setIsVerified(true);
         toast.success('✅ Conta já está verificada!');
         setTimeout(() => {
           window.location.href = '/onboarding';
@@ -123,7 +106,7 @@ const Verify = () => {
         return;
       }
 
-      // Etapa 2: Comparar os códigos
+      // Compara os códigos
       console.log('🔍 Comparando códigos...');
       if (!profileData.verification_code) {
         throw new Error('Nenhum código de verificação encontrado. Por favor, solicite um novo código.');
@@ -136,13 +119,13 @@ const Verify = () => {
 
       console.log('✅ Código correto! Atualizando status...');
 
-      // Etapa 3: Atualizar o status para 'verified' e remover o código
+      // Atualiza o status para 'verified' e remove o código
       console.log('📡 Atualizando status do usuário...');
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ 
           status: 'verified',
-          verification_code: null // Remove o código após verificação bem-sucedida
+          verification_code: null
         })
         .eq('id', user.id);
 
@@ -153,16 +136,14 @@ const Verify = () => {
 
       console.log('✅ Status atualizado com sucesso!');
       
-      // Atualiza o perfil no contexto
+      // Recarrega o perfil
       console.log('🔄 Recarregando perfil...');
       await refetchProfile();
 
       console.log('🎉 Verificação concluída com sucesso!');
-      setIsVerified(true);
       toast.success('✅ Conta verificada com sucesso!');
       
-      // Força reload para garantir que o ProtectedRoute leia o novo status
-      console.log('🔄 Redirecionando para onboarding...');
+      // Atualiza a página para o ProtectedRoute detectar a mudança
       setTimeout(() => {
         window.location.href = '/onboarding';
       }, 1000);
@@ -173,8 +154,6 @@ const Verify = () => {
       toast.error('Falha na verificação', { 
         description: error.message || 'Ocorreu um erro inesperado.' 
       });
-    } finally {
-      setIsVerifying(false);
     }
   };
 
@@ -182,35 +161,7 @@ const Verify = () => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
           <p>Carregando...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Se já estiver verificado, mostra tela de sucesso
-  if (isVerified || profile.status === 'verified') {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-        </div>
-
-        <div className="w-full max-w-md relative z-10">
-          <Card className="bg-card/50 backdrop-blur-xl border-border/50">
-            <CardContent className="p-8 text-center">
-              <CheckCircle className="w-20 h-20 text-green-500 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold mb-2">✅ Conta Verificada!</h2>
-              <p className="text-muted-foreground mb-6">
-                Sua conta foi verificada com sucesso. Redirecionando...
-              </p>
-              <Button onClick={() => window.location.href = '/onboarding'} className="gradient-primary">
-                Continuar para o Onboarding
-              </Button>
-            </CardContent>
-          </Card>
         </div>
       </div>
     );
@@ -321,14 +272,9 @@ const Verify = () => {
                   <Button
                     variant="outline"
                     onClick={handleResendCode}
-                    disabled={isResending}
                     className="flex-1"
                   >
-                    {isResending ? (
-                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    ) : (
-                      <RefreshCw className="w-4 h-4 mr-2" />
-                    )}
+                    <RefreshCw className="w-4 h-4 mr-2" />
                     Reenviar
                   </Button>
                   <Button
@@ -363,20 +309,10 @@ const Verify = () => {
                   </Button>
                   <Button
                     onClick={handleVerify}
-                    disabled={isVerifying}
                     className="flex-1 gradient-primary"
                   >
-                    {isVerifying ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                        Verificando...
-                      </>
-                    ) : (
-                      <>
-                        <ShieldCheck className="w-4 h-4 mr-2" />
-                        Verificar Conta
-                      </>
-                    )}
+                    <ShieldCheck className="w-4 h-4 mr-2" />
+                    Verificar Conta
                   </Button>
                 </div>
               </div>
