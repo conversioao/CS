@@ -11,6 +11,7 @@ export interface Profile {
   account_type: 'user' | 'affiliate';
   referral_code: string | null;
   status: string;
+  whatsapp_number: string | null; // Adicionando esta propriedade
 }
 
 interface SessionContextValue {
