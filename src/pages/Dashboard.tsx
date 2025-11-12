@@ -1,21 +1,16 @@
 import DashboardHeader from "@/components/DashboardHeader";
-import ToolsSection from "@/components/ToolsSection";
 import DashboardSidebar from "@/components/DashboardSidebar";
-import VerificationPromptModal from "@/components/VerificationPromptModal";
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate, Link } from "react-router-dom";
 import { Sparkles, Zap, Palette, Wand2, Video, Music, MessageSquare, Image } from "lucide-react";
 import { useSession } from "@/contexts/SessionContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect, useState } from "react";
 
 const Dashboard = () => {
-  const { profile, refetchProfile } = useSession();
-  const [showVerificationPrompt, setShowVerificationPrompt] = useState(false);
-  const [showTutorial, setShowTutorial] = useState(false);
+  const { profile } = useSession();
   const navigate = useNavigate();
-
-  const isVerified = profile?.status === 'verified';
+  const [showTutorial, setShowTutorial] = useState(false);
 
   // Check if user has seen the tutorial before
   useEffect(() => {
@@ -26,35 +21,14 @@ const Dashboard = () => {
   }, []);
 
   const handleNewCreationClick = () => {
-    if (!isVerified) {
-      setShowVerificationPrompt(true);
-    } else {
-      navigate('/generate');
-    }
+    // Esta verificação agora é feita exclusivamente na página /verify
+    // Se o usuário chegou aqui, é porque já está verificado.
+    navigate('/generate');
   };
 
   const handleTutorialClose = () => {
     setShowTutorial(false);
     localStorage.setItem('hasSeenTutorial', 'true');
-  };
-
-  const handleVerifyAccount = async () => {
-    if (!profile) return;
-    
-    // In a real app, this would open a modal to input the verification code
-    // For now, we'll simulate the verification process
-    const { error } = await supabase
-      .from('profiles')
-      .update({ status: 'verified' })
-      .eq('id', profile.id);
-
-    if (error) {
-      toast.error("Erro ao verificar conta", { description: error.message });
-    } else {
-      await refetchProfile();
-      setShowVerificationPrompt(false);
-      toast.success("Conta verificada com sucesso!");
-    }
   };
 
   // Tool data with modern icons and descriptions
@@ -212,12 +186,6 @@ const Dashboard = () => {
           </main>
         </div>
       </div>
-
-      <VerificationPromptModal 
-        isOpen={showVerificationPrompt} 
-        onClose={() => setShowVerificationPrompt(false)} 
-        onVerify={handleVerifyAccount}
-      />
     </>
   );
 };
