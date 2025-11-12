@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/contexts/SessionContext";
 import { useNavigate } from "react-router-dom";
@@ -18,8 +18,6 @@ const Verify = () => {
 
   const lastSixLetters = profile?.id ? profile.id.slice(-6) : '';
   const maskedId = profile?.id ? `${profile.id.slice(0, -6)}******` : 'N/A';
-
-  // Este useEffect foi removido para evitar loops. A lógica agora está no ProtectedRoute.
 
   const handleVerify = async () => {
     if (!profile || !verificationCode) {
@@ -42,18 +40,18 @@ const Verify = () => {
 
       toast.success("Conta verificada com sucesso! Redirecionando...");
       
-      // Após verificar, atualizamos o perfil e o ProtectedRoute cuidará do redirecionamento.
+      // Atualiza o perfil no contexto
       await refetchProfile();
-      // O navigate foi removido daqui para evitar conflitos.
+
+      // Navega diretamente para o dashboard após o sucesso
+      navigate('/dashboard', { replace: true });
 
     } catch (error: any) {
       toast.error("Falha na verificação", { description: error.message });
-    } finally {
-      setIsVerifying(false);
+      setIsVerifying(false); // Garante que o botão seja reativado em caso de erro
     }
   };
 
-  // Se o perfil ainda não carregou, mostramos um loader.
   if (!profile) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
