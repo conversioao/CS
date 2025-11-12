@@ -140,8 +140,6 @@ const Verify = () => {
     setIsVerifyingCode(true);
     try {
       // Lógica para o passo 'manual_fallback' (verificação por ID de usuário)
-      // Esta é uma verificação alternativa, que pode ser usada se o WhatsApp falhar.
-      // Neste caso, estamos apenas marcando o perfil como verificado.
       const { error } = await supabase
         .from('profiles')
         .update({ status: 'verified' })
