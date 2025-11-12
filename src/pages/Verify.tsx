@@ -7,10 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, CheckCircle, AlertCircle, Smartphone, Key } from "lucide-react";
+import { Loader2, AlertCircle, Smartphone, Key } from "lucide-react";
 import { toast } from "sonner";
 
-// Define os tipos para o passo atual
 type VerificationStep = 'initial' | 'entering_code' | 'manual_fallback';
 
 const Verify = () => {
@@ -23,10 +22,8 @@ const Verify = () => {
   const [verificationCode, setVerificationCode] = useState('');
   const [countdown, setCountdown] = useState(0);
 
-  // Extrai o número de WhatsApp do perfil
   const whatsappNumber = profile?.whatsapp_number ? profile.whatsapp_number.replace('+244', '') : '';
 
-  // Verificar se o utilizador já está verificado
   useEffect(() => {
     const checkVerificationStatus = async () => {
       setIsLoading(true);
@@ -38,7 +35,6 @@ const Verify = () => {
     checkVerificationStatus();
   }, [profile, navigate]);
 
-  // Lógica de countdown para reenvio de código
   useEffect(() => {
     if (countdown > 0) {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
@@ -54,15 +50,12 @@ const Verify = () => {
 
     setIsSendingCode(true);
     try {
-      // Em um sistema real, aqui você chamaria uma função edge para enviar o código via WhatsApp API
       const mockCode = Math.floor(100000 + Math.random() * 900000).toString();
-      
-      // Armazenar o código temporariamente
       localStorage.setItem(`verification_code_${profile?.id}`, mockCode);
       localStorage.setItem(`verification_code_sent_at_${profile?.id}`, Date.now().toString());
 
       toast.success(`Código enviado para +244${whatsappNumber}! Verifique suas mensagens.`);
-      setStep('entering_code'); // Avança para o passo de inserção do código
+      setStep('entering_code');
     } catch (error: any) {
       toast.error("Erro ao enviar código", { description: error.message });
     } finally {
@@ -78,7 +71,7 @@ const Verify = () => {
 
     setIsVerifyingCode(true);
     try {
-      // Verificar se é o código de 6 dígitos (WhatsApp)
+      // Lógica para o passo 'entering_code' (verificação por WhatsApp)
       const storedCode = localStorage.getItem(`verification_code_${profile?.id}`);
       const sentAt = localStorage.getItem(`verification_code_sent_at_${profile?.id}`);
 
@@ -102,21 +95,9 @@ const Verify = () => {
         await refetchProfile();
         toast.success("Conta verificada com sucesso!");
         setTimeout(() => navigate('/dashboard'), 1500);
-      } 
-      // Verificar se é o ID do usuário (fallback manual)
-      else if (profile && verificationCode === profile.id) {
-        const { error } = await supabase
-          .from('profiles')
-          .update({ status: 'verified' })
-          .eq('id', profile.id);
-
-        if (error) throw error;
-
-        await refetchProfile();
-        toast.success("Conta verificada com sucesso!");
-        setTimeout(() => navigate('/dashboard'), 1500);
       } else {
-        throw new Error("API Key inválida. Verifique e tente novamente.");
+        // Se o código não for encontrado ou não bater, informa o usuário
+        throw new Error("API Key inválida. Verifique e tente novamente ou use a verificação manual.");
       }
     } catch (error: any) {
       toast.error("Falha na verificação", { description: error.message });
@@ -134,6 +115,7 @@ const Verify = () => {
     
     setIsVerifyingCode(true);
     try {
+      // Lógica para o passo 'manual_fallback' (verificação por ID de usuário)
       const { error } = await supabase
         .from('profiles')
         .update({ status: 'verified' })
@@ -208,7 +190,7 @@ const Verify = () => {
               </div>
             )}
 
-            {/* Passo 2: Inserir a API Key */}
+            {/* Passo 2: Inserir a API Key (para verificação por WhatsApp) */}
             {step === 'entering_code' && (
               <div className="space-y-6">
                 <div className="text-center">
@@ -220,21 +202,22 @@ const Verify = () => {
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="api-key">API Key</Label>
+                  <Label htmlFor="api-key">API Key (6 dígitos)</Label>
                   <Input
                     id="api-key"
                     type="text"
                     placeholder="Digite a sua API Key"
                     value={verificationCode}
-                    onChange={(e) => setVerificationCode(e.target.value)}
+                    onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    maxLength={6}
                     autoFocus
                   />
                   <p className="text-xs text-muted-foreground">
-                    Pode ser o código de 6 dígitos ou o seu ID de usuário.
+                    Digite o código de 6 dígitos recebido por WhatsApp.
                   </p>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <Button onClick={handleVerifyCode} className="w-full gradient-primary" disabled={isVerifyingCode || !verificationCode}>
+                  <Button onClick={handleVerifyCode} className="w-full gradient-primary" disabled={isVerifyingCode || verificationCode.length !== 6}>
                     {isVerifyingCode ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -245,7 +228,6 @@ const Verify = () => {
                     )}
                   </Button>
                   
-                  {/* Link para fallback manual */}
                   <div className="text-center">
                     <Button 
                       variant="ghost" 
@@ -281,7 +263,7 @@ const Verify = () => {
               </div>
             )}
 
-            {/* Passo 3: Fallback Manual */}
+            {/* Passo 3: Fallback Manual (para verificação por ID de usuário) */}
             {step === 'manual_fallback' && (
               <div className="space-y-6">
                 <div className="flex items-center justify-center p-4 bg-muted/50 rounded-lg">
