@@ -17,8 +17,11 @@ const Verify = () => {
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
 
-  // Extrai as 6 últimas casas do ID do usuário para exibir como exemplo
-  const lastSixDigits = profile?.id ? profile.id.slice(-6) : '';
+  // Extrai as 6 últimas letras do ID do usuário para exibir como exemplo
+  const lastSixLetters = profile?.id ? profile.id.slice(-6) : '';
+  
+  // Oculta as últimas 6 letras do ID para exibição
+  const maskedId = profile?.id ? `${profile.id.slice(0, -6)}****` : 'N/A';
 
   useEffect(() => {
     const checkVerificationStatus = async () => {
@@ -33,14 +36,14 @@ const Verify = () => {
 
   const handleVerify = async () => {
     if (!profile || !verificationCode) {
-      toast.error("Por favor, insira as 6 últimas casas do seu ID.");
+      toast.error("Por favor, insira o código de verificação.");
       return;
     }
 
     setIsVerifying(true);
     try {
-      // Verifica se o código digitado corresponde às 6 últimas casas do ID
-      if (verificationCode !== lastSixDigits) {
+      // Verifica se o código digitado corresponde às 6 últimas letras do ID
+      if (verificationCode !== lastSixLetters) {
         throw new Error("Código de verificação incorreto. Tente novamente.");
       }
 
@@ -94,17 +97,17 @@ const Verify = () => {
               <div className="text-center">
                 <p className="font-medium">Seu ID de Usuário</p>
                 <Badge variant="secondary" className="mt-1 text-lg font-mono">
-                  {profile?.id || 'N/A'}
+                  {maskedId}
                 </Badge>
               </div>
             </div>
 
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-center">
               <p className="text-sm text-amber-800">
-                Para verificar sua conta, digite apenas as <strong>6 últimas casas</strong> do seu ID.
+                Para verificar sua conta, digite as <strong>6 últimas letras</strong> do seu ID.
               </p>
               <p className="text-xs text-amber-600 mt-1">
-                Exemplo: <Badge variant="outline" className="text-amber-800 border-amber-300">{lastSixDigits}</Badge>
+                Exemplo: <Badge variant="outline" className="text-amber-800 border-amber-300">{lastSixLetters}</Badge>
               </p>
             </div>
 
@@ -113,14 +116,14 @@ const Verify = () => {
               <Input
                 id="verification-code"
                 type="text"
-                placeholder="Digite as 6 últimas casas do seu ID"
+                placeholder="Digite as 6 últimas letras do seu ID"
                 value={verificationCode}
-                onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                onChange={(e) => setVerificationCode(e.target.value.slice(0, 6))}
                 maxLength={6}
                 autoFocus
               />
               <p className="text-xs text-muted-foreground">
-                Digite apenas os números, sem letras ou símbolos.
+                Digite exatamente 6 letras (números e letras são permitidos).
               </p>
             </div>
 
