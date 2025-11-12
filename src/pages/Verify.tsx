@@ -17,6 +17,7 @@ const Verify = () => {
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isVerified, setIsVerified] = useState(false);
 
   const handleNextStep = () => {
     console.log(`📍 Avançando para etapa ${currentStep + 1}`);
@@ -84,6 +85,12 @@ const Verify = () => {
       return;
     }
 
+    // Impede múltiplos cliques
+    if (isVerifying) {
+      console.log('⚠️ Verificação já em andamento, ignorando clique duplicado');
+      return;
+    }
+
     setIsVerifying(true);
     setError(null);
     console.log('📝 Código digitado:', verificationCode);
@@ -93,7 +100,7 @@ const Verify = () => {
       console.log('📡 Buscando perfil do usuário...');
       const { data: profileData, error: fetchError } = await supabase
         .from('profiles')
-        .select('verification_code')
+        .select('verification_code, status')
         .eq('id', user.id)
         .single();
 
@@ -103,9 +110,25 @@ const Verify = () => {
       }
 
       console.log('✅ Perfil encontrado. Código salvo:', profileData.verification_code);
+      console.log('📋 Status atual:', profileData.status);
+
+      // Verifica se já está verificado
+      if (profileData.status === 'verified') {
+        console.log('✅ Usuário já está verificado!');
+        setIsVerified(true);
+        toast.success('✅ Conta já está verificada!');
+        setTimeout(() => {
+          window.location.href = '/onboarding';
+        }, 1000);
+        return;
+      }
 
       // Etapa 2: Comparar os códigos
       console.log('🔍 Comparando códigos...');
+      if (!profileData.verification_code) {
+        throw new Error('Nenhum código de verificação encontrado. Por favor, solicite um novo código.');
+      }
+      
       if (verificationCode !== profileData.verification_code) {
         console.warn('⚠️ Código incorreto');
         throw new Error('Código incorreto. Verifique e tente novamente.');
@@ -135,6 +158,7 @@ const Verify = () => {
       await refetchProfile();
 
       console.log('🎉 Verificação concluída com sucesso!');
+      setIsVerified(true);
       toast.success('✅ Conta verificada com sucesso!');
       
       // Força reload para garantir que o ProtectedRoute leia o novo status
@@ -160,6 +184,33 @@ const Verify = () => {
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
           <p>Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Se já estiver verificado, mostra tela de sucesso
+  if (isVerified || profile.status === 'verified') {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        </div>
+
+        <div className="w-full max-w-md relative z-10">
+          <Card className="bg-card/50 backdrop-blur-xl border-border/50">
+            <CardContent className="p-8 text-center">
+              <CheckCircle className="w-20 h-20 text-green-500 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold mb-2">✅ Conta Verificada!</h2>
+              <p className="text-muted-foreground mb-6">
+                Sua conta foi verificada com sucesso. Redirecionando...
+              </p>
+              <Button onClick={() => window.location.href = '/onboarding'} className="gradient-primary">
+                Continuar para o Onboarding
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
