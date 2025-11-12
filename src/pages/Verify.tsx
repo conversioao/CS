@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShieldCheck, RefreshCw, AlertCircle, CheckCircle, Clock, Loader2 } from "lucide-react";
+import { ShieldCheck, RefreshCw, CheckCircle, Clock, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
 import { useNavigate } from "react-router-dom";
@@ -17,6 +17,7 @@ const Verify = () => {
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [countdown, setCountdown] = useState(0);
+  const [isWaiting, setIsWaiting] = useState(false); // Novo estado para a tela de espera
 
   useEffect(() => {
     if (profile?.status === 'verified') {
@@ -65,23 +66,46 @@ const Verify = () => {
     }
     
     setIsVerifying(true);
+    setIsWaiting(true); // Inicia a tela de espera
+
     try {
-      const { data, error } = await supabase.functions.invoke('verify-account', {
-        body: { userId: user.id, code: verificationCode },
+      // 1. Envia o código e o ID do usuário para o webhook
+      const response = await fetch('https://n8n.conversio.ao/webhook-test/verificacao', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          code: verificationCode,
+        }),
       });
 
-      if (error || !data.success) {
-        throw new Error(data.error || 'Código de verificação incorreto.');
+      if (!response.ok) {
+        throw new Error('Erro ao comunicar com o servidor de verificação.');
       }
 
-      toast.success('Conta verificada com sucesso!');
+      // 2. Espera 5 segundos
+      await new Promise(resolve => setTimeout(resolve, 5000));
+
+      // 3. Após 5 segundos, recarrega o perfil para verificar o status
       await refetchProfile();
-      navigate('/onboarding');
+
+      // 4. Verifica se o status agora é 'verified'
+      if (profile?.status === 'verified') {
+        toast.success('Conta verificada com sucesso!');
+        navigate('/onboarding');
+      } else {
+        // Se o status não mudou, o webhook pode ter rejeitado a verificação
+        toast.error('Falha na verificação. O código pode estar incorreto ou expirado.');
+      }
 
     } catch (error: any) {
-      toast.error('Falha na verificação', { description: error.message });
+      console.error(error);
+      toast.error('Falha na verificação', { description: error.message || 'Ocorreu um erro inesperado.' });
     } finally {
       setIsVerifying(false);
+      setIsWaiting(false); // Finaliza a tela de espera
     }
   };
 
@@ -124,46 +148,62 @@ const Verify = () => {
         </CardHeader>
 
         <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="verification-code">Código de Verificação</Label>
-            <Input
-              id="verification-code"
-              type="text"
-              placeholder="000000"
-              value={verificationCode}
-              onChange={(e) => {
-                const value = e.target.value.replace(/\D/g, '').slice(0, 6);
-                setVerificationCode(value);
-              }}
-              maxLength={6}
-              className="text-center text-2xl tracking-widest font-mono h-14"
-              autoFocus
-            />
-          </div>
+          {/* Tela de Espera */}
+          {isWaiting && (
+            <div className="flex flex-col items-center justify-center py-8">
+              <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Aguarde...</h3>
+              <p className="text-sm text-muted-foreground text-center">
+                Estamos verificando o seu código com o servidor. Isso pode levar alguns segundos.
+              </p>
+            </div>
+          )}
 
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Button
-              variant="outline"
-              onClick={generateAndSendCode}
-              disabled={isResending || countdown > 0}
-              className="flex-1"
-            >
-              {isResending ? <Loader2 className="w-4 h-4 animate-spin" /> : (countdown > 0 ? <Clock className="w-4 h-4 mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />)}
-              {countdown > 0 ? `Aguarde ${countdown}s` : 'Reenviar Código'}
-            </Button>
-            <Button
-              onClick={handleVerify}
-              disabled={isVerifying || verificationCode.length !== 6}
-              className="flex-1 gradient-primary"
-            >
-              {isVerifying ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4 mr-2" />}
-              Verificar Conta
-            </Button>
-          </div>
-          
-          <div className="text-xs text-muted-foreground text-center pt-2">
-            Não recebeu o código? Clique em "Reenviar Código" após 60 segundos.
-          </div>
+          {/* Formulário de Verificação (não mostra quando está esperando) */}
+          {!isWaiting && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="verification-code">Código de Verificação</Label>
+                <Input
+                  id="verification-code"
+                  type="text"
+                  placeholder="000000"
+                  value={verificationCode}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                    setVerificationCode(value);
+                  }}
+                  maxLength={6}
+                  className="text-center text-2xl tracking-widest font-mono h-14"
+                  autoFocus
+                />
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button
+                  variant="outline"
+                  onClick={generateAndSendCode}
+                  disabled={isResending || countdown > 0}
+                  className="flex-1"
+                >
+                  {isResending ? <Loader2 className="w-4 h-4 animate-spin" /> : (countdown > 0 ? <Clock className="w-4 h-4 mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />)}
+                  {countdown > 0 ? `Aguarde ${countdown}s` : 'Reenviar Código'}
+                </Button>
+                <Button
+                  onClick={handleVerify}
+                  disabled={isVerifying || verificationCode.length !== 6}
+                  className="flex-1 gradient-primary"
+                >
+                  {isVerifying ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4 mr-2" />}
+                  Verificar Conta
+                </Button>
+              </div>
+              
+              <div className="text-xs text-muted-foreground text-center pt-2">
+                Não recebeu o código? Clique em "Reenviar Código" após 60 segundos.
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>
