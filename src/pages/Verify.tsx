@@ -43,62 +43,86 @@ const Verify = () => {
   }, [countdown]);
 
   const handleSendCode = async () => {
-    if (!whatsappNumber) {
-      toast.error('Número de WhatsApp não encontrado no seu perfil.');
+    if (!profile || !whatsappNumber) {
+      toast.error('Perfil ou número de WhatsApp não encontrado.');
       return;
     }
 
     setIsSendingCode(true);
     try {
-      const mockCode = Math.floor(100000 + Math.random() * 900000).toString();
-      localStorage.setItem(`verification_code_${profile?.id}`, mockCode);
-      localStorage.setItem(`verification_code_sent_at_${profile?.id}`, Date.now().toString());
+      // 1. Gerar um código de 6 dígitos aleatório
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      
+      // 2. Definir a data de expiração (5 minutos a partir de agora)
+      const expiresAt = new Date();
+      expiresAt.setMinutes(expiresAt.getMinutes() + 5);
+
+      // 3. Inserir o código na tabela do banco de dados
+      const { error } = await supabase
+        .from('user_verification_codes')
+        .insert({
+          user_id: profile.id,
+          code: code,
+          expires_at: expiresAt.toISOString(),
+        });
+
+      if (error) throw error;
+
+      // Em um sistema real, aqui você chamaria uma função edge para enviar o código via WhatsApp API
+      // Por enquanto, apenas mostramos o código no console para fins de desenvolvimento
+      console.log(`Código de verificação para ${profile.id}: ${code}`);
 
       toast.success(`Código enviado para +244${whatsappNumber}! Verifique suas mensagens.`);
       setStep('entering_code');
     } catch (error: any) {
-      toast.error("Erro ao enviar código", { description: error.message });
+      console.error('Erro ao enviar código:', error);
+      toast.error("Erro ao enviar código. Tente novamente.");
     } finally {
       setIsSendingCode(false);
     }
   };
 
   const handleVerifyCode = async () => {
-    if (!verificationCode) {
+    if (!verificationCode || !profile) {
       toast.error("Por favor, insira a sua API Key.");
       return;
     }
 
     setIsVerifyingCode(true);
     try {
-      // Lógica para o passo 'entering_code' (verificação por WhatsApp)
-      const storedCode = localStorage.getItem(`verification_code_${profile?.id}`);
-      const sentAt = localStorage.getItem(`verification_code_sent_at_${profile?.id}`);
+      // 1. Buscar o código na tabela, verificando se ele existe, pertence ao usuário e não expirou
+      const { data: codeData, error: fetchError } = await supabase
+        .from('user_verification_codes')
+        .select('*')
+        .eq('user_id', profile.id)
+        .eq('code', verificationCode)
+        .gt('expires_at', new Date().toISOString())
+        .single(); // .single() garante que apenas um registro seja retornado ou um erro seja lançado
 
-      if (storedCode && sentAt && verificationCode === storedCode) {
-        const now = Date.now();
-        const fiveMinutesInMs = 5 * 60 * 1000;
-        if (now - parseInt(sentAt) > fiveMinutesInMs) {
-          throw new Error("Código expirado. Por favor, solicite um novo.");
-        }
-
-        const { error } = await supabase
-          .from('profiles')
-          .update({ status: 'verified' })
-          .eq('id', profile?.id);
-
-        if (error) throw error;
-
-        localStorage.removeItem(`verification_code_${profile?.id}`);
-        localStorage.removeItem(`verification_code_sent_at_${profile?.id}`);
-
-        await refetchProfile();
-        toast.success("Conta verificada com sucesso!");
-        setTimeout(() => navigate('/dashboard'), 1500);
-      } else {
-        // Se o código não for encontrado ou não bater, informa o usuário
-        throw new Error("API Key inválida. Verifique e tente novamente ou use a verificação manual.");
+      if (fetchError || !codeData) {
+        throw new Error("API Key inválida ou expirada. Tente novamente.");
       }
+
+      // 2. Se o código for válido, marcar o perfil como verificado
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ status: 'verified' })
+        .eq('id', profile.id);
+
+      if (updateError) throw updateError;
+
+      // 3. Deletar o código de verificação usado da tabela
+      await supabase
+        .from('user_verification_codes')
+        .delete()
+        .eq('id', codeData.id);
+
+      // 4. Atualizar o estado local do perfil
+      await refetchProfile();
+
+      toast.success("Conta verificada com sucesso!");
+      setTimeout(() => navigate('/dashboard'), 1500);
+
     } catch (error: any) {
       toast.error("Falha na verificação", { description: error.message });
     } finally {
@@ -116,6 +140,8 @@ const Verify = () => {
     setIsVerifyingCode(true);
     try {
       // Lógica para o passo 'manual_fallback' (verificação por ID de usuário)
+      // Esta é uma verificação alternativa, que pode ser usada se o WhatsApp falhar.
+      // Neste caso, estamos apenas marcando o perfil como verificado.
       const { error } = await supabase
         .from('profiles')
         .update({ status: 'verified' })
