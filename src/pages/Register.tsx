@@ -26,6 +26,11 @@ const Register = () => {
     }
   }, [searchParams]);
 
+  const generateVerificationCode = (): string => {
+    // Gera um código aleatório de 6 dígitos
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  };
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -55,6 +60,11 @@ const Register = () => {
 
     const formattedWhatsapp = `+244${whatsappDigits}`;
     const dummyEmail = `${formattedWhatsapp}@conversio.studio`;
+    const verificationCode = generateVerificationCode();
+
+    console.log('🔐 Iniciando cadastro...');
+    console.log('📱 WhatsApp:', formattedWhatsapp);
+    console.log('🔑 Código de verificação gerado:', verificationCode);
 
     try {
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
@@ -66,12 +76,34 @@ const Register = () => {
             whatsapp_number: formattedWhatsapp,
             account_type: 'user',
             ref_code: refCode,
+            verification_code: verificationCode,
           },
         },
       });
 
-      if (signUpError) throw signUpError;
-      if (!signUpData.user) throw new Error('Falha ao criar conta. Tente novamente.');
+      if (signUpError) {
+        console.error('❌ Erro no signup:', signUpError);
+        throw signUpError;
+      }
+      if (!signUpData.user) {
+        console.error('❌ Usuário não foi criado');
+        throw new Error('Falha ao criar conta. Tente novamente.');
+      }
+
+      console.log('✅ Usuário criado com sucesso:', signUpData.user.id);
+      
+      // Atualiza o perfil com o código de verificação
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ verification_code: verificationCode })
+        .eq('id', signUpData.user.id);
+
+      if (updateError) {
+        console.error('❌ Erro ao salvar código de verificação:', updateError);
+        throw updateError;
+      }
+
+      console.log('✅ Código de verificação salvo no banco de dados');
       
       toast.success('Conta criada com sucesso! Por favor, verifique a sua conta.');
       
@@ -79,6 +111,7 @@ const Register = () => {
       navigate('/verify');
 
     } catch (error: any) {
+      console.error('❌ Erro geral no cadastro:', error);
       toast.error('Erro no Cadastro', {
         description: error.message || 'Não foi possível criar a sua conta. Verifique se o número de WhatsApp já não está em uso.',
       });
