@@ -16,41 +16,62 @@ const Verify = () => {
   const [isVerifying, setIsVerifying] = useState(false);
 
   const handleVerify = async () => {
+    // 1. Desativa o botão e inicia o processo
+    setIsVerifying(true);
+    console.log("Iniciando processo de verificação...");
+
     if (!user) {
       toast.error("Sessão não encontrada. Por favor, faça login novamente.");
+      setIsVerifying(false);
       return;
     }
     if (!verificationCode) {
       toast.error("Por favor, insira o código de verificação.");
+      setIsVerifying(false);
       return;
     }
 
-    setIsVerifying(true);
     try {
-      // O código de verificação é o próprio ID do usuário.
+      // 2. Compara o código digitado com o ID do usuário
+      console.log(`Verificando código digitado: "${verificationCode}" com ID do usuário: "${user.id}"`);
       if (verificationCode !== user.id) {
+        // Lança um erro específico se o código estiver incorreto
         throw new Error("❌ Código incorreto. Tente novamente.");
       }
 
-      // Atualiza o status do perfil para 'verificado'
+      console.log("Código correto. Tentando atualizar o status no banco de dados...");
+      
+      // 3. Atualiza o status do perfil para 'verificado'
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ status: 'verified' })
         .eq('id', user.id);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        // Lança um erro se a atualização do banco de dados falhar
+        console.error("Erro ao atualizar o status:", updateError);
+        throw new Error("⚠️ Erro ao atualizar seu status. Tente novamente.");
+      }
 
+      console.log("Status atualizado com sucesso no banco de dados.");
       toast.success("✅ Conta verificada com sucesso!");
-      
-      // Atualiza o perfil no contexto para refletir o novo status
-      await refetchProfile();
 
-      // Redireciona para a tela de onboarding
-      navigate('/onboarding');
+      // 4. Atualiza o perfil localmente para que o ProtectedRoute possa redirecionar
+      await refetchProfile();
+      
+      // **CORREÇÃO PRINCIPAL:** Removemos o redirecionamento daqui.
+      // O componente ProtectedRoute agora cuidará do redirecionamento ao detectar a mudança de status.
+      // navigate('/onboarding'); // <-- LINHA REMOVIDA PARA CORRIGIR O LOOP
 
     } catch (error: any) {
-      toast.error(error.message || "Falha na verificação.");
+      // 5. Captura e exibe qualquer erro que ocorreu durante o processo
+      console.error("Falha na verificação:", { message: error.message, stack: error.stack });
+      toast.error("Falha na verificação", {
+        description: error.message || "Ocorreu um erro inesperado.",
+      });
     } finally {
+      // 6. Reativa o botão, independentemente do resultado
+      console.log("Processo de verificação finalizado.");
       setIsVerifying(false);
     }
   };
