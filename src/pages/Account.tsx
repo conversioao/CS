@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { User, Settings, CreditCard, Bot, Palette, Banknote, History, ShieldAlert, ShieldCheck, Loader2, Zap, Copy, Check } from "lucide-react";
+import { User, Settings, CreditCard, Bot, Palette, Banknote, History, ShieldAlert, ShieldCheck, Loader2, Zap } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -39,7 +39,6 @@ const Account = () => {
   const [tools, setTools] = useState<ToolCost[]>([]);
   const [selectedToolId, setSelectedToolId] = useState<string>('');
   const [userVerificationCode, setUserVerificationCode] = useState('');
-  const [copied, setCopied] = useState(false);
 
   const isProfileVerified = profile?.status === 'verified';
   const defaultTab = searchParams.get("tab") || "profile";
@@ -57,59 +56,36 @@ const Account = () => {
     fetchData();
   }, [user]);
 
-  const handleCopy = () => {
-    if (user?.id) {
-      navigator.clipboard.writeText(user.id);
-      setCopied(true);
-      toast.success("ID copiado para a área de transferência!");
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
   const handleVerifyAccount = async () => {
     if (!user || !verificationCode) {
       toast.error("Código de verificação é obrigatório.");
       return;
     }
-  
+    
     setIsVerifying(true);
-    toast.info("A verificar a sua conta...", { description: "Por favor, aguarde um momento." });
-  
-    // Artificial 5-second delay as requested
-    await new Promise(resolve => setTimeout(resolve, 5000));
-  
+    
     try {
-      // Verification logic
-      if (verificationCode !== user.id) {
-        throw new Error("Código de verificação inválido. Certifique-se de que corresponde ao seu ID de usuário.");
+      // Verifica se o código inserido é igual ao ID do usuário
+      if (verificationCode === user.id) {
+        // Atualiza o status do perfil para 'verified'
+        const { error } = await supabase
+          .from('profiles')
+          .update({ status: 'verified' })
+          .eq('id', user.id);
+        
+        if (error) throw error;
+        
+        // Atualiza o estado local
+        await refetchProfile();
+        
+        toast.success("Conta verificada com sucesso!");
+      } else {
+        toast.error("Código de verificação inválido.");
       }
-  
-      // Update status in the database first
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ status: 'verified' })
-        .eq('id', user.id);
-  
-      if (updateError) {
-        throw updateError;
-      }
-  
-      // If successful, show success message and reload
-      toast.success("Conta verificada com sucesso!", {
-        description: "A página será atualizada para aplicar as alterações.",
-      });
-  
-      // Wait a bit for the user to see the toast, then reload
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
-  
     } catch (error: any) {
-      console.error("Detailed Verification Error:", error);
-      toast.error("Erro na verificação", { 
-        description: error.message || "Ocorreu um problema ao tentar verificar sua conta." 
-      });
-      setIsVerifying(false); // Stop loading effect only on error
+      toast.error("Erro na verificação", { description: error.message });
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -176,31 +152,7 @@ const Account = () => {
             <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-6"><TabsTrigger value="profile"><User className="w-4 h-4 mr-2" />Perfil</TabsTrigger><TabsTrigger value="brand"><Palette className="w-4 h-4 mr-2" />Marca</TabsTrigger><TabsTrigger value="billing"><CreditCard className="w-4 h-4 mr-2" />Faturação</TabsTrigger><TabsTrigger value="integrations"><Bot className="w-4 h-4 mr-2" />Integrações</TabsTrigger></TabsList>
             <TabsContent value="profile">
               {!isProfileVerified ? (
-                <Card className="mb-6 bg-yellow-500/10 border-yellow-500/30">
-                  <CardHeader className="flex-row items-start gap-4 space-y-0">
-                    <ShieldAlert className="w-8 h-8 text-yellow-600 flex-shrink-0 mt-1" />
-                    <div>
-                      <CardTitle>Verifique a sua conta</CardTitle>
-                      <CardDescription className="flex items-center flex-wrap">
-                        Para ativar as funcionalidades, use o seu ID de usuário como código. Clique para copiar:
-                        <Button variant="ghost" size="sm" onClick={handleCopy} className="font-mono ml-2 px-2 h-7">
-                          {user?.id.substring(0, 8)}...
-                          {copied ? <Check className="w-4 h-4 text-green-500 ml-2" /> : <Copy className="w-4 h-4 ml-2" />}
-                        </Button>
-                      </CardDescription>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="verification-code">Código de Verificação</Label>
-                      <Input id="verification-code" placeholder="Cole o seu ID de usuário aqui" value={verificationCode} onChange={(e) => setVerificationCode(e.target.value)} />
-                    </div>
-                    <Button onClick={handleVerifyAccount} disabled={isVerifying} className="bg-yellow-500 hover:bg-yellow-600 text-black">
-                      {isVerifying ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ShieldCheck className="w-4 h-4 mr-2" />}
-                      Verificar Conta
-                    </Button>
-                  </CardContent>
-                </Card>
+                <Card className="mb-6 bg-yellow-500/10 border-yellow-500/30"><CardHeader className="flex-row items-center gap-4 space-y-0"><ShieldAlert className="w-8 h-8 text-yellow-600 flex-shrink-0" /><div><CardTitle>Verifique a sua conta</CardTitle><CardDescription>Insira o código recebido no WhatsApp para ativar todas as funcionalidades.</CardDescription></div></CardHeader><CardContent className="space-y-4"><div className="space-y-2"><Label htmlFor="verification-code">Código de Verificação</Label><Input id="verification-code" placeholder="Insira o código aqui" value={verificationCode} onChange={(e) => setVerificationCode(e.target.value)} /></div><Button onClick={handleVerifyAccount} disabled={isVerifying} className="bg-yellow-500 hover:bg-yellow-600 text-black">{isVerifying ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ShieldCheck className="w-4 h-4 mr-2" />}Verificar Conta</Button></CardContent></Card>
               ) : (
                  <Card className="mb-6 bg-green-500/10 border-green-500/30"><CardHeader className="flex-row items-center gap-4 space-y-0"><ShieldCheck className="w-8 h-8 text-green-600 flex-shrink-0" /><div><CardTitle>Conta Verificada</CardTitle><CardDescription>A sua conta está ativa. Todas as funcionalidades estão disponíveis.</CardDescription></div></CardHeader></Card>
               )}

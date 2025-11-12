@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -16,6 +17,7 @@ const Register = () => {
   const [whatsapp, setWhatsapp] = useState('');
   const [password, setPassword] = useState('');
   const [userType, setUserType] = useState('');
+  const [accountType, setAccountType] = useState('user');
   const [isLoading, setIsLoading] = useState(false);
   const [searchParams] = useSearchParams();
   const [refCode, setRefCode] = useState<string | null>(null);
@@ -43,7 +45,7 @@ const Register = () => {
             full_name: fullName,
             whatsapp_number: formattedWhatsapp,
             user_type: userType,
-            account_type: 'user', // Always set to 'user' now
+            account_type: accountType,
             ref_code: refCode,
           },
         },
@@ -92,6 +94,7 @@ const Register = () => {
             <div className="space-y-2"><Label htmlFor="whatsapp">Nº de WhatsApp</Label><div className="flex items-center gap-2"><div className="px-3 py-2 bg-muted rounded-md text-sm">+244</div><Input id="whatsapp" type="tel" placeholder="9XX XXX XXX" required value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} /></div></div>
             <div className="space-y-2"><Label htmlFor="password">Senha</Label><Input id="password" type="password" placeholder="Pelo menos 6 caracteres" required value={password} onChange={(e) => setPassword(e.target.value)} /></div>
             <div className="space-y-2"><Label htmlFor="userType">Eu sou</Label><Select required onValueChange={setUserType}><SelectTrigger id="userType"><SelectValue placeholder="Selecione o seu perfil..." /></SelectTrigger><SelectContent><SelectItem value="designer">Designer</SelectItem><SelectItem value="empreendedor">Empreendedor</SelectItem></SelectContent></Select></div>
+            <div className="space-y-2"><Label>Tipo de Conta</Label><RadioGroup defaultValue="user" onValueChange={setAccountType} className="flex gap-4"><div className="flex items-center space-x-2"><RadioGroupItem value="user" id="r1" /><Label htmlFor="r1">Usuário</Label></div><div className="flex items-center space-x-2"><RadioGroupItem value="affiliate" id="r2" /><Label htmlFor="r2">Afiliado</Label></div></RadioGroup></div>
             <Button type="submit" className="w-full gradient-primary" disabled={isLoading}>{isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Criar Conta Grátis'}</Button>
           </form>
           <div className="mt-4 text-center text-sm">Já tem uma conta?{' '}<Link to="/login" className="underline text-primary">Entre</Link></div>

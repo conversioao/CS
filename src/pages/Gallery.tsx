@@ -13,13 +13,13 @@ import { Loader2 } from "lucide-react";
 interface GalleryItem {
   id: string;
   url: string;
-  type: 'image' | 'video' | 'audio';
+  type: 'image' | 'video';
   created_at: string;
   likes: number;
   is_liked: boolean;
 }
 
-const categories = ["Tudo", "Imagens", "Vídeos", "Áudios"];
+const categories = ["Tudo", "Imagens", "Vídeos"];
 
 const Gallery = () => {
   const [activeCategory, setActiveCategory] = useState("Tudo");
@@ -36,30 +36,23 @@ const Gallery = () => {
       if (!user) return;
       
       setLoading(true);
-      try {
-        // First, get image history from localStorage
-        const imageHistory = JSON.parse(localStorage.getItem('image_history') || '[]');
-        
-        // Then get video history from localStorage
-        const videoHistory = JSON.parse(localStorage.getItem('video_history') || '[]');
-        
-        // Combine all media
-        const allMedia = [
-          ...imageHistory.map((item: any) => ({ ...item, type: 'image' })),
-          ...videoHistory.map((item: any) => ({ ...item, type: 'video' }))
-        ].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
-        
-        setUserMedia(allMedia);
-      } catch (error) {
+      const { data, error } = await supabase
+        .from('user_media')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
         console.error('Error fetching user media:', error);
         toast({
           title: "Erro",
           description: "Não foi possível carregar suas criações",
           variant: "destructive",
         });
-      } finally {
-        setLoading(false);
+      } else {
+        setUserMedia(data || []);
       }
+      setLoading(false);
     };
 
     fetchUserMedia();
@@ -69,7 +62,6 @@ const Gallery = () => {
     if (activeCategory === "Tudo") return true;
     if (activeCategory === "Imagens") return item.type === 'image';
     if (activeCategory === "Vídeos") return item.type === 'video';
-    if (activeCategory === "Áudios") return item.type === 'audio';
     return true;
   });
 
@@ -77,7 +69,7 @@ const Gallery = () => {
     try {
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${type}-${Date.now()}.${type === 'image' ? 'png' : type === 'video' ? 'mp4' : 'mp3'}`;
+      link.download = `${type}-${Date.now()}.${type === 'image' ? 'png' : 'mp4'}`;
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
       document.body.appendChild(link);
@@ -216,80 +208,49 @@ const Gallery = () => {
                               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                               loading="lazy"
                             />
-                          ) : item.type === 'video' ? (
-                            <div className="w-full h-full flex items-center justify-center bg-black">
-                              <div className="text-white text-center">
-                                <div className="w-16 h-16 mx-auto bg-primary/20 rounded-full flex items-center justify-center mb-2">
-                                  <video className="w-8 h-8" />
-                                </div>
-                                <p className="text-sm">Vídeo</p>
-                              </div>
-                            </div>
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-black">
-                              <div className="text-white text-center">
-                                <div className="w-16 h-16 mx-auto bg-primary/20 rounded-full flex items-center justify-center mb-2">
-                                  <audio className="w-8 h-8" />
-                                </div>
-                                <p className="text-sm">Áudio</p>
-                              </div>
-                            </div>
+                            <video
+                              src={item.url}
+                              className="w-full h-full object-cover"
+                              controls={false}
+                            />
                           )}
                         </div>
                       </DialogTrigger>
                       <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 flex flex-col">
                         <div className="flex-1 relative overflow-auto bg-black flex items-center justify-center">
-                          {item.type === 'image' ? (
-                            <img
-                              ref={zoomedImageRef}
-                              src={item.url}
-                              alt="Imagem ampliada"
-                              className="max-w-none max-h-none"
-                              style={{
-                                transform: `scale(${zoomLevel}) rotate(${rotation}deg)`,
-                                transition: 'transform 0.2s ease'
-                              }}
-                            />
-                          ) : item.type === 'video' ? (
-                            <video
-                              src={item.url}
-                              controls
-                              className="max-w-full max-h-full"
-                            />
-                          ) : (
-                            <div className="text-white p-8 text-center">
-                              <audio
-                                src={item.url}
-                                controls
-                                className="w-full max-w-md"
-                              />
-                              <p className="mt-4">Áudio gerado</p>
-                            </div>
-                          )}
+                          <img
+                            ref={zoomedImageRef}
+                            src={item.url}
+                            alt="Imagem ampliada"
+                            className="max-w-none max-h-none"
+                            style={{
+                              transform: `scale(${zoomLevel}) rotate(${rotation}deg)`,
+                              transition: 'transform 0.2s ease'
+                            }}
+                          />
                         </div>
-                        {item.type === 'image' && (
-                          <div className="flex items-center justify-center gap-2 p-4 bg-background">
-                            <Button variant="outline" size="icon" onClick={handleZoomOut}>
-                              <ZoomOut className="w-4 h-4" />
-                            </Button>
-                            <Button variant="outline" onClick={handleReset}>
-                              Reset
-                            </Button>
-                            <Button variant="outline" size="icon" onClick={handleZoomIn}>
-                              <ZoomIn className="w-4 h-4" />
-                            </Button>
-                            <Button variant="outline" size="icon" onClick={handleRotate}>
-                              <RotateCw className="w-4 h-4" />
-                            </Button>
-                            <div className="flex-1"></div>
-                            <Button variant="outline" size="icon" onClick={() => handleDownload(item.url, item.type)}>
-                              <Download className="w-4 h-4" />
-                            </Button>
-                            <Button variant="outline" size="icon" onClick={() => handleShare(item.url)}>
-                              <Share2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        )}
+                        <div className="flex items-center justify-center gap-2 p-4 bg-background">
+                          <Button variant="outline" size="icon" onClick={handleZoomOut}>
+                            <ZoomOut className="w-4 h-4" />
+                          </Button>
+                          <Button variant="outline" onClick={handleReset}>
+                            Reset
+                          </Button>
+                          <Button variant="outline" size="icon" onClick={handleZoomIn}>
+                            <ZoomIn className="w-4 h-4" />
+                          </Button>
+                          <Button variant="outline" size="icon" onClick={handleRotate}>
+                            <RotateCw className="w-4 h-4" />
+                          </Button>
+                          <div className="flex-1"></div>
+                          <Button variant="outline" size="icon" onClick={() => handleDownload(item.url, item.type)}>
+                            <Download className="w-4 h-4" />
+                          </Button>
+                          <Button variant="outline" size="icon" onClick={() => handleShare(item.url)}>
+                            <Share2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </DialogContent>
                     </Dialog>
                     
