@@ -73,7 +73,7 @@ const Register = () => {
       if (signUpError) throw signUpError;
       if (!signUpData.user) throw new Error('Falha ao criar conta. Tente novamente.');
       
-      toast.success('Conta criada com sucesso! Por favor, verifique o seu número.');
+      toast.success('Conta criada com sucesso! Por favor, verifique a sua conta.');
       
       // Redireciona para a página de verificação
       navigate('/verify');

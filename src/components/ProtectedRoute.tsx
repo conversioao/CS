@@ -18,9 +18,9 @@ const ProtectedRoute = () => {
     return <Navigate to="/login" replace />;
   }
 
-  // Se o usuário está logado, mas o perfil ainda não foi carregado, espere.
+  // Se a sessão existe, mas o perfil ainda está carregando, mostre o loader.
   if (!profile) {
-    return (
+     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-12 h-12 animate-spin text-primary" />
       </div>
