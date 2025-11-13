@@ -5,13 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShieldCheck, RefreshCw, CheckCircle, Clock, Loader2, AlertCircle } from "lucide-react";
+import { ShieldCheck, RefreshCw, CheckCircle, Clock, Loader2, AlertCircle, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
 import { useNavigate } from "react-router-dom";
 
 const Verify = () => {
-  const { user, profile, loading: sessionLoading } = useSession();
+  const { user, profile, loading: sessionLoading, refetchProfile } = useSession();
   const navigate = useNavigate();
   const [verificationCode, setVerificationCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
@@ -19,25 +19,8 @@ const Verify = () => {
   const [countdown, setCountdown] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [showSuccessScreen, setShowSuccessScreen] = useState(false);
-
-  // Efeito para verificar o status após um reload
-  useEffect(() => {
-    const wasVerifying = localStorage.getItem('wasVerifying');
-    if (wasVerifying === 'true') {
-      setIsVerifying(true); // Mostra o loader
-      localStorage.removeItem('wasVerifying');
-
-      // Aguarda o carregamento da sessão e do perfil
-      if (!sessionLoading && profile) {
-        if (profile.status === 'verified') {
-          setShowSuccessScreen(true);
-        } else {
-          setError("A verificação falhou. Por favor, tente novamente.");
-        }
-        setIsVerifying(false);
-      }
-    }
-  }, [sessionLoading, profile]);
+  const [showCheckStatusButton, setShowCheckStatusButton] = useState(false);
+  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
 
   useEffect(() => {
     if (profile?.status === 'verified' && !showSuccessScreen) {
@@ -89,7 +72,6 @@ const Verify = () => {
     setError(null);
 
     try {
-      // Envia os dados para o webhook
       const response = await fetch('https://n8n.conversio.ao/webhook-test/verificacao', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -100,10 +82,13 @@ const Verify = () => {
         throw new Error('Erro ao comunicar com o servidor de verificação.');
       }
 
-      // Marca que a verificação foi acionada e aguarda 5 segundos para recarregar
-      localStorage.setItem('wasVerifying', 'true');
+      toast.info("Processamento iniciado", {
+        description: "Aguarde 5 segundos e depois verifique o status.",
+      });
+
       setTimeout(() => {
-        window.location.reload();
+        setIsVerifying(false);
+        setShowCheckStatusButton(true);
       }, 5000);
 
     } catch (error: any) {
@@ -114,11 +99,43 @@ const Verify = () => {
     }
   };
 
+  const handleCheckStatus = async () => {
+    if (!user) return;
+    setIsCheckingStatus(true);
+    setError(null);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      await refetchProfile();
+      
+      const { data, error: profileError } = await supabase
+        .from('profiles')
+        .select('status')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      if (data?.status === 'verified') {
+        setShowSuccessScreen(true);
+        setShowCheckStatusButton(false);
+        toast.success("Conta verificada com sucesso!");
+      } else {
+        setError("Sua conta ainda não foi verificada. Por favor, aguarde mais um pouco ou tente reenviar o código.");
+        toast.warning("Verificação pendente", { description: "Aguarde um momento e tente verificar o status novamente." });
+      }
+    } catch (error: any) {
+      setError("Erro ao verificar o status. Tente novamente.");
+      toast.error("Erro ao verificar status", { description: error.message });
+    } finally {
+      setIsCheckingStatus(false);
+    }
+  };
+
   const handleContinue = () => {
     navigate('/dashboard');
   };
 
-  if (sessionLoading || (localStorage.getItem('wasVerifying') && !profile)) {
+  if (sessionLoading || !profile) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-12 h-12 animate-spin text-primary" />
@@ -137,16 +154,18 @@ const Verify = () => {
         <CardHeader className="text-center">
           <img src={logo} alt="Conversio Studio" className="h-12 w-auto mx-auto mb-4" />
           <CardTitle className="text-2xl">Verifique a Sua Conta</CardTitle>
-          {!showSuccessScreen && <CardDescription>Enviámos um código de 6 dígitos para o seu WhatsApp.</CardDescription>}
+          <CardDescription>
+            Enviámos um código de 6 dígitos para o seu WhatsApp para garantir a sua segurança.
+          </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-6">
           {isVerifying ? (
             <div className="flex flex-col items-center justify-center py-8">
               <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
-              <h3 className="text-lg font-semibold mb-2">A verificar...</h3>
+              <h3 className="text-lg font-semibold mb-2">Aguarde 5 segundos...</h3>
               <p className="text-sm text-muted-foreground text-center">
-                Aguarde um momento. Estamos a confirmar o seu código.
+                Estamos a processar o seu pedido de verificação.
               </p>
             </div>
           ) : showSuccessScreen ? (
@@ -161,6 +180,15 @@ const Verify = () => {
               <Button onClick={handleContinue} className="w-full gradient-primary">
                 Bem-vindo ao Studio
               </Button>
+            </div>
+          ) : showCheckStatusButton ? (
+            <div className="space-y-4 text-center">
+              <p className="text-muted-foreground">O processamento foi iniciado. Clique abaixo para verificar o status da sua conta.</p>
+              <Button onClick={handleCheckStatus} disabled={isCheckingStatus} className="w-full">
+                {isCheckingStatus ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ShieldCheck className="w-4 h-4 mr-2" />}
+                Verificar Status
+              </Button>
+              {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
             </div>
           ) : (
             <>
