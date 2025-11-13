@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShieldCheck, RefreshCw, CheckCircle, Clock, Loader2, AlertCircle, RotateCcw } from "lucide-react";
+import { ShieldCheck, RefreshCw, CheckCircle, Clock, Loader2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
 import { useNavigate } from "react-router-dom";
@@ -20,14 +20,33 @@ const Verify = () => {
   const [isWaiting, setIsWaiting] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [resendAttempts, setResendAttempts] = useState(0);
-  const maxResendAttempts = 3;
+  const [showSuccessScreen, setShowSuccessScreen] = useState(false);
+
+  // Verifica se a página foi recarregada após a verificação
+  useEffect(() => {
+    const verificationTriggered = localStorage.getItem('verificationTriggered');
+    if (verificationTriggered === 'true') {
+      localStorage.removeItem('verificationTriggered');
+      // Força uma atualização do perfil após o reload
+      refetchProfile().then(() => {
+        // Aguarda um pouco para garantir que o estado foi atualizado
+        setTimeout(() => {
+          if (profile?.status === 'verified') {
+            setIsVerified(true);
+            setShowSuccessScreen(true);
+          } else {
+            setError("A verificação ainda está pendente. Por favor, tente novamente.");
+          }
+        }, 1000);
+      });
+    }
+  }, [profile, refetchProfile]);
 
   useEffect(() => {
-    if (profile?.status === 'verified') {
+    if (profile?.status === 'verified' && !showSuccessScreen) {
       navigate('/dashboard');
     }
-  }, [profile, navigate]);
+  }, [profile, navigate, showSuccessScreen]);
 
   useEffect(() => {
     if (countdown > 0) {
@@ -38,10 +57,6 @@ const Verify = () => {
 
   const generateAndSendCode = async () => {
     if (!user) return;
-    if (resendAttempts >= maxResendAttempts) {
-      toast.error('Limite de reenvios atingido', { description: `Você atingiu o limite de ${maxResendAttempts} reenvios.` });
-      return;
-    }
     
     setIsResending(true);
     try {
@@ -60,7 +75,6 @@ const Verify = () => {
       });
       
       setCountdown(60);
-      setResendAttempts(prev => prev + 1);
     } catch (error: any) {
       toast.error('Erro ao reenviar código', { description: error.message });
     } finally {
@@ -95,41 +109,25 @@ const Verify = () => {
         throw new Error('Erro ao comunicar com o servidor de verificação.');
       }
 
-      // Aguarda 5 segundos
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      // Marca que a verificação foi acionada
+      localStorage.setItem('verificationTriggered', 'true');
       
-      // Após 5 segundos, verifica o status do perfil
-      await refetchProfile();
-      
-      // Verifica o status do perfil
-      if (profile?.status === 'verified') {
-        setIsVerified(true);
-        toast.success('Conta verificada com sucesso!');
-        
-        // Redireciona para o dashboard após um pequeno delay
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 2000);
-      } else {
-        setError("Código de verificação inválido. Por favor, verifique e tente novamente.");
-        toast.error('Falha na verificação', { 
-          description: "O código inserido não é válido." 
-        });
-      }
+      // Aguarda 5 segundos e depois recarrega a página
+      setTimeout(() => {
+        window.location.reload();
+      }, 5000);
 
     } catch (error: any) {
       console.error(error);
       setError(error.message || 'Ocorreu um erro inesperado.');
       toast.error('Falha na verificação', { description: error.message || 'Ocorreu um erro inesperado.' });
-    } finally {
       setIsVerifying(false);
       setIsWaiting(false);
     }
   };
 
-  const handleTryAgain = () => {
-    setError(null);
-    setVerificationCode('');
+  const handleContinue = () => {
+    navigate('/dashboard');
   };
 
   if (sessionLoading || !profile) {
@@ -140,7 +138,8 @@ const Verify = () => {
     );
   }
 
-  if (profile.status === 'verified') {
+  // Se o status já estiver verificado e não estamos mostrando a tela de sucesso, redireciona
+  if (profile.status === 'verified' && !showSuccessScreen) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="w-full max-w-md bg-card/50 backdrop-blur-xl border-border/50">
@@ -182,8 +181,8 @@ const Verify = () => {
             </div>
           )}
 
-          {/* Mensagem de Sucesso */}
-          {isVerified && (
+          {/* Tela de Sucesso após reload */}
+          {showSuccessScreen && isVerified && (
             <div className="flex flex-col items-center justify-center py-8 space-y-6">
               <div className="relative">
                 <CheckCircle className="w-20 h-20 text-green-500 mx-auto" />
@@ -193,32 +192,29 @@ const Verify = () => {
               </div>
               <h3 className="text-xl font-semibold">Conta Verificada!</h3>
               <p className="text-sm text-muted-foreground text-center">
-                Redirecionando para o seu painel...
+                Sua conta foi verificada com sucesso.
               </p>
-            </div>
-          )}
-
-          {/* Mensagem de Erro com Botão Tentar Novamente */}
-          {error && !isVerified && (
-            <div className="space-y-4">
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <div className="flex items-center gap-3">
-                  <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-                  <div>
-                    <p className="font-medium text-red-800">Erro na Verificação</p>
-                    <p className="text-sm text-red-600">{error}</p>
-                  </div>
-                </div>
-              </div>
-              <Button onClick={handleTryAgain} className="w-full">
-                <RotateCcw className="w-4 h-4 mr-2" />
-                Tentar Novamente
+              <Button onClick={handleContinue} className="w-full gradient-primary">
+                Continuar para o Painel
               </Button>
             </div>
           )}
 
+          {/* Mensagem de Erro */}
+          {error && !showSuccessScreen && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                <div>
+                  <p className="font-medium text-red-800">Erro na Verificação</p>
+                  <p className="text-sm text-red-600">{error}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Formulário de Verificação (padrão) */}
-          {!isWaiting && !isVerified && !error && (
+          {!isWaiting && !showSuccessScreen && !error && (
             <>
               <div className="space-y-2">
                 <Label htmlFor="verification-code">Código de Verificação</Label>
@@ -241,11 +237,11 @@ const Verify = () => {
                 <Button
                   variant="outline"
                   onClick={generateAndSendCode}
-                  disabled={isResending || countdown > 0 || resendAttempts >= maxResendAttempts}
+                  disabled={isResending || countdown > 0}
                   className="flex-1"
                 >
                   {isResending ? <Loader2 className="w-4 h-4 animate-spin" /> : (countdown > 0 ? <Clock className="w-4 h-4 mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />)}
-                  {countdown > 0 ? `Aguarde ${countdown}s` : `Reenviar Código (${resendAttempts}/${maxResendAttempts})`}
+                  {countdown > 0 ? `Aguarde ${countdown}s` : 'Reenviar Código'}
                 </Button>
                 <Button
                   onClick={handleVerify}
