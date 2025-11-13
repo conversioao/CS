@@ -18,11 +18,11 @@ const Verify = () => {
   const [isResending, setIsResending] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [isWaiting, setIsWaiting] = useState(false);
-  const [isVerified, setIsVerified] = useState(false); // Novo estado para controlar o selo
+  const [isVerified, setIsVerified] = useState(false);
 
   useEffect(() => {
     if (profile?.status === 'verified') {
-      navigate('/dashboard');
+      navigate('/onboarding');
     }
   }, [profile, navigate]);
 
@@ -70,7 +70,6 @@ const Verify = () => {
     setIsWaiting(true);
 
     try {
-      // 1. Envia o código e o ID do usuário para o webhook
       const response = await fetch('https://n8n.conversio.ao/webhook-test/verificacao', {
         method: 'POST',
         headers: {
@@ -86,12 +85,15 @@ const Verify = () => {
         throw new Error('Erro ao comunicar com o servidor de verificação.');
       }
 
-      // 2. Espera 5 segundos
       await new Promise(resolve => setTimeout(resolve, 5000));
 
-      // 3. Após 5 segundos, define o estado como verificado
       setIsVerified(true);
       toast.success('Verificação concluída!');
+
+      // Redireciona diretamente para o onboarding
+      setTimeout(() => {
+        navigate('/onboarding');
+      }, 1000); // Pequeno atraso para o usuário ver a mensagem de sucesso
 
     } catch (error: any) {
       console.error(error);
@@ -100,10 +102,6 @@ const Verify = () => {
       setIsVerifying(false);
       setIsWaiting(false);
     }
-  };
-
-  const handleContinueToOnboarding = () => {
-    navigate('/onboarding');
   };
 
   if (sessionLoading || !profile) {
@@ -145,7 +143,6 @@ const Verify = () => {
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {/* Tela de Espera */}
           {isWaiting && (
             <div className="flex flex-col items-center justify-center py-8">
               <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
@@ -156,7 +153,6 @@ const Verify = () => {
             </div>
           )}
 
-          {/* Tela de Confirmação (após a espera) */}
           {!isWaiting && isVerified && (
             <div className="flex flex-col items-center justify-center py-8 space-y-6">
               <div className="relative">
@@ -167,15 +163,11 @@ const Verify = () => {
               </div>
               <h3 className="text-xl font-semibold">Conta Verificada!</h3>
               <p className="text-sm text-muted-foreground text-center">
-                Sua conta foi verificada com sucesso. Clique no botão abaixo para continuar.
+                Redirecionando para o seu studio...
               </p>
-              <Button onClick={handleContinueToOnboarding} className="w-full gradient-primary">
-                Continuar para o Onboarding
-              </Button>
             </div>
           )}
 
-          {/* Formulário de Verificação (padrão) */}
           {!isWaiting && !isVerified && (
             <>
               <div className="space-y-2">

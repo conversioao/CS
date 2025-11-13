@@ -25,7 +25,7 @@ import Community from "./pages/Community";
 import Credits from "./pages/Credits";
 import Account from "./pages/Account";
 import Onboarding from "./pages/Onboarding";
-import ThemeSelection from "./pages/ThemeSelection";
+import Verify from "./pages/Verify"; // NOVA ROTA
 import NotFound from "./pages/NotFound";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -37,7 +37,6 @@ import AdminReports from "./pages/admin/AdminReports";
 import AffiliateDashboard from "./pages/AffiliateDashboard";
 import AdminWhatsapp from "./pages/admin/AdminWhatsapp";
 import AdminCreditPackages from "./pages/admin/AdminCreditPackages";
-import Verify from "./pages/Verify"; // NOVA ROTA
 
 const queryClient = new QueryClient();
 
@@ -55,7 +54,6 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/onboarding" element={<Onboarding />} />
-              <Route path="/theme-selection" element={<ThemeSelection />} />
               <Route path="/model/:slug" element={<ModelDetail />} />
 
               {/* Protected Routes */}
@@ -63,7 +61,7 @@ const App = () => (
                 {/* Rota de Verificação Obrigatória */}
                 <Route path="/verify" element={<Verify />} />
                 
-                {/* Rotas do Dashboard (só acessíveis após verificação) */}
+                {/* Rotas do Dashboard (só acessáveis após verificação) */}
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/generate" element={<Generate />} />
                 <Route path="/generate-video" element={<GenerateVideo />} />
