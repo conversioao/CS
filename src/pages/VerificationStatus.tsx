@@ -11,50 +11,55 @@ import { useNavigate } from "react-router-dom";
 const VerificationStatus = () => {
   const { user, profile, loading: sessionLoading, refetchProfile } = useSession();
   const navigate = useNavigate();
-  const [verificationStatus, setVerificationStatus] = useState<'checking' | 'verified' | 'pending' | 'error'>('checking');
+  const [verificationStatus, setVerificationStatus] = useState<'idle' | 'checking' | 'verified' | 'pending' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [hasChecked, setHasChecked] = useState(false);
 
   useEffect(() => {
-    const checkVerificationStatus = async () => {
-      if (!user || sessionLoading) return;
+    if (profile?.status === 'verified' && hasChecked) {
+      // Se já estiver verificado e já tiver checado, vai direto para o dashboard
+      navigate('/dashboard');
+    }
+  }, [profile, navigate, hasChecked]);
 
-      try {
-        // Aguarda um pouco para garantir que o processo de verificação foi concluído
-        await new Promise(resolve => setTimeout(resolve, 2000));
+  const handleCheckStatus = async () => {
+    if (!user || sessionLoading) return;
+
+    setVerificationStatus('checking');
+    setErrorMessage(null);
+    setHasChecked(true);
+
+    try {
+      // Atualiza o perfil do usuário
+      await refetchProfile();
+      
+      // Verifica o status no banco de dados
+      const { data, error: profileError } = await supabase
+        .from('profiles')
+        .select('status')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      if (data?.status === 'verified') {
+        setVerificationStatus('verified');
+        toast.success("Conta verificada com sucesso!");
         
-        // Atualiza o perfil do usuário
-        await refetchProfile();
-        
-        // Verifica o status no banco de dados
-        const { data, error: profileError } = await supabase
-          .from('profiles')
-          .select('status')
-          .eq('id', user.id)
-          .single();
-
-        if (profileError) throw profileError;
-
-        if (data?.status === 'verified') {
-          setVerificationStatus('verified');
-          toast.success("Conta verificada com sucesso!");
-          
-          // Redireciona para login após 3 segundos
-          setTimeout(async () => {
-            await supabase.auth.signOut();
-            navigate('/login');
-          }, 3000);
-        } else {
-          setVerificationStatus('pending');
-        }
-      } catch (error: any) {
-        console.error("Erro ao verificar status:", error);
-        setVerificationStatus('error');
-        setErrorMessage(error.message || 'Erro ao verificar o status da conta.');
+        // Redireciona para login após 3 segundos
+        setTimeout(async () => {
+          await supabase.auth.signOut();
+          navigate('/login');
+        }, 3000);
+      } else {
+        setVerificationStatus('pending');
       }
-    };
-
-    checkVerificationStatus();
-  }, [user, sessionLoading, refetchProfile, navigate]);
+    } catch (error: any) {
+      console.error("Erro ao verificar status:", error);
+      setVerificationStatus('error');
+      setErrorMessage(error.message || 'Erro ao verificar o status da conta.');
+    }
+  };
 
   const handleContinue = async () => {
     await supabase.auth.signOut();
@@ -79,13 +84,25 @@ const VerificationStatus = () => {
       <Card className="w-full max-w-md relative z-10 bg-card/50 backdrop-blur-xl border-border/50">
         <CardHeader className="text-center">
           <img src={logo} alt="Conversio Studio" className="h-12 w-auto mx-auto mb-4" />
-          <CardTitle className="text-2xl">Verificando sua conta</CardTitle>
+          <CardTitle className="text-2xl">Verifique o status da sua conta</CardTitle>
           <CardDescription>
-            Estamos verificando o status da sua conta. Aguarde um momento.
+            Clique no botão abaixo para verificar se sua conta foi verificada.
           </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-6">
+          {verificationStatus === 'idle' && (
+            <div className="flex flex-col items-center justify-center py-8 space-y-6">
+              <ShieldCheck className="w-20 h-20 text-primary mx-auto" />
+              <p className="text-sm text-muted-foreground text-center">
+                Clique no botão abaixo para verificar o status da sua conta.
+              </p>
+              <Button onClick={handleCheckStatus} className="w-full gradient-primary">
+                Verificar Status
+              </Button>
+            </div>
+          )}
+
           {verificationStatus === 'checking' && (
             <div className="flex flex-col items-center justify-center py-8">
               <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
@@ -121,9 +138,14 @@ const VerificationStatus = () => {
               <p className="text-sm text-muted-foreground text-center">
                 Sua conta ainda não foi verificada. Por favor, verifique seu WhatsApp e tente novamente.
               </p>
-              <Button onClick={handleContinue} className="w-full gradient-primary">
-                Voltar para Verificação
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-2 w-full">
+                <Button onClick={handleCheckStatus} className="w-full">
+                  Verificar Novamente
+                </Button>
+                <Button onClick={handleContinue} variant="outline" className="w-full">
+                  Voltar para Verificação
+                </Button>
+              </div>
             </div>
           )}
 
@@ -134,9 +156,14 @@ const VerificationStatus = () => {
               <p className="text-sm text-muted-foreground text-center">
                 {errorMessage || 'Ocorreu um erro ao verificar sua conta. Por favor, tente novamente.'}
               </p>
-              <Button onClick={handleContinue} className="w-full gradient-primary">
-                Tentar Novamente
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-2 w-full">
+                <Button onClick={handleCheckStatus} className="w-full">
+                  Tentar Novamente
+                </Button>
+                <Button onClick={handleContinue} variant="outline" className="w-full">
+                  Voltar para Verificação
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>
