@@ -17,7 +17,8 @@ const Verify = () => {
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [countdown, setCountdown] = useState(0);
-  const [isWaiting, setIsWaiting] = useState(false); // Novo estado para a tela de espera
+  const [isWaiting, setIsWaiting] = useState(false);
+  const [isVerified, setIsVerified] = useState(false); // Novo estado para controlar o selo
 
   useEffect(() => {
     if (profile?.status === 'verified') {
@@ -66,7 +67,7 @@ const Verify = () => {
     }
     
     setIsVerifying(true);
-    setIsWaiting(true); // Inicia a tela de espera
+    setIsWaiting(true);
 
     try {
       // 1. Envia o código e o ID do usuário para o webhook
@@ -88,25 +89,21 @@ const Verify = () => {
       // 2. Espera 5 segundos
       await new Promise(resolve => setTimeout(resolve, 5000));
 
-      // 3. Após 5 segundos, recarrega o perfil para verificar o status
-      await refetchProfile();
-
-      // 4. Verifica se o status agora é 'verified'
-      if (profile?.status === 'verified') {
-        toast.success('Conta verificada com sucesso!');
-        navigate('/onboarding');
-      } else {
-        // Se o status não mudou, o webhook pode ter rejeitado a verificação
-        toast.error('Falha na verificação. O código pode estar incorreto ou expirado.');
-      }
+      // 3. Após 5 segundos, define o estado como verificado
+      setIsVerified(true);
+      toast.success('Verificação concluída!');
 
     } catch (error: any) {
       console.error(error);
       toast.error('Falha na verificação', { description: error.message || 'Ocorreu um erro inesperado.' });
     } finally {
       setIsVerifying(false);
-      setIsWaiting(false); // Finaliza a tela de espera
+      setIsWaiting(false);
     }
+  };
+
+  const handleContinueToOnboarding = () => {
+    navigate('/onboarding');
   };
 
   if (sessionLoading || !profile) {
@@ -159,8 +156,27 @@ const Verify = () => {
             </div>
           )}
 
-          {/* Formulário de Verificação (não mostra quando está esperando) */}
-          {!isWaiting && (
+          {/* Tela de Confirmação (após a espera) */}
+          {!isWaiting && isVerified && (
+            <div className="flex flex-col items-center justify-center py-8 space-y-6">
+              <div className="relative">
+                <CheckCircle className="w-20 h-20 text-green-500 mx-auto" />
+                <div className="absolute -top-1 -right-1 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                  <ShieldCheck className="w-5 h-5 text-white" />
+                </div>
+              </div>
+              <h3 className="text-xl font-semibold">Conta Verificada!</h3>
+              <p className="text-sm text-muted-foreground text-center">
+                Sua conta foi verificada com sucesso. Clique no botão abaixo para continuar.
+              </p>
+              <Button onClick={handleContinueToOnboarding} className="w-full gradient-primary">
+                Continuar para o Onboarding
+              </Button>
+            </div>
+          )}
+
+          {/* Formulário de Verificação (padrão) */}
+          {!isWaiting && !isVerified && (
             <>
               <div className="space-y-2">
                 <Label htmlFor="verification-code">Código de Verificação</Label>
