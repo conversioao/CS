@@ -5,13 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShieldCheck, RefreshCw, CheckCircle, Clock, Loader2, AlertCircle } from "lucide-react";
+import { ShieldCheck, RefreshCw, CheckCircle, Clock, Loader2, AlertCircle, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
 import { useNavigate } from "react-router-dom";
 
 const Verify = () => {
-  const { user, profile, loading: sessionLoading } = useSession();
+  const { user, profile, loading: sessionLoading, refetchProfile } = useSession();
   const navigate = useNavigate();
   const [verificationCode, setVerificationCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
@@ -20,6 +20,8 @@ const Verify = () => {
   const [isWaiting, setIsWaiting] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resendAttempts, setResendAttempts] = useState(0);
+  const maxResendAttempts = 3;
 
   useEffect(() => {
     if (profile?.status === 'verified') {
@@ -36,6 +38,10 @@ const Verify = () => {
 
   const generateAndSendCode = async () => {
     if (!user) return;
+    if (resendAttempts >= maxResendAttempts) {
+      toast.error('Limite de reenvios atingido', { description: `Você atingiu o limite de ${maxResendAttempts} reenvios.` });
+      return;
+    }
     
     setIsResending(true);
     try {
@@ -54,6 +60,7 @@ const Verify = () => {
       });
       
       setCountdown(60);
+      setResendAttempts(prev => prev + 1);
     } catch (error: any) {
       toast.error('Erro ao reenviar código', { description: error.message });
     } finally {
@@ -88,11 +95,14 @@ const Verify = () => {
         throw new Error('Erro ao comunicar com o servidor de verificação.');
       }
 
-      // Aguarda a resposta do webhook
-      const result = await response.json();
+      // Aguarda 5 segundos
+      await new Promise(resolve => setTimeout(resolve, 5000));
       
-      // Verifica o status da resposta
-      if (result.status === 'verificado') {
+      // Após 5 segundos, verifica o status do perfil
+      await refetchProfile();
+      
+      // Verifica o status do perfil
+      if (profile?.status === 'verified') {
         setIsVerified(true);
         toast.success('Conta verificada com sucesso!');
         
@@ -100,13 +110,11 @@ const Verify = () => {
         setTimeout(() => {
           navigate('/dashboard');
         }, 2000);
-      } else if (result.status === 'pendente') {
+      } else {
         setError("Código de verificação inválido. Por favor, verifique e tente novamente.");
         toast.error('Falha na verificação', { 
           description: "O código inserido não é válido." 
         });
-      } else {
-        throw new Error('Status de verificação desconhecido.');
       }
 
     } catch (error: any) {
@@ -117,6 +125,11 @@ const Verify = () => {
       setIsVerifying(false);
       setIsWaiting(false);
     }
+  };
+
+  const handleTryAgain = () => {
+    setError(null);
+    setVerificationCode('');
   };
 
   if (sessionLoading || !profile) {
@@ -185,16 +198,22 @@ const Verify = () => {
             </div>
           )}
 
-          {/* Mensagem de Erro */}
+          {/* Mensagem de Erro com Botão Tentar Novamente */}
           {error && !isVerified && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <div className="flex items-center gap-3">
-                <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-                <div>
-                  <p className="font-medium text-red-800">Erro na Verificação</p>
-                  <p className="text-sm text-red-600">{error}</p>
+            <div className="space-y-4">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="flex items-center gap-3">
+                  <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-red-800">Erro na Verificação</p>
+                    <p className="text-sm text-red-600">{error}</p>
+                  </div>
                 </div>
               </div>
+              <Button onClick={handleTryAgain} className="w-full">
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Tentar Novamente
+              </Button>
             </div>
           )}
 
@@ -222,11 +241,11 @@ const Verify = () => {
                 <Button
                   variant="outline"
                   onClick={generateAndSendCode}
-                  disabled={isResending || countdown > 0}
+                  disabled={isResending || countdown > 0 || resendAttempts >= maxResendAttempts}
                   className="flex-1"
                 >
                   {isResending ? <Loader2 className="w-4 h-4 animate-spin" /> : (countdown > 0 ? <Clock className="w-4 h-4 mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />)}
-                  {countdown > 0 ? `Aguarde ${countdown}s` : 'Reenviar Código'}
+                  {countdown > 0 ? `Aguarde ${countdown}s` : `Reenviar Código (${resendAttempts}/${maxResendAttempts})`}
                 </Button>
                 <Button
                   onClick={handleVerify}
