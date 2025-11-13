@@ -11,7 +11,7 @@ import logo from "@/assets/logo.png";
 import { useNavigate } from "react-router-dom";
 
 const Verify = () => {
-  const { user, profile, loading: sessionLoading, refetchProfile } = useSession();
+  const { user, profile, loading: sessionLoading } = useSession();
   const navigate = useNavigate();
   const [verificationCode, setVerificationCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
@@ -72,6 +72,7 @@ const Verify = () => {
     setError(null);
 
     try {
+      // Envia os dados para o webhook
       const response = await fetch('https://n8n.conversio.ao/webhook-test/verificacao', {
         method: 'POST',
         headers: {
@@ -87,27 +88,25 @@ const Verify = () => {
         throw new Error('Erro ao comunicar com o servidor de verificação.');
       }
 
-      // Aguarda 5 segundos para simular o processamento
-      await new Promise(resolve => setTimeout(resolve, 5000));
-
-      // Após 5 segundos, verifica o status do perfil
-      await refetchProfile();
+      // Aguarda a resposta do webhook
+      const result = await response.json();
       
-      // Se o status for verificado, redireciona para o dashboard
-      if (profile?.status === 'verified') {
+      // Verifica o status da resposta
+      if (result.status === 'verificado') {
         setIsVerified(true);
-        toast.success('Verificação concluída!');
+        toast.success('Conta verificada com sucesso!');
         
         // Redireciona para o dashboard após um pequeno delay
         setTimeout(() => {
           navigate('/dashboard');
-        }, 1000);
-      } else {
-        // Se não estiver verificado, mostra erro
+        }, 2000);
+      } else if (result.status === 'pendente') {
         setError("Código de verificação inválido. Por favor, verifique e tente novamente.");
         toast.error('Falha na verificação', { 
-          description: "O código inserido não é válido ou ocorreu um erro no processo." 
+          description: "O código inserido não é válido." 
         });
+      } else {
+        throw new Error('Status de verificação desconhecido.');
       }
 
     } catch (error: any) {
@@ -170,8 +169,24 @@ const Verify = () => {
             </div>
           )}
 
+          {/* Mensagem de Sucesso */}
+          {isVerified && (
+            <div className="flex flex-col items-center justify-center py-8 space-y-6">
+              <div className="relative">
+                <CheckCircle className="w-20 h-20 text-green-500 mx-auto" />
+                <div className="absolute -top-1 -right-1 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                  <ShieldCheck className="w-5 h-5 text-white" />
+                </div>
+              </div>
+              <h3 className="text-xl font-semibold">Conta Verificada!</h3>
+              <p className="text-sm text-muted-foreground text-center">
+                Redirecionando para o seu painel...
+              </p>
+            </div>
+          )}
+
           {/* Mensagem de Erro */}
-          {error && (
+          {error && !isVerified && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
               <div className="flex items-center gap-3">
                 <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
@@ -184,7 +199,7 @@ const Verify = () => {
           )}
 
           {/* Formulário de Verificação (padrão) */}
-          {!isWaiting && !isVerified && (
+          {!isWaiting && !isVerified && !error && (
             <>
               <div className="space-y-2">
                 <Label htmlFor="verification-code">Código de Verificação</Label>
