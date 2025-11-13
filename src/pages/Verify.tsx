@@ -5,22 +5,39 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShieldCheck, RefreshCw, CheckCircle, Clock, Loader2, AlertCircle, RotateCcw } from "lucide-react";
+import { ShieldCheck, RefreshCw, CheckCircle, Clock, Loader2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
 import { useNavigate } from "react-router-dom";
 
 const Verify = () => {
-  const { user, profile, loading: sessionLoading, refetchProfile } = useSession();
+  const { user, profile, loading: sessionLoading } = useSession();
   const navigate = useNavigate();
   const [verificationCode, setVerificationCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [countdown, setCountdown] = useState(0);
-  const [isWaiting, setIsWaiting] = useState(false);
-  const [isVerified, setIsVerified] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSuccessScreen, setShowSuccessScreen] = useState(false);
+
+  // Efeito para verificar o status após um reload
+  useEffect(() => {
+    const wasVerifying = localStorage.getItem('wasVerifying');
+    if (wasVerifying === 'true') {
+      setIsVerifying(true); // Mostra o loader
+      localStorage.removeItem('wasVerifying');
+
+      // Aguarda o carregamento da sessão e do perfil
+      if (!sessionLoading && profile) {
+        if (profile.status === 'verified') {
+          setShowSuccessScreen(true);
+        } else {
+          setError("A verificação falhou. Por favor, tente novamente.");
+        }
+        setIsVerifying(false);
+      }
+    }
+  }, [sessionLoading, profile]);
 
   useEffect(() => {
     if (profile?.status === 'verified' && !showSuccessScreen) {
@@ -69,94 +86,42 @@ const Verify = () => {
     }
     
     setIsVerifying(true);
-    setIsWaiting(true);
     setError(null);
 
     try {
       // Envia os dados para o webhook
       const response = await fetch('https://n8n.conversio.ao/webhook-test/verificacao', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: user.id,
-          code: verificationCode,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, code: verificationCode }),
       });
 
       if (!response.ok) {
         throw new Error('Erro ao comunicar com o servidor de verificação.');
       }
 
-      // Aguarda 5 segundos
-      await new Promise(resolve => setTimeout(resolve, 5000));
-      
-      // Após 5 segundos, verifica o status do perfil
-      await refetchProfile();
-      
-      // Pequeno delay para garantir que o estado foi atualizado
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Busca o perfil atualizado diretamente do banco
-      const { data: updatedProfile, error: profileError } = await supabase
-        .from('profiles')
-        .select('status')
-        .eq('id', user.id)
-        .single();
-
-      if (profileError) throw profileError;
-      
-      // Verifica o status do perfil
-      if (updatedProfile?.status === 'verified') {
-        setIsVerified(true);
-        setShowSuccessScreen(true);
-        toast.success('Conta verificada com sucesso!');
-      } else {
-        setError("Código de verificação inválido. Por favor, verifique e tente novamente.");
-        toast.error('Falha na verificação', { 
-          description: "O código inserido não é válido." 
-        });
-      }
+      // Marca que a verificação foi acionada e aguarda 5 segundos para recarregar
+      localStorage.setItem('wasVerifying', 'true');
+      setTimeout(() => {
+        window.location.reload();
+      }, 5000);
 
     } catch (error: any) {
       console.error(error);
       setError(error.message || 'Ocorreu um erro inesperado.');
       toast.error('Falha na verificação', { description: error.message || 'Ocorreu um erro inesperado.' });
-    } finally {
       setIsVerifying(false);
-      setIsWaiting(false);
     }
-  };
-
-  const handleTryAgain = () => {
-    setError(null);
-    setVerificationCode('');
-    setShowSuccessScreen(false);
   };
 
   const handleContinue = () => {
     navigate('/dashboard');
   };
 
-  if (sessionLoading || !profile) {
+  if (sessionLoading || (localStorage.getItem('wasVerifying') && !profile)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-12 h-12 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (profile.status === 'verified' && !showSuccessScreen) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="w-full max-w-md bg-card/50 backdrop-blur-xl border-border/50">
-          <CardContent className="p-8 text-center">
-            <CheckCircle className="w-20 h-20 text-green-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-2">Conta Já Verificada!</h2>
-            <p className="text-muted-foreground mb-6">Você será redirecionado para o painel.</p>
-          </CardContent>
-        </Card>
       </div>
     );
   }
@@ -172,25 +137,19 @@ const Verify = () => {
         <CardHeader className="text-center">
           <img src={logo} alt="Conversio Studio" className="h-12 w-auto mx-auto mb-4" />
           <CardTitle className="text-2xl">Verifique a Sua Conta</CardTitle>
-          <CardDescription>
-            Enviámos um código de 6 dígitos para o seu WhatsApp para garantir a sua segurança.
-          </CardDescription>
+          {!showSuccessScreen && <CardDescription>Enviámos um código de 6 dígitos para o seu WhatsApp.</CardDescription>}
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {/* Tela de Espera */}
-          {isWaiting && (
+          {isVerifying ? (
             <div className="flex flex-col items-center justify-center py-8">
               <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Aguarde...</h3>
+              <h3 className="text-lg font-semibold mb-2">A verificar...</h3>
               <p className="text-sm text-muted-foreground text-center">
-                Estamos verificando o seu código com o servidor. Isso pode levar alguns segundos.
+                Aguarde um momento. Estamos a confirmar o seu código.
               </p>
             </div>
-          )}
-
-          {/* Tela de Sucesso */}
-          {showSuccessScreen && isVerified && (
+          ) : showSuccessScreen ? (
             <div className="flex flex-col items-center justify-center py-8 space-y-6">
               <div className="relative">
                 <CheckCircle className="w-20 h-20 text-green-500 mx-auto" />
@@ -199,37 +158,23 @@ const Verify = () => {
                 </div>
               </div>
               <h3 className="text-xl font-semibold">Conta Verificada!</h3>
-              <p className="text-sm text-muted-foreground text-center">
-                Sua conta foi verificada com sucesso. Clique no botão abaixo para continuar.
-              </p>
               <Button onClick={handleContinue} className="w-full gradient-primary">
-                Continuar para o Painel
+                Bem-vindo ao Studio
               </Button>
             </div>
-          )}
-
-          {/* Mensagem de Erro com Botão Tentar Novamente */}
-          {error && !isVerified && !isWaiting && (
-            <div className="space-y-4">
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <div className="flex items-center gap-3">
-                  <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-                  <div>
-                    <p className="font-medium text-red-800">Erro na Verificação</p>
-                    <p className="text-sm text-red-600">{error}</p>
+          ) : (
+            <>
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <div className="flex items-center gap-3">
+                    <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-red-800">Erro na Verificação</p>
+                      <p className="text-sm text-red-600">{error}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <Button onClick={handleTryAgain} className="w-full">
-                <RotateCcw className="w-4 h-4 mr-2" />
-                Tentar Novamente
-              </Button>
-            </div>
-          )}
-
-          {/* Formulário de Verificação (padrão) */}
-          {!isWaiting && !showSuccessScreen && !error && (
-            <>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="verification-code">Código de Verificação</Label>
                 <Input
@@ -262,7 +207,7 @@ const Verify = () => {
                   disabled={isVerifying || verificationCode.length !== 6}
                   className="flex-1 gradient-primary"
                 >
-                  {isVerifying ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4 mr-2" />}
+                  <ShieldCheck className="w-4 h-4 mr-2" />
                   Verificar Conta
                 </Button>
               </div>
