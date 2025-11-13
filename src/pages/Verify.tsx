@@ -24,6 +24,7 @@ const Verify = () => {
 
   useEffect(() => {
     if (profile?.status === 'verified' && !showSuccessScreen) {
+      // Se já estiver verificado, vai direto para o dashboard
       navigate('/dashboard');
     }
   }, [profile, navigate, showSuccessScreen]);
@@ -131,8 +132,10 @@ const Verify = () => {
     }
   };
 
-  const handleContinue = () => {
-    navigate('/dashboard');
+  const handleContinue = async () => {
+    // Faz logout do usuário atual e redireciona para login
+    await supabase.auth.signOut();
+    navigate('/login');
   };
 
   if (sessionLoading || !profile) {
@@ -177,8 +180,11 @@ const Verify = () => {
                 </div>
               </div>
               <h3 className="text-xl font-semibold">Conta Verificada!</h3>
+              <p className="text-sm text-muted-foreground text-center">
+                Sua conta foi verificada com sucesso. Faça login para continuar.
+              </p>
               <Button onClick={handleContinue} className="w-full gradient-primary">
-                Bem-vindo ao Studio
+                Ir para Login
               </Button>
             </div>
           ) : showCheckStatusButton ? (
