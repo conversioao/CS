@@ -34,13 +34,18 @@ const Verify = () => {
           if (profile?.status === 'verified') {
             setIsVerified(true);
             setShowSuccessScreen(true);
+            
+            // Leva automaticamente ao painel após 2 segundos
+            setTimeout(() => {
+              navigate('/dashboard');
+            }, 2000);
           } else {
             setError("A verificação ainda está pendente. Por favor, tente novamente.");
           }
         }, 1000);
       });
     }
-  }, [profile, refetchProfile]);
+  }, [profile, refetchProfile, navigate]);
 
   useEffect(() => {
     if (profile?.status === 'verified' && !showSuccessScreen) {
@@ -126,10 +131,6 @@ const Verify = () => {
     }
   };
 
-  const handleContinue = () => {
-    navigate('/dashboard');
-  };
-
   if (sessionLoading || !profile) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -192,11 +193,8 @@ const Verify = () => {
               </div>
               <h3 className="text-xl font-semibold">Conta Verificada!</h3>
               <p className="text-sm text-muted-foreground text-center">
-                Sua conta foi verificada com sucesso.
+                Redirecionando para o seu painel...
               </p>
-              <Button onClick={handleContinue} className="w-full gradient-primary">
-                Continuar para o Painel
-              </Button>
             </div>
           )}
 
