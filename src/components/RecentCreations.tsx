@@ -1,11 +1,6 @@
-import { Clock, Download, ArrowRight } from "lucide-react";
+import { Download, ArrowRight } from "lucide-react";
 import { useState, useEffect } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
@@ -27,7 +22,7 @@ const RecentCreations = () => {
         console.error('Error parsing image history:', e);
       }
     }
-    setRecentImages(allImages.slice(0, 4)); // Show only 4 on dashboard
+    setRecentImages(allImages.slice(0, 4));
   }, []);
 
   const handleImageClick = (creation: { id: string; url: string }) => {
@@ -53,6 +48,7 @@ const RecentCreations = () => {
       console.error('Error downloading image:', error);
     }
   };
+
   return (
     <section id="recent-creations-section">
       <div className="flex items-center justify-between mb-6">
@@ -70,11 +66,11 @@ const RecentCreations = () => {
             <div
               key={creation.id}
               onClick={() => handleImageClick(creation)}
-              className="group relative aspect-square rounded-xl overflow-hidden cursor-pointer hover:scale-105 transition-all duration-300 bg-card/50 backdrop-blur-sm shadow-lg"
+              className="group relative aspect-square rounded-xl overflow-hidden cursor-pointer hover:scale-105 transition-all duration-300 bg-card/50 backdrop-blur-sm shadow-lg border border-border/50 hover:border-primary/50"
             >
               <img
                 src={creation.url}
-                alt={`Criação`}
+                alt="Criação"
                 className="w-full h-full object-cover"
                 loading="lazy"
               />

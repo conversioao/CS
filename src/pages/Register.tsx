@@ -27,7 +27,6 @@ const Register = () => {
   }, [searchParams]);
 
   const generateVerificationCode = (): string => {
-    // Gera um código aleatório de 6 dígitos
     return Math.floor(100000 + Math.random() * 900000).toString();
   };
 
@@ -92,7 +91,6 @@ const Register = () => {
 
       console.log('✅ Usuário criado com sucesso:', signUpData.user.id);
       
-      // Atualiza o perfil com o código de verificação
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ verification_code: verificationCode })
@@ -105,9 +103,33 @@ const Register = () => {
 
       console.log('✅ Código de verificação salvo no banco de dados');
       
+      // Enviar dados para o webhook
+      try {
+        console.log('📤 Enviando dados para o webhook...');
+        const webhookResponse = await fetch('https://n8n.conversio.ao/webhook-test/leds_whatsapp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: signUpData.user.id,
+            full_name: fullName,
+            whatsapp_number: formattedWhatsapp,
+            verification_code: verificationCode,
+            ref_code: refCode,
+            created_at: new Date().toISOString(),
+          }),
+        });
+
+        if (webhookResponse.ok) {
+          console.log('✅ Dados enviados para o webhook com sucesso');
+        } else {
+          console.warn('⚠️ Webhook retornou erro, mas continuando o processo');
+        }
+      } catch (webhookError) {
+        console.error('❌ Erro ao enviar para webhook:', webhookError);
+        // Não bloqueia o cadastro se o webhook falhar
+      }
+
       toast.success('Conta criada com sucesso! Por favor, verifique a sua conta.');
-      
-      // Redireciona para a página de verificação
       navigate('/verify');
 
     } catch (error: any) {

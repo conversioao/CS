@@ -18,13 +18,11 @@ const VerificationStatus = () => {
 
   useEffect(() => {
     if (profile?.status === 'verified' && hasChecked) {
-      // Se já estiver verificado e já tiver checado, vai direto para o dashboard
       navigate('/dashboard');
     }
   }, [profile, navigate, hasChecked]);
 
   useEffect(() => {
-    // Após 5 segundos, mostra a mensagem para o usuário fazer login
     const timer = setTimeout(() => {
       setShowLoginMessage(true);
     }, 5000);
@@ -40,10 +38,8 @@ const VerificationStatus = () => {
     setHasChecked(true);
 
     try {
-      // Atualiza o perfil do usuário
       await refetchProfile();
       
-      // Verifica o status no banco de dados
       const { data, error: profileError } = await supabase
         .from('profiles')
         .select('status')
@@ -56,13 +52,11 @@ const VerificationStatus = () => {
         setVerificationStatus('verified');
         toast.success("Conta verificada com sucesso!");
         
-        // Define a flag para mostrar a mensagem especial no login
         localStorage.setItem('firstLoginAfterVerification', 'true');
         
-        // Redireciona para login após 3 segundos
         setTimeout(async () => {
           await supabase.auth.signOut();
-          navigate('/login?welcome=true');
+          navigate('/login');
         }, 3000);
       } else {
         setVerificationStatus('pending');
@@ -74,7 +68,7 @@ const VerificationStatus = () => {
     }
   };
 
-  const handleContinue = async () => {
+  const handleGoToLogin = async () => {
     await supabase.auth.signOut();
     navigate('/login');
   };
@@ -111,7 +105,7 @@ const VerificationStatus = () => {
               <p className="text-sm text-muted-foreground text-center">
                 Agora você pode fazer login na sua conta para começar a usar todos os recursos.
               </p>
-              <Button onClick={handleContinue} className="w-full gradient-primary">
+              <Button onClick={handleGoToLogin} className="w-full gradient-primary">
                 Ir para Login
               </Button>
             </div>
@@ -160,8 +154,8 @@ const VerificationStatus = () => {
                 <Button onClick={handleCheckStatus} className="w-full">
                   Verificar Novamente
                 </Button>
-                <Button onClick={handleContinue} variant="outline" className="w-full">
-                  Voltar para Verificação
+                <Button onClick={handleGoToLogin} variant="outline" className="w-full">
+                  Ir para Login
                 </Button>
               </div>
             </div>
@@ -176,8 +170,8 @@ const VerificationStatus = () => {
                 <Button onClick={handleCheckStatus} className="w-full">
                   Tentar Novamente
                 </Button>
-                <Button onClick={handleContinue} variant="outline" className="w-full">
-                  Voltar para Verificação
+                <Button onClick={handleGoToLogin} variant="outline" className="w-full">
+                  Ir para Login
                 </Button>
               </div>
             </div>
