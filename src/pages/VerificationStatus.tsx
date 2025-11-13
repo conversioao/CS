@@ -14,6 +14,7 @@ const VerificationStatus = () => {
   const [verificationStatus, setVerificationStatus] = useState<'idle' | 'checking' | 'verified' | 'pending' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [hasChecked, setHasChecked] = useState(false);
+  const [showLoginMessage, setShowLoginMessage] = useState(false);
 
   useEffect(() => {
     if (profile?.status === 'verified' && hasChecked) {
@@ -21,6 +22,15 @@ const VerificationStatus = () => {
       navigate('/dashboard');
     }
   }, [profile, navigate, hasChecked]);
+
+  useEffect(() => {
+    // Após 5 segundos, mostra a mensagem para o usuário fazer login
+    const timer = setTimeout(() => {
+      setShowLoginMessage(true);
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleCheckStatus = async () => {
     if (!user || sessionLoading) return;
@@ -46,10 +56,13 @@ const VerificationStatus = () => {
         setVerificationStatus('verified');
         toast.success("Conta verificada com sucesso!");
         
+        // Define a flag para mostrar a mensagem especial no login
+        localStorage.setItem('firstLoginAfterVerification', 'true');
+        
         // Redireciona para login após 3 segundos
         setTimeout(async () => {
           await supabase.auth.signOut();
-          navigate('/login');
+          navigate('/login?welcome=true');
         }, 3000);
       } else {
         setVerificationStatus('pending');
@@ -91,7 +104,18 @@ const VerificationStatus = () => {
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {verificationStatus === 'idle' && (
+          {showLoginMessage ? (
+            <div className="flex flex-col items-center justify-center py-8 space-y-6">
+              <CheckCircle className="w-20 h-20 text-green-500 mx-auto" />
+              <h3 className="text-xl font-semibold">Processamento Concluído!</h3>
+              <p className="text-sm text-muted-foreground text-center">
+                Agora você pode fazer login na sua conta para começar a usar todos os recursos.
+              </p>
+              <Button onClick={handleContinue} className="w-full gradient-primary">
+                Ir para Login
+              </Button>
+            </div>
+          ) : verificationStatus === 'idle' ? (
             <div className="flex flex-col items-center justify-center py-8 space-y-6">
               <ShieldCheck className="w-20 h-20 text-primary mx-auto" />
               <p className="text-sm text-muted-foreground text-center">
@@ -101,9 +125,7 @@ const VerificationStatus = () => {
                 Verificar Status
               </Button>
             </div>
-          )}
-
-          {verificationStatus === 'checking' && (
+          ) : verificationStatus === 'checking' ? (
             <div className="flex flex-col items-center justify-center py-8">
               <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
               <h3 className="text-lg font-semibold mb-2">Verificando...</h3>
@@ -111,9 +133,7 @@ const VerificationStatus = () => {
                 Estamos confirmando o status da sua conta.
               </p>
             </div>
-          )}
-
-          {verificationStatus === 'verified' && (
+          ) : verificationStatus === 'verified' ? (
             <div className="flex flex-col items-center justify-center py-8 space-y-6">
               <div className="relative">
                 <CheckCircle className="w-20 h-20 text-green-500 mx-auto" />
@@ -129,9 +149,7 @@ const VerificationStatus = () => {
                 <div className="bg-primary h-2 rounded-full w-full animate-pulse"></div>
               </div>
             </div>
-          )}
-
-          {verificationStatus === 'pending' && (
+          ) : verificationStatus === 'pending' ? (
             <div className="flex flex-col items-center justify-center py-8 space-y-6">
               <AlertCircle className="w-20 h-20 text-yellow-500 mx-auto" />
               <h3 className="text-xl font-semibold">Verificação Pendente</h3>
@@ -147,9 +165,7 @@ const VerificationStatus = () => {
                 </Button>
               </div>
             </div>
-          )}
-
-          {verificationStatus === 'error' && (
+          ) : (
             <div className="flex flex-col items-center justify-center py-8 space-y-6">
               <AlertCircle className="w-20 h-20 text-red-500 mx-auto" />
               <h3 className="text-xl font-semibold">Erro na Verificação</h3>
