@@ -25,7 +25,8 @@ import Community from "./pages/Community";
 import Credits from "./pages/Credits";
 import Account from "./pages/Account";
 import Onboarding from "./pages/Onboarding";
-import Verify from "./pages/Verify"; // NOVA ROTA
+import Verify from "./pages/Verify";
+import VerificationStatus from "./pages/VerificationStatus"; // Nova página
 import NotFound from "./pages/NotFound";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -55,13 +56,11 @@ const App = () => (
               <Route path="/register" element={<Register />} />
               <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/model/:slug" element={<ModelDetail />} />
+              <Route path="/verification-status" element={<VerificationStatus />} /> {/* Nova rota */}
 
               {/* Protected Routes */}
               <Route element={<ProtectedRoute />}>
-                {/* Rota de Verificação Obrigatória */}
                 <Route path="/verify" element={<Verify />} />
-                
-                {/* Rotas do Dashboard (só acessáveis após verificação) */}
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/generate" element={<Generate />} />
                 <Route path="/generate-video" element={<GenerateVideo />} />

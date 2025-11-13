@@ -5,29 +5,26 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShieldCheck, RefreshCw, CheckCircle, Clock, Loader2, AlertCircle, RotateCcw } from "lucide-react";
+import { ShieldCheck, RefreshCw, Clock, Loader2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
 import { useNavigate } from "react-router-dom";
 
 const Verify = () => {
-  const { user, profile, loading: sessionLoading, refetchProfile } = useSession();
+  const { user, profile, loading: sessionLoading } = useSession();
   const navigate = useNavigate();
   const [verificationCode, setVerificationCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [showSuccessScreen, setShowSuccessScreen] = useState(false);
-  const [showCheckStatusButton, setShowCheckStatusButton] = useState(false);
-  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
 
   useEffect(() => {
-    if (profile?.status === 'verified' && !showSuccessScreen) {
+    if (profile?.status === 'verified') {
       // Se já estiver verificado, vai direto para o dashboard
       navigate('/dashboard');
     }
-  }, [profile, navigate, showSuccessScreen]);
+  }, [profile, navigate]);
 
   useEffect(() => {
     if (countdown > 0) {
@@ -84,12 +81,12 @@ const Verify = () => {
       }
 
       toast.info("Processamento iniciado", {
-        description: "Aguarde 5 segundos e depois verifique o status.",
+        description: "Você será redirecionado para verificar o status.",
       });
 
+      // Redireciona para a página de verificação de status após 5 segundos
       setTimeout(() => {
-        setIsVerifying(false);
-        setShowCheckStatusButton(true);
+        navigate('/verification-status');
       }, 5000);
 
     } catch (error: any) {
@@ -98,44 +95,6 @@ const Verify = () => {
       toast.error('Falha na verificação', { description: error.message || 'Ocorreu um erro inesperado.' });
       setIsVerifying(false);
     }
-  };
-
-  const handleCheckStatus = async () => {
-    if (!user) return;
-    setIsCheckingStatus(true);
-    setError(null);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      await refetchProfile();
-      
-      const { data, error: profileError } = await supabase
-        .from('profiles')
-        .select('status')
-        .eq('id', user.id)
-        .single();
-
-      if (profileError) throw profileError;
-
-      if (data?.status === 'verified') {
-        setShowSuccessScreen(true);
-        setShowCheckStatusButton(false);
-        toast.success("Conta verificada com sucesso!");
-      } else {
-        setError("Sua conta ainda não foi verificada. Por favor, aguarde mais um pouco ou tente reenviar o código.");
-        toast.warning("Verificação pendente", { description: "Aguarde um momento e tente verificar o status novamente." });
-      }
-    } catch (error: any) {
-      setError("Erro ao verificar o status. Tente novamente.");
-      toast.error("Erro ao verificar status", { description: error.message });
-    } finally {
-      setIsCheckingStatus(false);
-    }
-  };
-
-  const handleContinue = async () => {
-    // Faz logout do usuário atual e redireciona para login
-    await supabase.auth.signOut();
-    navigate('/login');
   };
 
   if (sessionLoading || !profile) {
@@ -166,35 +125,10 @@ const Verify = () => {
           {isVerifying ? (
             <div className="flex flex-col items-center justify-center py-8">
               <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Aguarde 5 segundos...</h3>
+              <h3 className="text-lg font-semibold mb-2">Processando...</h3>
               <p className="text-sm text-muted-foreground text-center">
-                Estamos a processar o seu pedido de verificação.
+                Estamos a processar o seu pedido de verificação. Você será redirecionado em instantes.
               </p>
-            </div>
-          ) : showSuccessScreen ? (
-            <div className="flex flex-col items-center justify-center py-8 space-y-6">
-              <div className="relative">
-                <CheckCircle className="w-20 h-20 text-green-500 mx-auto" />
-                <div className="absolute -top-1 -right-1 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                  <ShieldCheck className="w-5 h-5 text-white" />
-                </div>
-              </div>
-              <h3 className="text-xl font-semibold">Conta Verificada!</h3>
-              <p className="text-sm text-muted-foreground text-center">
-                Sua conta foi verificada com sucesso. Faça login para continuar.
-              </p>
-              <Button onClick={handleContinue} className="w-full gradient-primary">
-                Ir para Login
-              </Button>
-            </div>
-          ) : showCheckStatusButton ? (
-            <div className="space-y-4 text-center">
-              <p className="text-muted-foreground">O processamento foi iniciado. Clique abaixo para verificar o status da sua conta.</p>
-              <Button onClick={handleCheckStatus} disabled={isCheckingStatus} className="w-full">
-                {isCheckingStatus ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ShieldCheck className="w-4 h-4 mr-2" />}
-                Verificar Status
-              </Button>
-              {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
             </div>
           ) : (
             <>
