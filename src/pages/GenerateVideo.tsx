@@ -14,6 +14,7 @@ import { storeMediaInSupabase } from "@/lib/supabase-storage";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import CameraCaptureDialog from "@/components/CameraCaptureDialog";
 import React from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface GeneratedVideo {
   url: string;
@@ -148,67 +149,135 @@ const GenerateVideo = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
         <DashboardHeader />
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 relative flex flex-col">
-          <div className="absolute inset-0 pointer-events-none z-[-1] bg-dot-pattern opacity-20" />
-          <div className="mb-8 flex items-center justify-between">
-            <Link to="/dashboard" className="flex items-center gap-2 text-muted-foreground hover:text-foreground"><ArrowLeft className="w-4 h-4" /><span>Voltar ao Dashboard</span></Link>
-            <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full"><Sparkles className="w-4 h-4 text-primary" /><span className="text-sm font-semibold">3 créditos por vídeo</span></div>
+          <div className="absolute inset-0 pointer-events-none z-[-1] overflow-hidden">
+            <div className="absolute inset-0 bg-dot-pattern opacity-20" />
+            <motion.div 
+              className="absolute top-[-20%] left-[-10%] w-[40rem] h-[40rem] bg-red-500/10 rounded-full blur-3xl"
+              animate={{ 
+                scale: [1, 1.2, 1],
+                opacity: [0.3, 0.5, 0.3]
+              }}
+              transition={{ duration: 8, repeat: Infinity }}
+            />
+            <motion.div 
+              className="absolute bottom-[-30%] right-[-15%] w-[50rem] h-[50rem] bg-orange-500/10 rounded-full blur-3xl"
+              animate={{ 
+                scale: [1.2, 1, 1.2],
+                opacity: [0.5, 0.3, 0.5]
+              }}
+              transition={{ duration: 10, repeat: Infinity }}
+            />
           </div>
+
+          <div className="mb-8 flex items-center justify-between">
+            <Link to="/dashboard" className="flex items-center gap-2 text-muted-foreground hover:text-foreground group"><ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /><span>Voltar ao Dashboard</span></Link>
+            <motion.div 
+              className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full"
+              whileHover={{ scale: 1.05 }}
+            >
+              <Sparkles className="w-4 h-4 text-primary" />
+              <span className="text-sm font-semibold">3 créditos por vídeo</span>
+            </motion.div>
+          </div>
+
           <div className="flex-1 flex flex-col gap-6 min-h-0">
-            <div className="bg-card/50 backdrop-blur-xl rounded-xl shadow-lg p-6 flex-1 flex flex-col">
+            <div className="bg-card/50 backdrop-blur-xl rounded-xl shadow-lg p-6 flex-1 flex flex-col border border-border/50">
               <h2 className="text-2xl font-bold mb-6 flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center"><Video className="w-5 h-5 text-primary" /></div>Resultado da Geração</h2>
               {generatedVideos.length === 0 && !isLoading ? (
-                <div className="flex-1 flex flex-col items-center justify-center text-center">
-                  <div className="w-20 h-20 rounded-lg bg-muted/50 flex items-center justify-center mb-4"><Video className="w-10 h-10 text-muted-foreground" /></div>
+                <motion.div 
+                  className="flex-1 flex flex-col items-center justify-center text-center"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
+                  <motion.div 
+                    className="w-20 h-20 rounded-lg bg-muted/50 flex items-center justify-center mb-4"
+                    animate={{ rotate: [0, 5, -5, 0] }}
+                    transition={{ duration: 3, repeat: Infinity }}
+                  >
+                    <Video className="w-10 h-10 text-muted-foreground" />
+                  </motion.div>
                   <h3 className="text-xl font-bold">Pronto para criar?</h3>
                   <p className="text-muted-foreground max-w-md text-sm">Configure as opções abaixo para gerar o seu vídeo.</p>
-                </div>
+                </motion.div>
               ) : (
                 <div className="flex-1 overflow-y-auto -mr-4 pr-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {isLoading && (
-                      Array.from({ length: quantity }).map((_, i) => (
-                        <div key={`loader-${i}`} className="relative overflow-hidden rounded-lg bg-muted/30 aspect-video">
-                          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-center p-4">
-                            <Loader2 className="w-10 h-10 animate-spin text-primary" />
-                            <p className="text-sm font-semibold">{currentLoadingMessage}</p>
-                            <p className="text-xs text-muted-foreground">Vídeo {i + 1} de {quantity}</p>
-                            <div className="text-lg font-mono text-primary tabular-nums">
-                              {String(Math.floor(timer / 60)).padStart(2, '0')}:{String(timer % 60).padStart(2, '0')}
+                    <AnimatePresence>
+                      {isLoading && (
+                        Array.from({ length: quantity }).map((_, i) => (
+                          <motion.div
+                            key={`loader-${i}`}
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="relative overflow-hidden rounded-lg bg-muted/30 aspect-video"
+                          >
+                            <div className="absolute inset-0 bg-gradient-to-br from-red-500/20 to-orange-500/20 animate-pulse" />
+                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-center p-4">
+                              <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }}>
+                                <Video className="w-10 h-10 text-primary" />
+                              </motion.div>
+                              <p className="text-sm font-semibold">{currentLoadingMessage}</p>
+                              <p className="text-xs text-muted-foreground">Vídeo {i + 1} de {quantity}</p>
+                              <div className="text-lg font-mono text-primary tabular-nums">
+                                {String(Math.floor(timer / 60)).padStart(2, '0')}:{String(timer % 60).padStart(2, '0')}
+                              </div>
                             </div>
-                            <p className="text-xs text-muted-foreground mt-2">Este processo pode levar até 10 minutos.</p>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                    {generatedVideos.map((video, index) => (
-                      <Card key={video.id} className="overflow-hidden group">
-                        <CardContent className="p-0">
-                          <div className="relative aspect-video bg-black">
-                            <video src={video.url} className="w-full h-full object-cover" controls />
-                            <div className="absolute bottom-2 right-2 flex gap-1.5">
-                              <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleDownload(video.url, index)}><Download className="w-4 h-4" /></Button>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                          </motion.div>
+                        ))
+                      )}
+                      {generatedVideos.map((video, index) => (
+                        <motion.div
+                          key={video.id}
+                          initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                        >
+                          <Card className="overflow-hidden group hover:shadow-xl hover:shadow-primary/20 transition-all">
+                            <CardContent className="p-0">
+                              <div className="relative aspect-video bg-black">
+                                <video src={video.url} className="w-full h-full object-cover" controls />
+                                <div className="absolute bottom-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <Button variant="outline" size="icon" className="h-8 w-8 bg-card/80 backdrop-blur-sm" onClick={() => handleDownload(video.url, index)}><Download className="w-4 h-4" /></Button>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
                   </div>
                 </div>
               )}
             </div>
           </div>
+
           <div className="w-full max-w-4xl mx-auto pt-8 sticky bottom-0 pb-6 bg-background">
-            <div className="relative flex items-center gap-1 rounded-full bg-card/80 backdrop-blur-xl border border-border/50 p-2 shadow-lg">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="relative flex items-center gap-1 rounded-full bg-card/80 backdrop-blur-xl border border-border/50 p-2 shadow-lg"
+            >
               {generationMode === 'image' && (<>
                 <Input id="image-upload-video" type="file" accept=".jpg,.jpeg,.png,.webp" onChange={(e) => e.target.files && handleImageUpload(e.target.files[0])} className="hidden" />
                 <label htmlFor="image-upload-video"><Button variant="ghost" size="icon" className="rounded-full" asChild disabled={isLoading}><span><Upload className="w-5 h-5" /></span></Button></label>
                 <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setIsCameraOpen(true)} disabled={isLoading}><Camera className="w-5 h-5" /></Button>
-                {uploadedImageUrl && (<div className="absolute -top-14 left-12 w-12 h-12 rounded-lg overflow-hidden border-2 border-primary"><img src={uploadedImageUrl} alt="Preview" className="w-full h-full object-cover" /><Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-5 w-5 rounded-full" onClick={() => setUploadedImageUrl(null)} disabled={isLoading}><X className="w-3 h-3" /></Button></div>)}
+                {uploadedImageUrl && (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="absolute -top-14 left-12 w-12 h-12 rounded-lg overflow-hidden border-2 border-primary shadow-lg"
+                  >
+                    <img src={uploadedImageUrl} alt="Preview" className="w-full h-full object-cover" />
+                    <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-5 w-5 rounded-full" onClick={() => setUploadedImageUrl(null)} disabled={isLoading}><X className="w-3 h-3" /></Button>
+                  </motion.div>
+                )}
               </>)}
               <Textarea placeholder={generationMode === 'image' ? "Descreva o movimento..." : "Descreva o vídeo a ser criado..."} value={description} onChange={(e) => setDescription(e.target.value)} disabled={isLoading} className="flex-1 bg-transparent border-none focus-visible:ring-0 resize-none text-base py-2.5" rows={1} />
               <Popover><PopoverTrigger asChild><Button variant="ghost" size="icon" className="rounded-full" disabled={isLoading}><SlidersHorizontal className="w-6 h-6" /></Button></PopoverTrigger><PopoverContent className="w-80 mb-2"><div className="grid gap-4"><div className="space-y-2"><h4 className="font-medium">Configurações</h4><p className="text-sm text-muted-foreground">Ajuste os parâmetros do vídeo.</p></div><div className="grid gap-2"><div className="grid grid-cols-3 items-center gap-4"><Label>Modo</Label><div className="col-span-2"><Select value={generationMode} onValueChange={(v) => setGenerationMode(v as "image" | "text")}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="image">Imagem para Vídeo</SelectItem><SelectItem value="text">Texto para Vídeo</SelectItem></SelectContent></Select></div></div><div className="grid grid-cols-3 items-center gap-4"><Label>Quantidade</Label><Input type="number" min="1" max="4" value={quantity} onChange={(e) => setQuantity(Math.min(4, Math.max(1, parseInt(e.target.value) || 1)))} className="col-span-2 h-8" /></div><div className="grid grid-cols-3 items-center gap-4"><Label>Proporção</Label><Select value={aspectRatio} onValueChange={setAspectRatio}><SelectTrigger className="col-span-2 h-8"><SelectValue /></SelectTrigger><SelectContent>{aspectRatios.map(ar => { const Icon = ar.icon; return (<SelectItem key={ar.value} value={ar.value}><div className="flex items-center gap-2"><Icon className="w-4 h-4" /><span>{ar.label}</span></div></SelectItem>);})}</SelectContent></Select></div></div></div></PopoverContent></Popover>
-              <Button size="icon" className="rounded-full w-10 h-10 gradient-primary" onClick={handleGenerate} disabled={isLoading}>{isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}</Button>
-            </div>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button size="icon" className="rounded-full w-10 h-10 gradient-primary" onClick={handleGenerate} disabled={isLoading}>{isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}</Button>
+              </motion.div>
+            </motion.div>
           </div>
           <CameraCaptureDialog isOpen={isCameraOpen} onClose={() => setIsCameraOpen(false)} onCapture={handleImageUpload} />
         </main>

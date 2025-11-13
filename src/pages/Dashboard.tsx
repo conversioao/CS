@@ -2,14 +2,59 @@ import DashboardHeader from "@/components/DashboardHeader";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Sparkles, Image, Video, Wand2, Combine, Music, AudioLines } from "lucide-react";
+import { Sparkles, Image, Video, Wand2, Combine, Music, AudioLines, TrendingUp, Zap, Award } from "lucide-react";
 import { useSession } from "@/contexts/SessionContext";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import RecentCreations from "@/components/RecentCreations";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Dashboard = () => {
-  const { profile } = useSession();
+  const { profile, user } = useSession();
   const navigate = useNavigate();
+  const [stats, setStats] = useState({
+    creditsUsed: 0,
+    imagesGenerated: 0,
+    videosGenerated: 0,
+    musicsGenerated: 0,
+    totalCreations: 0,
+  });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (!user) return;
+
+      // Fetch credit usage
+      const { data: transactions } = await supabase
+        .from('credit_transactions')
+        .select('amount, transaction_type')
+        .eq('user_id', user.id);
+
+      const creditsUsed = transactions
+        ?.filter(t => t.amount < 0)
+        .reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
+
+      // Fetch media counts
+      const { data: media } = await supabase
+        .from('user_media')
+        .select('media_type')
+        .eq('user_id', user.id);
+
+      const imagesGenerated = media?.filter(m => m.media_type === 'image').length || 0;
+      const videosGenerated = media?.filter(m => m.media_type === 'video').length || 0;
+      const musicsGenerated = media?.filter(m => m.media_type === 'audio').length || 0;
+
+      setStats({
+        creditsUsed,
+        imagesGenerated,
+        videosGenerated,
+        musicsGenerated,
+        totalCreations: (media?.length || 0),
+      });
+    };
+
+    fetchStats();
+  }, [user]);
 
   const tools = [
     { id: 'generate', title: 'Gerar Imagens', description: 'Crie imagens únicas com IA', icon: Sparkles, color: 'from-purple-500 to-pink-500', link: '/generate' },
@@ -18,6 +63,13 @@ const Dashboard = () => {
     { id: 'video', title: 'Gerar Vídeos', description: 'Crie vídeos dinâmicos', icon: Video, color: 'from-red-500 to-orange-500', link: '/generate-video' },
     { id: 'voice', title: 'Gerar Voz', description: 'Crie narrações com IA', icon: AudioLines, color: 'from-indigo-500 to-purple-500', link: '/generate-voice' },
     { id: 'music', title: 'Gerar Música', description: 'Componha trilhas sonoras', icon: Music, color: 'from-yellow-500 to-amber-500', link: '/generate-music' },
+  ];
+
+  const statsCards = [
+    { label: 'Créditos Usados', value: stats.creditsUsed, icon: Zap, color: 'from-yellow-500 to-orange-500' },
+    { label: 'Imagens Geradas', value: stats.imagesGenerated, icon: Image, color: 'from-purple-500 to-pink-500' },
+    { label: 'Vídeos Criados', value: stats.videosGenerated, icon: Video, color: 'from-blue-500 to-cyan-500' },
+    { label: 'Total de Criações', value: stats.totalCreations, icon: Award, color: 'from-green-500 to-teal-500' },
   ];
 
   return (
@@ -45,21 +97,55 @@ const Dashboard = () => {
             </Button>
           </div>
 
+          {/* Estatísticas */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+            {statsCards.map((stat, index) => {
+              const Icon = stat.icon;
+              return (
+                <Card 
+                  key={stat.label}
+                  className="bg-card/50 backdrop-blur-xl border-border/50 hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 overflow-hidden group"
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                        <Icon className="w-6 h-6 text-white" />
+                      </div>
+                    </div>
+                    <div className="text-3xl font-bold gradient-text mb-1">{stat.value}</div>
+                    <p className="text-sm text-muted-foreground">{stat.label}</p>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          {/* Ferramentas */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+              <Sparkles className="w-6 h-6 text-primary" />
+              Ferramentas de IA
+            </h2>
+          </div>
+
           <div id="tools-section" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-            {tools.map((tool) => {
+            {tools.map((tool, index) => {
               const Icon = tool.icon;
               return (
                 <Card
                   key={tool.id}
-                  className="group cursor-pointer bg-card/50 backdrop-blur-xl border border-border/50 hover:border-primary/50 transition-all duration-300 overflow-hidden hover:shadow-xl hover:shadow-primary/10"
+                  className="group cursor-pointer bg-card/50 backdrop-blur-xl border border-border/50 hover:border-primary/50 transition-all duration-300 overflow-hidden hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1"
                   onClick={() => navigate(tool.link)}
+                  style={{ animationDelay: `${index * 0.1}s` }}
                 >
                   <CardContent className="p-0">
-                    <div className="relative h-32 overflow-hidden">
+                    <div className="relative h-40 overflow-hidden">
                       <div className={`absolute inset-0 bg-gradient-to-br ${tool.color} opacity-10 group-hover:opacity-20 transition-opacity duration-300`} />
+                      <div className="absolute inset-0 bg-gradient-to-t from-card/80 to-transparent" />
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${tool.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                          <Icon className="w-8 h-8 text-white" />
+                        <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${tool.color} flex items-center justify-center shadow-2xl group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}>
+                          <Icon className="w-10 h-10 text-white" />
                         </div>
                       </div>
                     </div>

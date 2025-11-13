@@ -15,7 +15,7 @@ import { storeMediaInSupabase } from "@/lib/supabase-storage";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import CameraCaptureDialog from "@/components/CameraCaptureDialog";
 import React from "react";
-import { Badge } from "@/components/ui/badge";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface GeneratedImage {
   url: string;
@@ -169,77 +169,148 @@ const Generate = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
         <DashboardHeader />
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 relative flex flex-col">
-          <div className="absolute inset-0 pointer-events-none z-[-1] bg-dot-pattern opacity-20" />
-          <div className="mb-8 flex items-center justify-between">
-            <Link to="/dashboard" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"><ArrowLeft className="w-4 h-4" /><span>Voltar ao Dashboard</span></Link>
-            <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full"><Sparkles className="w-4 h-4 text-primary" /><span className="text-sm font-semibold">1 crédito por imagem</span></div>
+          <div className="absolute inset-0 pointer-events-none z-[-1] overflow-hidden">
+            <div className="absolute inset-0 bg-dot-pattern opacity-20" />
+            <motion.div 
+              className="absolute top-[-20%] left-[-10%] w-[40rem] h-[40rem] bg-primary/10 rounded-full blur-3xl"
+              animate={{ 
+                scale: [1, 1.2, 1],
+                opacity: [0.3, 0.5, 0.3]
+              }}
+              transition={{ duration: 8, repeat: Infinity }}
+            />
+            <motion.div 
+              className="absolute bottom-[-30%] right-[-15%] w-[50rem] h-[50rem] bg-secondary/10 rounded-full blur-3xl"
+              animate={{ 
+                scale: [1.2, 1, 1.2],
+                opacity: [0.5, 0.3, 0.5]
+              }}
+              transition={{ duration: 10, repeat: Infinity }}
+            />
           </div>
+
+          <div className="mb-8 flex items-center justify-between">
+            <Link to="/dashboard" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors group">
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+              <span>Voltar ao Dashboard</span>
+            </Link>
+            <motion.div 
+              className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Sparkles className="w-4 h-4 text-primary" />
+              <span className="text-sm font-semibold">1 crédito por imagem</span>
+            </motion.div>
+          </div>
+
           <div className="flex-1 flex flex-col gap-6 min-h-0">
-            <div className="bg-card/50 backdrop-blur-xl rounded-xl shadow-lg p-6 flex-1 flex flex-col">
-              <h2 className="text-2xl font-bold mb-6 flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center"><Image className="w-5 h-5 text-primary" /></div>Resultado da Geração</h2>
+            <div className="bg-card/50 backdrop-blur-xl rounded-xl shadow-lg p-6 flex-1 flex flex-col border border-border/50">
+              <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Image className="w-5 h-5 text-primary" />
+                </div>
+                Resultado da Geração
+              </h2>
+              
               {generatedImages.length === 0 && !isLoading ? (
-                <div className="flex-1 flex flex-col items-center justify-center text-center">
-                  <div className="w-20 h-20 rounded-lg bg-muted/50 flex items-center justify-center mb-4"><Image className="w-10 h-10 text-muted-foreground" /></div>
+                <motion.div 
+                  className="flex-1 flex flex-col items-center justify-center text-center"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <motion.div 
+                    className="w-20 h-20 rounded-lg bg-muted/50 flex items-center justify-center mb-4"
+                    animate={{ 
+                      rotate: [0, 5, -5, 0],
+                      scale: [1, 1.05, 1]
+                    }}
+                    transition={{ duration: 3, repeat: Infinity }}
+                  >
+                    <Image className="w-10 h-10 text-muted-foreground" />
+                  </motion.div>
                   <h3 className="text-xl font-bold">Pronto para criar?</h3>
                   <p className="text-muted-foreground max-w-md text-sm">Configure as opções abaixo para gerar a sua imagem.</p>
-                </div>
+                </motion.div>
               ) : (
                 <div className="flex-1 overflow-y-auto -mr-4 pr-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {isLoading && !isEditing && (
-                      Array.from({ length: quantity }).map((_, i) => (
-                        <div key={`loader-${i}`} className="relative overflow-hidden rounded-lg bg-muted/30 aspect-square">
-                          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-center p-4">
-                            <Loader2 className="w-10 h-10 animate-spin text-primary" />
-                            <p className="text-sm font-semibold">A gerar imagem {i + 1}...</p>
-                            <div className="text-lg font-mono text-primary tabular-nums">{String(Math.floor(timer / 60)).padStart(2, '0')}:{String(timer % 60).padStart(2, '0')}</div>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                    {isLoading && isEditing && (
-                      <div className="relative overflow-hidden rounded-lg bg-muted/30 aspect-square">
-                        <img src={imageToEdit?.url} alt="A editar" className="w-full h-full object-cover filter blur-sm brightness-50" />
-                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-white">
-                          <Loader2 className="w-10 h-10 animate-spin text-primary" />
-                          <p>A editar...</p>
-                        </div>
-                      </div>
-                    )}
-                    {generatedImages.map((image) => (
-                      <Card key={image.id} className="overflow-hidden group">
-                        <CardContent className="p-0">
-                          <div className="relative aspect-square">
-                            <img src={image.url} alt="Imagem gerada" className="w-full h-full object-cover" />
-                            <div className="absolute bottom-2 right-2 flex gap-1.5">
-                              <Dialog onOpenChange={(isOpen) => !isOpen && setZoomLevel(1)}>
-                                <DialogTrigger asChild><Button variant="outline" size="icon" className="h-8 w-8"><Maximize2 className="w-4 h-4" /></Button></DialogTrigger>
-                                <DialogContent className="max-w-[95vw] max-h-[95vh] p-2 flex flex-col">
-                                  <div className="flex-1 relative overflow-auto">
-                                    <img src={image.url} alt="Imagem gerada" className="max-w-none max-h-none" style={{ transform: `scale(${zoomLevel})` }} />
-                                  </div>
-                                  <div className="flex items-center justify-center gap-2 pt-2">
-                                    <Button variant="outline" size="icon" onClick={() => setZoomLevel(p => Math.max(p - 0.2, 0.2))}><ZoomOut className="w-4 h-4" /></Button>
-                                    <Button variant="outline" onClick={() => setZoomLevel(1)}>Reset</Button>
-                                    <Button variant="outline" size="icon" onClick={() => setZoomLevel(p => Math.min(p + 0.2, 5))}><ZoomIn className="w-4 h-4" /></Button>
-                                  </div>
-                                </DialogContent>
-                              </Dialog>
-                              <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleDownload(image.url)}><Download className="w-4 h-4" /></Button>
-                              <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setImageToEdit(image)}><Edit className="w-4 h-4" /></Button>
+                    <AnimatePresence>
+                      {isLoading && !isEditing && (
+                        Array.from({ length: quantity }).map((_, i) => (
+                          <motion.div
+                            key={`loader-${i}`}
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.8 }}
+                            className="relative overflow-hidden rounded-lg bg-muted/30 aspect-square"
+                          >
+                            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent animate-pulse" />
+                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-center p-4">
+                              <motion.div
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                              >
+                                <Sparkles className="w-10 h-10 text-primary" />
+                              </motion.div>
+                              <p className="text-sm font-semibold">A gerar imagem {i + 1}...</p>
+                              <div className="text-lg font-mono text-primary tabular-nums">{String(Math.floor(timer / 60)).padStart(2, '0')}:{String(timer % 60).padStart(2, '0')}</div>
                             </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                          </motion.div>
+                        ))
+                      )}
+                      {generatedImages.map((image, index) => (
+                        <motion.div
+                          key={image.id}
+                          initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                        >
+                          <Card className="overflow-hidden group hover:shadow-xl hover:shadow-primary/20 transition-all duration-300">
+                            <CardContent className="p-0">
+                              <div className="relative aspect-square">
+                                <img src={image.url} alt="Imagem gerada" className="w-full h-full object-cover" />
+                                <div className="absolute bottom-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <Dialog onOpenChange={(isOpen) => !isOpen && setZoomLevel(1)}>
+                                    <DialogTrigger asChild>
+                                      <Button variant="outline" size="icon" className="h-8 w-8 bg-card/80 backdrop-blur-sm">
+                                        <Maximize2 className="w-4 h-4" />
+                                      </Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="max-w-[95vw] max-h-[95vh] p-2 flex flex-col">
+                                      <div className="flex-1 relative overflow-auto">
+                                        <img src={image.url} alt="Imagem gerada" className="max-w-none max-h-none" style={{ transform: `scale(${zoomLevel})` }} />
+                                      </div>
+                                      <div className="flex items-center justify-center gap-2 pt-2">
+                                        <Button variant="outline" size="icon" onClick={() => setZoomLevel(p => Math.max(p - 0.2, 0.2))}><ZoomOut className="w-4 h-4" /></Button>
+                                        <Button variant="outline" onClick={() => setZoomLevel(1)}>Reset</Button>
+                                        <Button variant="outline" size="icon" onClick={() => setZoomLevel(p => Math.min(p + 0.2, 5))}><ZoomIn className="w-4 h-4" /></Button>
+                                      </div>
+                                    </DialogContent>
+                                  </Dialog>
+                                  <Button variant="outline" size="icon" className="h-8 w-8 bg-card/80 backdrop-blur-sm" onClick={() => handleDownload(image.url)}><Download className="w-4 h-4" /></Button>
+                                  <Button variant="outline" size="icon" className="h-8 w-8 bg-card/80 backdrop-blur-sm" onClick={() => setImageToEdit(image)}><Edit className="w-4 h-4" /></Button>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
                   </div>
                 </div>
               )}
             </div>
           </div>
+
           <div className="w-full max-w-4xl mx-auto pt-8 sticky bottom-0 pb-6 bg-background">
             {imageToEdit ? (
-              <div className="relative rounded-xl bg-card/80 backdrop-blur-xl border border-border/50 p-2 shadow-lg animate-fade-in">
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="relative rounded-xl bg-card/80 backdrop-blur-xl border border-border/50 p-2 shadow-lg"
+              >
                 <div className="p-2 border-b border-border/50 mb-2">
                   <div className="flex items-center gap-3">
                     <img src={imageToEdit.url} alt="Editing thumbnail" className="w-12 h-12 rounded-md object-cover" />
@@ -271,29 +342,32 @@ const Generate = () => {
                     {isEditing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
                   </Button>
                 </div>
-              </div>
+              </motion.div>
             ) : (
-              <div className="relative flex items-center gap-1 rounded-full bg-card/80 backdrop-blur-xl border border-border/50 p-2 shadow-lg">
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="relative flex items-center gap-1 rounded-full bg-card/80 backdrop-blur-xl border border-border/50 p-2 shadow-lg"
+              >
                 <Input id="image-upload" type="file" accept=".jpg,.jpeg,.png,.webp" onChange={(e) => e.target.files && handleImageUpload(e.target.files[0])} className="hidden" />
                 <label htmlFor="image-upload"><Button variant="ghost" size="icon" className="rounded-full" asChild disabled={isLoading}><span><Upload className="w-5 h-5" /></span></Button></label>
                 <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setIsCameraOpen(true)} disabled={isLoading}><Camera className="w-5 h-5" /></Button>
-                {uploadedImageUrl && (<div className="absolute -top-14 left-12 w-12 h-12 rounded-lg overflow-hidden border-2 border-primary"><img src={uploadedImageUrl} alt="Preview" className="w-full h-full object-cover" /><Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-5 w-5 rounded-full" onClick={() => setUploadedImageUrl(null)} disabled={isLoading}><X className="w-3 h-3" /></Button></div>)}
+                {uploadedImageUrl && (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="absolute -top-14 left-12 w-12 h-12 rounded-lg overflow-hidden border-2 border-primary shadow-lg"
+                  >
+                    <img src={uploadedImageUrl} alt="Preview" className="w-full h-full object-cover" />
+                    <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-5 w-5 rounded-full" onClick={() => setUploadedImageUrl(null)} disabled={isLoading}><X className="w-3 h-3" /></Button>
+                  </motion.div>
+                )}
                 <Textarea id="description" placeholder={uploadedImageUrl ? "Descreva o que quer alterar ou adicionar..." : "Descreva a imagem que deseja criar..."} value={description} onChange={(e) => setDescription(e.target.value)} disabled={isLoading} className="flex-1 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 resize-none text-base py-2.5 mx-2" rows={1} />
-                <Popover>
-                  <PopoverTrigger asChild><Button variant="ghost" size="icon" className="rounded-full" disabled={isLoading}><SlidersHorizontal className="w-6 h-6" /></Button></PopoverTrigger>
-                  <PopoverContent className="w-80 mb-2">
-                    <div className="grid gap-4">
-                      <div className="space-y-2"><h4 className="font-medium leading-none">Configurações</h4><p className="text-sm text-muted-foreground">Ajuste os parâmetros da geração.</p></div>
-                      <div className="grid gap-4">
-                        <div className="grid grid-cols-3 items-center gap-4"><Label htmlFor="modelo">Modelo</Label><Select value={modelo} onValueChange={setModelo}><SelectTrigger id="modelo" className="col-span-2 h-8"><SelectValue /></SelectTrigger><SelectContent>{models.map(m => (<SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>))}</SelectContent></Select></div>
-                        <div className="grid grid-cols-3 items-center gap-4"><Label htmlFor="quantity">Quantidade</Label><Input id="quantity" type="number" min="1" max="4" value={quantity} onChange={(e) => setQuantity(Math.min(4, Math.max(1, parseInt(e.target.value) || 1)))} className="col-span-2 h-8" /></div>
-                        <div><Label className="text-sm font-medium">Proporção</Label><div className="flex items-center gap-2 mt-2">{aspectRatios.map(ar => { const Icon = ar.icon; return (<Button key={ar.value} variant={aspectRatio === ar.value ? "default" : "outline"} size="icon" onClick={() => setAspectRatio(ar.value)} className="h-12 w-12 flex-col gap-1"><Icon className="w-5 h-5" /><span className="text-xs">{ar.value}</span></Button>);})}</div></div>
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-                <Button size="icon" className="rounded-full w-10 h-10 gradient-primary glow-effect" onClick={handleGenerate} disabled={isLoading || (!uploadedImageUrl && !description)}>{isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}</Button>
-              </div>
+                <Popover><PopoverTrigger asChild><Button variant="ghost" size="icon" className="rounded-full" disabled={isLoading}><SlidersHorizontal className="w-6 h-6" /></Button></PopoverTrigger><PopoverContent className="w-80 mb-2"><div className="grid gap-4"><div className="space-y-2"><h4 className="font-medium">Configurações</h4><p className="text-sm text-muted-foreground">Ajuste os parâmetros da geração.</p></div><div className="grid gap-4"><div className="grid grid-cols-3 items-center gap-4"><Label htmlFor="modelo">Modelo</Label><Select value={modelo} onValueChange={setModelo}><SelectTrigger id="modelo" className="col-span-2 h-8"><SelectValue /></SelectTrigger><SelectContent>{models.map(m => (<SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>))}</SelectContent></Select></div><div className="grid grid-cols-3 items-center gap-4"><Label htmlFor="quantity">Quantidade</Label><Input id="quantity" type="number" min="1" max="4" value={quantity} onChange={(e) => setQuantity(Math.min(4, Math.max(1, parseInt(e.target.value) || 1)))} className="col-span-2 h-8" /></div><div><Label className="text-sm font-medium">Proporção</Label><div className="flex items-center gap-2 mt-2">{aspectRatios.map(ar => { const Icon = ar.icon; return (<Button key={ar.value} variant={aspectRatio === ar.value ? "default" : "outline"} size="icon" onClick={() => setAspectRatio(ar.value)} className="h-12 w-12 flex-col gap-1"><Icon className="w-5 h-5" /><span className="text-xs">{ar.value}</span></Button>);})}</div></div></div></div></PopoverContent></Popover>
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Button size="icon" className="rounded-full w-10 h-10 gradient-primary glow-effect" onClick={handleGenerate} disabled={isLoading || (!uploadedImageUrl && !description)}>{isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}</Button>
+                </motion.div>
+              </motion.div>
             )}
           </div>
           <CameraCaptureDialog isOpen={isCameraOpen} onClose={() => setIsCameraOpen(false)} onCapture={handleImageUpload} />
