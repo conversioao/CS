@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShieldCheck, RefreshCw, CheckCircle, Clock, Loader2 } from "lucide-react";
+import { ShieldCheck, RefreshCw, CheckCircle, Clock, Loader2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
 import { useNavigate } from "react-router-dom";
@@ -19,10 +19,11 @@ const Verify = () => {
   const [countdown, setCountdown] = useState(0);
   const [isWaiting, setIsWaiting] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (profile?.status === 'verified') {
-      navigate('/onboarding');
+      navigate('/dashboard');
     }
   }, [profile, navigate]);
 
@@ -62,12 +63,13 @@ const Verify = () => {
 
   const handleVerify = async () => {
     if (!user || verificationCode.length !== 6) {
-      toast.error("Código inválido", { description: "O código deve ter 6 dígitos." });
+      setError("O código deve ter 6 dígitos.");
       return;
     }
     
     setIsVerifying(true);
     setIsWaiting(true);
+    setError(null);
 
     try {
       const response = await fetch('https://n8n.conversio.ao/webhook-test/verificacao', {
@@ -85,18 +87,32 @@ const Verify = () => {
         throw new Error('Erro ao comunicar com o servidor de verificação.');
       }
 
+      // Aguarda 5 segundos para simular o processamento
       await new Promise(resolve => setTimeout(resolve, 5000));
 
-      setIsVerified(true);
-      toast.success('Verificação concluída!');
-
-      // Redireciona diretamente para o onboarding
-      setTimeout(() => {
-        navigate('/onboarding');
-      }, 1000); // Pequeno atraso para o usuário ver a mensagem de sucesso
+      // Após 5 segundos, verifica o status do perfil
+      await refetchProfile();
+      
+      // Se o status for verificado, redireciona para o dashboard
+      if (profile?.status === 'verified') {
+        setIsVerified(true);
+        toast.success('Verificação concluída!');
+        
+        // Redireciona para o dashboard após um pequeno delay
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 1000);
+      } else {
+        // Se não estiver verificado, mostra erro
+        setError("Código de verificação inválido. Por favor, verifique e tente novamente.");
+        toast.error('Falha na verificação', { 
+          description: "O código inserido não é válido ou ocorreu um erro no processo." 
+        });
+      }
 
     } catch (error: any) {
       console.error(error);
+      setError(error.message || 'Ocorreu um erro inesperado.');
       toast.error('Falha na verificação', { description: error.message || 'Ocorreu um erro inesperado.' });
     } finally {
       setIsVerifying(false);
@@ -143,6 +159,7 @@ const Verify = () => {
         </CardHeader>
 
         <CardContent className="space-y-6">
+          {/* Tela de Espera */}
           {isWaiting && (
             <div className="flex flex-col items-center justify-center py-8">
               <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
@@ -153,21 +170,20 @@ const Verify = () => {
             </div>
           )}
 
-          {!isWaiting && isVerified && (
-            <div className="flex flex-col items-center justify-center py-8 space-y-6">
-              <div className="relative">
-                <CheckCircle className="w-20 h-20 text-green-500 mx-auto" />
-                <div className="absolute -top-1 -right-1 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                  <ShieldCheck className="w-5 h-5 text-white" />
+          {/* Mensagem de Erro */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                <div>
+                  <p className="font-medium text-red-800">Erro na Verificação</p>
+                  <p className="text-sm text-red-600">{error}</p>
                 </div>
               </div>
-              <h3 className="text-xl font-semibold">Conta Verificada!</h3>
-              <p className="text-sm text-muted-foreground text-center">
-                Redirecionando para o seu studio...
-              </p>
             </div>
           )}
 
+          {/* Formulário de Verificação (padrão) */}
           {!isWaiting && !isVerified && (
             <>
               <div className="space-y-2">
