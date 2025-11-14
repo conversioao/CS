@@ -26,8 +26,6 @@ import Credits from "./pages/Credits";
 import Account from "./pages/Account";
 import Onboarding from "./pages/Onboarding";
 import Verify from "./pages/Verify";
-import VerificationStatus from "./pages/VerificationStatus";
-import Welcome from "./pages/Welcome";
 import NotFound from "./pages/NotFound";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -57,9 +55,7 @@ const App = () => (
               <Route path="/register" element={<Register />} />
               <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/model/:slug" element={<ModelDetail />} />
-              <Route path="/verification-status" element={<VerificationStatus />} />
-              <Route path="/welcome" element={<Welcome />} />
-
+              {/* Removed routes: /verification-status and /welcome */}
               {/* Protected Routes */}
               <Route element={<ProtectedRoute />}>
                 <Route path="/verify" element={<Verify />} />

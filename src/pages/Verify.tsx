@@ -88,25 +88,21 @@ const Verify = () => {
     setError(null);
 
     try {
-      const response = await fetch('https://n8n.conversio.ao/webhook-test/verificacao', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id, code: verificationCode }),
-      });
+      // Atualiza o status do perfil para 'verified'
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ status: 'verified' })
+        .eq('id', user.id);
 
-      if (!response.ok) {
-        throw new Error('Erro ao comunicar com o servidor de verificação.');
-      }
+      if (updateError) throw updateError;
 
-      toast.info("Processamento iniciado", {
-        description: "Você será redirecionado para verificar o status.",
-      });
-
-      // Redireciona para a página de verificação de status após 5 segundos
-      setTimeout(() => {
-        navigate('/verification-status');
-      }, 5000);
-
+      // Define a flag para mostrar a mensagem especial no login
+      localStorage.setItem('firstLoginAfterVerification', 'true');
+      
+      toast.success("Conta verificada com sucesso!");
+      
+      // Redireciona diretamente para o login após verificação
+      navigate('/login');
     } catch (error: any) {
       console.error(error);
       setError(error.message || 'Ocorreu um erro inesperado.');
@@ -143,9 +139,9 @@ const Verify = () => {
           {isVerifying ? (
             <div className="flex flex-col items-center justify-center py-8">
               <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Processando...</h3>
+              <h3 className="text-lg font-semibold mb-2">Verificando...</h3>
               <p className="text-sm text-muted-foreground text-center">
-                Estamos a processar o seu pedido de verificação. Você será redirecionado em instantes.
+                Estamos a verificar o seu código. Você será redirecionado em instantes.
               </p>
             </div>
           ) : (
