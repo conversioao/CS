@@ -34,7 +34,10 @@ const Verify = () => {
   }, [countdown]);
 
   const generateAndSendCode = async () => {
-    if (!user) return;
+    if (!user || !profile) {
+      toast.error("Não foi possível obter os dados do usuário. Tente novamente.");
+      return;
+    }
     
     setIsResending(true);
     try {
@@ -47,7 +50,19 @@ const Verify = () => {
 
       if (updateError) throw updateError;
 
-      console.log(`[SIMULAÇÃO] Código ${newCode} enviado para ${profile?.whatsapp_number}`);
+      // Call the webhook as requested
+      await fetch('https://n8n.conversio.ao/webhook-test/leds_whatsapp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: user.id,
+          full_name: profile.full_name,
+          whatsapp_number: profile.whatsapp_number,
+          verification_code: newCode,
+          created_at: new Date().toISOString(),
+        }),
+      });
+
       toast.success('Novo código enviado!', {
         description: 'Verifique seu WhatsApp para o novo código de 6 dígitos.',
       });
