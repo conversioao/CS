@@ -36,23 +36,39 @@ const Gallery = () => {
       if (!user) return;
       
       setLoading(true);
-      const { data, error } = await supabase
-        .from('user_media')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from('user_media')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching user media:', error);
+        if (error) {
+          console.error('Error fetching user media:', error);
+          toast({
+            title: "Erro",
+            description: "Não foi possível carregar suas criações",
+            variant: "destructive",
+          });
+        } else {
+          // Ensure all items have a type
+          const mediaWithTypes = (data || []).map(item => ({
+            ...item,
+            type: item.media_type as 'image' | 'video',
+            is_liked: false
+          }));
+          setUserMedia(mediaWithTypes);
+        }
+      } catch (error) {
+        console.error('Unexpected error fetching user media:', error);
         toast({
           title: "Erro",
           description: "Não foi possível carregar suas criações",
           variant: "destructive",
         });
-      } else {
-        setUserMedia(data || []);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     fetchUserMedia();

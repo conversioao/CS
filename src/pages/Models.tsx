@@ -29,27 +29,27 @@ const categoryLabels: { [key: string]: string } = {
 };
 
 const Models = () => {
-  const [modelsAndTools, setModelsAndTools] = useState<ModelOrTool[]>([]);
+  const [models, setModels] = useState<ModelOrTool[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchModelsAndTools = async () => {
+    const fetchModels = async () => {
       const { data, error } = await supabase
         .from('models_and_tools')
         .select('*')
         .eq('is_active', true)
-        .order('category')
+        .eq('category', 'model') // Only fetch models, not tools
         .order('name');
 
       if (error) {
-        console.error('Error fetching models and tools:', error);
+        console.error('Error fetching models:', error);
       } else {
-        setModelsAndTools(data || []);
+        setModels(data || []);
       }
       setLoading(false);
     };
 
-    fetchModelsAndTools();
+    fetchModels();
   }, []);
 
   const getModelRoute = (model: ModelOrTool) => {
@@ -62,14 +62,6 @@ const Models = () => {
         return '/generate?model=Conversio%20Studio%20%E2%80%94%20StyleAI';
       case 'Conversio Studio — Vision':
         return '/generate?model=Conversio%20Studio%20%E2%80%94%20Vision';
-      case 'Edição de Imagem':
-        return '/edit-image';
-      case 'Combinação de Imagens':
-        return '/combine-image';
-      case 'Geração de Vídeos':
-        return '/generate-video';
-      case 'Geração de Voz':
-        return '/generate-voice';
       default:
         return '/generate';
     }
@@ -105,25 +97,25 @@ const Models = () => {
           
           <div className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">
-              Modelos e Ferramentas
+              Modelos de IA
             </h1>
             <p className="text-muted-foreground text-lg">
-              Escolha o modelo ou ferramenta ideal para cada tipo de criação
+              Escolha o modelo ideal para cada tipo de criação
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {modelsAndTools.map((item) => {
-              const Icon = categoryIcons[item.category] || Sparkles;
+            {models.map((model) => {
+              const Icon = categoryIcons[model.category] || Sparkles;
               return (
                 <div
-                  key={item.id}
+                  key={model.id}
                   className="group bg-secondary/20 border border-border rounded-xl overflow-hidden hover:border-primary/50 transition-all duration-300 relative"
                 >
                   <div className="relative aspect-square overflow-hidden">
                     <img 
-                      src={item.image_url} 
-                      alt={item.name}
+                      src={model.image_url} 
+                      alt={model.name}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
@@ -134,21 +126,21 @@ const Models = () => {
                   
                   <div className="p-6">
                     <div className="flex items-center justify-between mb-2">
-                      <Badge variant="secondary">{categoryLabels[item.category]}</Badge>
+                      <Badge variant="secondary">{categoryLabels[model.category]}</Badge>
                       <div className="flex items-center gap-1 text-sm font-semibold">
                         <Sparkles className="w-4 h-4 text-primary" />
-                        {item.credit_cost}
+                        {model.credit_cost}
                       </div>
                     </div>
-                    <h3 className="text-xl font-semibold mb-3">{item.name}</h3>
+                    <h3 className="text-xl font-semibold mb-3">{model.name}</h3>
                     <p className="text-sm text-muted-foreground mb-4">
-                      {item.description}
+                      {model.description}
                     </p>
                     
-                    <Link to={getModelRoute(item)}>
+                    <Link to={getModelRoute(model)}>
                       <Button className="w-full gradient-primary">
                         <Sparkles className="w-4 h-4 mr-2" />
-                        Usar {categoryLabels[item.category]}
+                        Usar Modelo
                       </Button>
                     </Link>
                   </div>

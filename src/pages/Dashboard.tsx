@@ -1,8 +1,8 @@
 import DashboardHeader from "@/components/DashboardHeader";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
 import { Sparkles, Image, Video, Wand2, Combine, Music, AudioLines, TrendingUp, Zap, Award } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useSession } from "@/contexts/SessionContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import RecentCreations from "@/components/RecentCreations";
@@ -65,13 +65,6 @@ const Dashboard = () => {
     { id: 'music', title: 'Gerar Música', description: 'Componha trilhas sonoras', icon: Music, color: 'from-yellow-500 to-amber-500', link: '/generate-music' },
   ];
 
-  const statsCards = [
-    { label: 'Créditos Usados', value: stats.creditsUsed, icon: Zap, color: 'from-yellow-500 to-orange-500' },
-    { label: 'Imagens Geradas', value: stats.imagesGenerated, icon: Image, color: 'from-purple-500 to-pink-500' },
-    { label: 'Vídeos Criados', value: stats.videosGenerated, icon: Video, color: 'from-blue-500 to-cyan-500' },
-    { label: 'Total de Criações', value: stats.totalCreations, icon: Award, color: 'from-green-500 to-teal-500' },
-  ];
-
   return (
     <div className="min-h-screen bg-background flex">
       <div className="hidden lg:block"><DashboardSidebar /></div>
@@ -97,28 +90,26 @@ const Dashboard = () => {
             </Button>
           </div>
 
-          {/* Estatísticas */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
-            {statsCards.map((stat, index) => {
-              const Icon = stat.icon;
-              return (
-                <Card 
-                  key={stat.label}
-                  className="bg-card/50 backdrop-blur-xl border-border/50 hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 overflow-hidden group"
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                >
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                        <Icon className="w-6 h-6 text-white" />
-                      </div>
+          {/* Link to Statistics page */}
+          <div className="mb-8">
+            <Card className="bg-card/50 backdrop-blur-xl border-border/50 hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 overflow-hidden group">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                      <TrendingUp className="w-6 h-6 text-white" />
                     </div>
-                    <div className="text-3xl font-bold gradient-text mb-1">{stat.value}</div>
-                    <p className="text-sm text-muted-foreground">{stat.label}</p>
-                  </CardContent>
-                </Card>
-              );
-            })}
+                    <div>
+                      <h3 className="font-semibold">Estatísticas</h3>
+                      <p className="text-sm text-muted-foreground">Veja seu desempenho e uso</p>
+                    </div>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => navigate('/statistics')}>
+                    Ver Detalhes
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Ferramentas */}

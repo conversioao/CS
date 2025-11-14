@@ -37,6 +37,7 @@ import AdminReports from "./pages/admin/AdminReports";
 import AffiliateDashboard from "./pages/AffiliateDashboard";
 import AdminWhatsapp from "./pages/admin/AdminWhatsapp";
 import AdminCreditPackages from "./pages/admin/AdminCreditPackages";
+import Statistics from "./pages/Statistics";
 
 const queryClient = new QueryClient();
 
@@ -72,6 +73,7 @@ const App = () => (
                 <Route path="/community" element={<Community />} />
                 <Route path="/credits" element={<Credits />} />
                 <Route path="/account" element={<Account />} />
+                <Route path="/statistics" element={<Statistics />} />
                 <Route path="/affiliate/dashboard" element={<AffiliateDashboard />} />
               </Route>
 

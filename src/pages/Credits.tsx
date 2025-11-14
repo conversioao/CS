@@ -42,7 +42,7 @@ const Credits = () => {
     setLoading(true);
 
     const fetchPlans = supabase.from('credit_packages').select('*').eq('is_active', true).order('price', { ascending: true });
-    const fetchTransactions = supabase.from('credit_transactions').select('*, payments(status)').eq('user_id', user.id).order('created_at', { ascending: false }).limit(4);
+    const fetchTransactions = supabase.from('credit_transactions').select('*, payments(status)').eq('user_id', user.id).order('created_at', { ascending: false }).limit(10);
 
     const [plansResult, transactionsResult] = await Promise.all([fetchPlans, fetchTransactions]);
 
@@ -84,9 +84,9 @@ const Credits = () => {
               <p className="text-muted-foreground text-lg">Escolha o pacote ideal para as suas necessidades criativas</p>
             </div>
             
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-              <div className="lg:col-span-3">
-                <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-8">
+              <div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {plans.map((plan) => (
                     <Card key={plan.id} className="bg-card/50 backdrop-blur-xl border-border/50 flex flex-col hover:border-primary/50 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10">
                       <CardHeader className="text-center">
@@ -120,9 +120,9 @@ const Credits = () => {
                 </div>
               </div>
 
-              <div className="lg:col-span-2">
-                <Card className="bg-card/50 backdrop-blur-xl h-full">
-                  <CardHeader><CardTitle>Últimas Transações</CardTitle></CardHeader>
+              <div>
+                <Card className="bg-card/50 backdrop-blur-xl">
+                  <CardHeader><CardTitle>Histórico de Transações</CardTitle></CardHeader>
                   <CardContent>
                     {loading ? (
                       <div className="flex justify-center items-center h-40">
