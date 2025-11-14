@@ -18,7 +18,6 @@ const VerificationStatus = () => {
 
   useEffect(() => {
     if (profile?.status === 'verified' && hasChecked) {
-      // Se já estiver verificado e já tiver checado, vai direto para o dashboard
       navigate('/dashboard');
     }
   }, [profile, navigate, hasChecked]);
