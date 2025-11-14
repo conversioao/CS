@@ -32,7 +32,6 @@ const Register = () => {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     const whatsappDigits = whatsapp.replace(/\D/g, '');
     if (whatsappDigits.length !== 9) {
       toast.error('Número de WhatsApp inválido', {
@@ -90,7 +89,6 @@ const Register = () => {
       }
 
       console.log('✅ Usuário criado com sucesso:', signUpData.user.id);
-      
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ verification_code: verificationCode })
@@ -102,7 +100,6 @@ const Register = () => {
       }
 
       console.log('✅ Código de verificação salvo no banco de dados');
-      
       // Enviar dados para o webhook
       try {
         console.log('📤 Enviando dados para o webhook...');
@@ -131,7 +128,6 @@ const Register = () => {
 
       toast.success('Conta criada com sucesso! Por favor, verifique a sua conta.');
       navigate('/verify');
-
     } catch (error: any) {
       console.error('❌ Erro geral no cadastro:', error);
       toast.error('Erro no Cadastro', {
@@ -160,30 +156,17 @@ const Register = () => {
           <form onSubmit={handleRegister} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="fullName">Nome Completo</Label>
-              <Input 
-                id="fullName" 
-                placeholder="Seu nome completo" 
-                required 
-                value={fullName} 
-                onChange={(e) => setFullName(e.target.value)} 
-              />
+              <Input id="fullName" placeholder="Seu nome completo" required value={fullName} onChange={(e) => setFullName(e.target.value)} />
             </div>
-            
             <div className="space-y-2">
               <Label htmlFor="whatsapp">Nº de WhatsApp</Label>
               <div className="flex items-center gap-2">
                 <div className="px-3 py-2 bg-muted rounded-md text-sm">+244</div>
-                <Input 
-                  id="whatsapp" 
-                  type="tel" 
-                  placeholder="9XXXXXXXX" 
-                  required 
-                  value={whatsapp} 
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/\D/g, '').slice(0, 9);
-                    setWhatsapp(value);
-                  }}
-                  maxLength={9}
+                <Input id="whatsapp" type="tel" placeholder="9XXXXXXXX" required value={whatsapp} onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, '').slice(0, 9);
+                  setWhatsapp(value);
+                }}
+                maxLength={9}
                 />
               </div>
               <p className="text-xs text-muted-foreground">
@@ -193,34 +176,19 @@ const Register = () => {
 
             <div className="space-y-2">
               <Label htmlFor="password">Senha</Label>
-              <Input 
-                id="password" 
-                type="password" 
-                placeholder="Pelo menos 6 caracteres" 
-                required 
-                value={password} 
-                onChange={(e) => setPassword(e.target.value)}
+              <Input id="password" type="password" placeholder="Pelo menos 6 caracteres" required value={password} onChange={(e) => setPassword(e.target.value)}
                 minLength={6}
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirmar Senha</Label>
-              <Input 
-                id="confirmPassword" 
-                type="password" 
-                placeholder="Repita a senha" 
-                required 
-                value={confirmPassword} 
-                onChange={(e) => setConfirmPassword(e.target.value)}
+              <Input id="confirmPassword" type="password" placeholder="Repita a senha" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
                 minLength={6}
               />
             </div>
 
-            <Button 
-              type="submit" 
-              className="w-full gradient-primary" 
-              disabled={isLoading}
+            <Button type="submit" className="w-full gradient-primary" disabled={isLoading}
             >
               {isLoading ? (
                 <>
@@ -232,7 +200,6 @@ const Register = () => {
               )}
             </Button>
           </form>
-          
           <div className="mt-6 space-y-2">
             <div className="text-xs text-muted-foreground text-center">
               Ao criar a conta, você concorda com nossos{' '}
@@ -241,7 +208,6 @@ const Register = () => {
               <Link to="/privacy" className="underline text-primary">Política de Privacidade</Link>
             </div>
           </div>
-          
           <div className="mt-4 text-center text-sm">
             Já tem uma conta?{' '}
             <Link to="/login" className="underline text-primary">Entre</Link>

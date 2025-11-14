@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import RecentCreations from "@/components/RecentCreations";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import DashboardTutorial from "@/components/DashboardTutorial";
 
 const Dashboard = () => {
   const { profile, user } = useSession();
@@ -19,6 +20,7 @@ const Dashboard = () => {
     musicsGenerated: 0,
     totalCreations: 0,
   });
+  const [showTutorial, setShowTutorial] = useState(false);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -55,6 +57,15 @@ const Dashboard = () => {
 
     fetchStats();
   }, [user]);
+
+  // Check if this is the first login after verification
+  useEffect(() => {
+    const isFirstLogin = localStorage.getItem('firstLoginAfterVerification') === 'true';
+    if (isFirstLogin) {
+      setShowTutorial(true);
+      localStorage.removeItem('firstLoginAfterVerification');
+    }
+  }, []);
 
   const tools = [
     { id: 'generate', title: 'Gerar Imagens', description: 'Crie imagens únicas com IA', icon: Sparkles, color: 'from-purple-500 to-pink-500', link: '/generate' },
@@ -155,6 +166,8 @@ const Dashboard = () => {
           <RecentCreations />
         </main>
       </div>
+
+      {showTutorial && <DashboardTutorial onFinish={() => setShowTutorial(false)} />}
     </div>
   );
 };

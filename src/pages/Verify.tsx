@@ -19,6 +19,7 @@ const Verify = () => {
   const [countdown, setCountdown] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [codeSent, setCodeSent] = useState(false);
+  const [showLoginRedirect, setShowLoginRedirect] = useState(false);
 
   useEffect(() => {
     if (profile?.status === 'verified') {
@@ -36,11 +37,9 @@ const Verify = () => {
 
   const generateAndSendCode = async () => {
     if (!user || !profile) return;
-    
     setIsSendingCode(true);
     try {
       const newCode = Math.floor(100000 + Math.random() * 900000).toString();
-      
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ verification_code: newCode })
@@ -48,8 +47,8 @@ const Verify = () => {
 
       if (updateError) throw updateError;
 
-      // Enviar dados para o webhook
-      const webhookResponse = await fetch('https://n8n.conversio.ao/webhook-test/leds_whatsapp', {
+      // Enviar dados para o webhook de reenvio de código
+      const webhookResponse = await fetch('https://n8n.conversio.ao/webhook-test/reenviar_codigo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -68,7 +67,6 @@ const Verify = () => {
       toast.success('Código enviado!', {
         description: 'Verifique seu WhatsApp para o código de 6 dígitos.',
       });
-      
       setCountdown(60);
       setCodeSent(true);
     } catch (error: any) {
@@ -83,7 +81,6 @@ const Verify = () => {
       setError("O código deve ter 6 dígitos.");
       return;
     }
-    
     setIsVerifying(true);
     setError(null);
 
@@ -107,11 +104,8 @@ const Verify = () => {
 
       // Mostrar mensagem de sucesso
       toast.success("Solicitação de verificação enviada com sucesso!");
-      
-      // Aguardar 5 segundos antes de redirecionar para o login
-      setTimeout(() => {
-        navigate('/login');
-      }, 5000);
+      // Mostrar tela de redirecionamento
+      setShowLoginRedirect(true);
     } catch (error: any) {
       console.error(error);
       setError(error.message || 'Ocorreu um erro inesperado.');
@@ -145,7 +139,20 @@ const Verify = () => {
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {isVerifying ? (
+          {showLoginRedirect ? (
+            <div className="flex flex-col items-center justify-center py-8">
+              <ShieldCheck className="w-16 h-16 text-green-500 mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Solicitação enviada!</h3>
+              <p className="text-sm text-muted-foreground text-center mb-6">
+                Sua solicitação de verificação foi enviada com sucesso. Por favor, faça login para verificar se sua conta foi ativada.
+              </p>
+              <Button onClick={() => navigate('/login')}
+                className="gradient-primary"
+              >
+                Fazer Login
+              </Button>
+            </div>
+          ) : isVerifying ? (
             <div className="flex flex-col items-center justify-center py-8">
               <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
               <h3 className="text-lg font-semibold mb-2">Enviando solicitação...</h3>
@@ -166,7 +173,6 @@ const Verify = () => {
                   </div>
                 </div>
               )}
-              
               {codeSent && (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                   <div className="flex items-center gap-3">
@@ -215,7 +221,6 @@ const Verify = () => {
                   Verificar Conta
                 </Button>
               </div>
-              
               <div className="text-xs text-muted-foreground text-center pt-2">
                 O código é válido por 60 segundos. Clique em "Enviar Código" para reenviar.
               </div>

@@ -18,7 +18,6 @@ const Login = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
     const formattedWhatsapp = `+244${whatsapp.replace(/\s/g, '')}`;
     const dummyEmail = `${formattedWhatsapp}@conversio.studio`;
 
@@ -50,7 +49,7 @@ const Login = () => {
           const isFirstLogin = localStorage.getItem('firstLoginAfterVerification') === 'true';
           if (isFirstLogin) {
             localStorage.removeItem('firstLoginAfterVerification');
-            navigate('/welcome');
+            navigate('/dashboard');
           } else {
             navigate('/dashboard');
           }
@@ -60,7 +59,6 @@ const Login = () => {
           navigate('/verify');
         }
       }
-
     } catch (error: any) {
       toast.error('Erro no Login', {
         description: 'Número de WhatsApp ou senha incorretos.',
