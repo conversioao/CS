@@ -19,7 +19,6 @@ const Verify = () => {
   const [countdown, setCountdown] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [codeSent, setCodeSent] = useState(false);
-  const [showLoginButton, setShowLoginButton] = useState(false);
 
   useEffect(() => {
     if (profile?.status === 'verified') {
@@ -109,9 +108,9 @@ const Verify = () => {
       // Mostrar mensagem de sucesso
       toast.success("Solicitação de verificação enviada com sucesso!");
       
-      // Aguardar 5 segundos antes de mostrar o botão de login
+      // Aguardar 5 segundos antes de redirecionar para o login
       setTimeout(() => {
-        setShowLoginButton(true);
+        navigate('/login');
       }, 5000);
     } catch (error: any) {
       console.error(error);
@@ -153,20 +152,6 @@ const Verify = () => {
               <p className="text-sm text-muted-foreground text-center">
                 Estamos processando sua solicitação de verificação.
               </p>
-            </div>
-          ) : showLoginButton ? (
-            <div className="flex flex-col items-center justify-center py-8">
-              <ShieldCheck className="w-16 h-16 text-green-500 mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Solicitação enviada!</h3>
-              <p className="text-sm text-muted-foreground text-center mb-6">
-                Sua solicitação de verificação foi enviada com sucesso. Por favor, verifique se sua conta foi verificada.
-              </p>
-              <Button 
-                onClick={() => navigate('/login')}
-                className="gradient-primary"
-              >
-                Fazer Login
-              </Button>
             </div>
           ) : (
             <>
