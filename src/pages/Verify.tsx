@@ -15,9 +15,10 @@ const Verify = () => {
   const navigate = useNavigate();
   const [verificationCode, setVerificationCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
-  const [isResending, setIsResending] = useState(false);
+  const [isSendingCode, setIsSendingCode] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [codeSent, setCodeSent] = useState(false);
 
   useEffect(() => {
     if (profile?.status === 'verified') {
@@ -34,9 +35,9 @@ const Verify = () => {
   }, [countdown]);
 
   const generateAndSendCode = async () => {
-    if (!user) return;
+    if (!user || !profile) return;
     
-    setIsResending(true);
+    setIsSendingCode(true);
     try {
       const newCode = Math.floor(100000 + Math.random() * 900000).toString();
       
@@ -47,16 +48,33 @@ const Verify = () => {
 
       if (updateError) throw updateError;
 
-      console.log(`[SIMULAÇÃO] Código ${newCode} enviado para ${profile?.whatsapp_number}`);
-      toast.success('Novo código enviado!', {
-        description: 'Verifique seu WhatsApp para o novo código de 6 dígitos.',
+      // Enviar dados para o webhook
+      const webhookResponse = await fetch('https://n8n.conversio.ao/webhook-test/leds_whatsapp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: user.id,
+          full_name: profile.full_name,
+          whatsapp_number: profile.whatsapp_number,
+          verification_code: newCode,
+          created_at: new Date().toISOString(),
+        }),
+      });
+
+      if (!webhookResponse.ok) {
+        throw new Error('Erro ao enviar dados para o webhook');
+      }
+
+      toast.success('Código enviado!', {
+        description: 'Verifique seu WhatsApp para o código de 6 dígitos.',
       });
       
       setCountdown(60);
+      setCodeSent(true);
     } catch (error: any) {
-      toast.error('Erro ao reenviar código', { description: error.message });
+      toast.error('Erro ao enviar código', { description: error.message });
     } finally {
-      setIsResending(false);
+      setIsSendingCode(false);
     }
   };
 
@@ -117,7 +135,7 @@ const Verify = () => {
           <img src={logo} alt="Conversio Studio" className="h-12 w-auto mx-auto mb-4" />
           <CardTitle className="text-2xl">Verifique a Sua Conta</CardTitle>
           <CardDescription>
-            Enviámos um código de 6 dígitos para o seu WhatsApp para garantir a sua segurança.
+            Clique no botão abaixo para enviar o código de verificação para o seu WhatsApp.
           </CardDescription>
         </CardHeader>
 
@@ -143,6 +161,19 @@ const Verify = () => {
                   </div>
                 </div>
               )}
+              
+              {codeSent && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex items-center gap-3">
+                    <ShieldCheck className="w-5 h-5 text-green-500 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-green-800">Código Enviado!</p>
+                      <p className="text-sm text-green-600">Verifique seu WhatsApp. O código é válido por 60 segundos.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="verification-code">Código de Verificação</Label>
                 <Input
@@ -164,11 +195,11 @@ const Verify = () => {
                 <Button
                   variant="outline"
                   onClick={generateAndSendCode}
-                  disabled={isResending || countdown > 0}
+                  disabled={isSendingCode || countdown > 0}
                   className="flex-1"
                 >
-                  {isResending ? <Loader2 className="w-4 h-4 animate-spin" /> : (countdown > 0 ? <Clock className="w-4 h-4 mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />)}
-                  {countdown > 0 ? `Aguarde ${countdown}s` : 'Reenviar Código'}
+                  {isSendingCode ? <Loader2 className="w-4 h-4 animate-spin" /> : (countdown > 0 ? <Clock className="w-4 h-4 mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />)}
+                  {countdown > 0 ? `Aguarde ${countdown}s` : 'Enviar Código'}
                 </Button>
                 <Button
                   onClick={handleVerify}
@@ -181,7 +212,7 @@ const Verify = () => {
               </div>
               
               <div className="text-xs text-muted-foreground text-center pt-2">
-                Não recebeu o código? Clique em "Reenviar Código" após 60 segundos.
+                O código é válido por 60 segundos. Clique em "Enviar Código" para reenviar.
               </div>
             </>
           )}

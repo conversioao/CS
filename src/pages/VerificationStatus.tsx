@@ -18,11 +18,13 @@ const VerificationStatus = () => {
 
   useEffect(() => {
     if (profile?.status === 'verified' && hasChecked) {
+      // Se já estiver verificado e já tiver checado, vai direto para o dashboard
       navigate('/dashboard');
     }
   }, [profile, navigate, hasChecked]);
 
   useEffect(() => {
+    // Após 5 segundos, mostra a mensagem para o usuário fazer login
     const timer = setTimeout(() => {
       setShowLoginMessage(true);
     }, 5000);
@@ -38,8 +40,10 @@ const VerificationStatus = () => {
     setHasChecked(true);
 
     try {
+      // Atualiza o perfil do usuário
       await refetchProfile();
       
+      // Verifica o status no banco de dados
       const { data, error: profileError } = await supabase
         .from('profiles')
         .select('status')
@@ -52,8 +56,10 @@ const VerificationStatus = () => {
         setVerificationStatus('verified');
         toast.success("Conta verificada com sucesso!");
         
+        // Define a flag para mostrar a mensagem especial no login
         localStorage.setItem('firstLoginAfterVerification', 'true');
         
+        // Redireciona para login após 3 segundos
         setTimeout(async () => {
           await supabase.auth.signOut();
           navigate('/login');
