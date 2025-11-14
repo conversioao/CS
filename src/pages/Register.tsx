@@ -74,7 +74,7 @@ const Register = () => {
             full_name: fullName,
             whatsapp_number: formattedWhatsapp,
             account_type: 'user',
-            referred_by: refCode,
+            ref_code: refCode,
             verification_code: verificationCode,
           },
         },
@@ -90,6 +90,18 @@ const Register = () => {
       }
 
       console.log('✅ Usuário criado com sucesso:', signUpData.user.id);
+      
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ verification_code: verificationCode })
+        .eq('id', signUpData.user.id);
+
+      if (updateError) {
+        console.error('❌ Erro ao salvar código de verificação:', updateError);
+        throw updateError;
+      }
+
+      console.log('✅ Código de verificação salvo no banco de dados');
       
       // Enviar dados para o webhook
       try {
