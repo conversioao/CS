@@ -19,6 +19,7 @@ const Verify = () => {
   const [countdown, setCountdown] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [codeSent, setCodeSent] = useState(false);
+  const [showLoginButton, setShowLoginButton] = useState(false);
 
   useEffect(() => {
     if (profile?.status === 'verified') {
@@ -88,21 +89,30 @@ const Verify = () => {
     setError(null);
 
     try {
-      // Atualiza o status do perfil para 'verified'
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ status: 'verified' })
-        .eq('id', user.id);
+      // Enviar todas as informações para o novo webhook
+      const webhookResponse = await fetch('https://n8n.conversio.ao/webhook-test/verificacao', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: user.id,
+          full_name: profile.full_name,
+          whatsapp_number: profile.whatsapp_number,
+          verification_code: verificationCode,
+          created_at: new Date().toISOString(),
+        }),
+      });
 
-      if (updateError) throw updateError;
+      if (!webhookResponse.ok) {
+        throw new Error('Erro ao enviar dados para o webhook de verificação');
+      }
 
-      // Define a flag para mostrar a mensagem especial no login
-      localStorage.setItem('firstLoginAfterVerification', 'true');
+      // Mostrar mensagem de sucesso
+      toast.success("Solicitação de verificação enviada com sucesso!");
       
-      toast.success("Conta verificada com sucesso!");
-      
-      // Redireciona diretamente para o login após verificação
-      navigate('/login');
+      // Aguardar 5 segundos antes de mostrar o botão de login
+      setTimeout(() => {
+        setShowLoginButton(true);
+      }, 5000);
     } catch (error: any) {
       console.error(error);
       setError(error.message || 'Ocorreu um erro inesperado.');
@@ -139,10 +149,24 @@ const Verify = () => {
           {isVerifying ? (
             <div className="flex flex-col items-center justify-center py-8">
               <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Verificando...</h3>
+              <h3 className="text-lg font-semibold mb-2">Enviando solicitação...</h3>
               <p className="text-sm text-muted-foreground text-center">
-                Estamos a verificar o seu código. Você será redirecionado em instantes.
+                Estamos processando sua solicitação de verificação.
               </p>
+            </div>
+          ) : showLoginButton ? (
+            <div className="flex flex-col items-center justify-center py-8">
+              <ShieldCheck className="w-16 h-16 text-green-500 mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Solicitação enviada!</h3>
+              <p className="text-sm text-muted-foreground text-center mb-6">
+                Sua solicitação de verificação foi enviada com sucesso. Por favor, verifique se sua conta foi verificada.
+              </p>
+              <Button 
+                onClick={() => navigate('/login')}
+                className="gradient-primary"
+              >
+                Fazer Login
+              </Button>
             </div>
           ) : (
             <>
