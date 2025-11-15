@@ -17,6 +17,7 @@ import CameraCaptureDialog from "@/components/CameraCaptureDialog";
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import { useSession } from "@/contexts/SessionContext";
 
 interface GeneratedImage {
   url: string;
@@ -43,6 +44,7 @@ const Generate = () => {
   const [modelo, setModelo] = useState("");
   const [models, setModels] = useState<Model[]>([]);
   const [creditCost, setCreditCost] = useState(1);
+  const [selectedModel, setSelectedModel] = useState<"Nano Banana" | "Seedream 4.0">("Nano Banana");
   
   const [description, setDescription] = useState("");
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
@@ -55,6 +57,7 @@ const Generate = () => {
   const [timer, setTimer] = useState(0);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
+  const { user, profile, refetchProfile } = useSession();
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
@@ -129,7 +132,18 @@ const Generate = () => {
       }
       
       toast.info("A gerar imagens...", { description: `Isso pode levar até ${quantity * 30} segundos.` });
-      const response = await fetch('https://n8n.conversio.ao/webhook-test/Gerar_Modelos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image_url: imageUrl, description, quantidade: quantity.toString(), proporcao: aspectRatio, modelo }) });
+      const response = await fetch('https://n8n.conversio.ao/webhook-test/Gerar_Modelos', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ 
+          image_url: imageUrl, 
+          description, 
+          quantidade: quantity.toString(), 
+          proporcao: aspectRatio, 
+          modelo,
+          model_type: selectedModel // Add the selected model type
+        }) 
+      });
       if (!response.ok) throw new Error('Erro ao gerar imagem');
       const webhookResponse = await response.json();
       if (webhookResponse && Array.isArray(webhookResponse)) {
@@ -139,6 +153,43 @@ const Generate = () => {
           const newImages: GeneratedImage[] = storedUrls.map((url, index) => ({ url, id: `${Date.now()}-${index}` }));
           setGeneratedImages(prev => [...newImages, ...prev]);
           toast.success("Sucesso!", { description: `${newImages.length} imagem(s) gerada(s) com sucesso.` });
+          
+          // Deduct credits from user's account
+          const totalCost = creditCost * quantity;
+          if (user && profile) {
+            const { error: updateError } = await supabase
+              .from('profiles')
+              .update({ credits: profile.credits - totalCost })
+              .eq('id', user.id);
+            
+            if (updateError) {
+              console.error('Error updating credits:', updateError);
+              toast.error("Erro ao atualizar créditos.");
+            } else {
+              // Update the local profile state
+              refetchProfile();
+            }
+            
+            // Record the transaction
+            const { error: transactionError } = await supabase
+              .from('credit_transactions')
+              .insert({
+                user_id: user.id,
+                transaction_type: 'generation',
+                amount: -totalCost,
+                description: `${quantity} imagem(ns) gerada(s) com ${modelo}`,
+                related_data: {
+                  modelo,
+                  quantidade: quantity,
+                  proporcao: aspectRatio,
+                  model_type: selectedModel
+                }
+              });
+            
+            if (transactionError) {
+              console.error('Error recording transaction:', transactionError);
+            }
+          }
         }
       }
     } catch (error) {
@@ -169,6 +220,39 @@ const Generate = () => {
           toast.success("Sucesso!", { description: "Imagem editada com sucesso." });
           setImageToEdit(null);
           setEditPrompt('');
+          
+          // Deduct credits for editing (1 credit per edit)
+          if (user && profile) {
+            const { error: updateError } = await supabase
+              .from('profiles')
+              .update({ credits: profile.credits - 1 })
+              .eq('id', user.id);
+            
+            if (updateError) {
+              console.error('Error updating credits:', updateError);
+              toast.error("Erro ao atualizar créditos.");
+            } else {
+              // Update the local profile state
+              refetchProfile();
+            }
+            
+            // Record the transaction
+            const { error: transactionError } = await supabase
+              .from('credit_transactions')
+              .insert({
+                user_id: user.id,
+                transaction_type: 'edit',
+                amount: -1,
+                description: 'Edição de imagem',
+                related_data: {
+                  original_image_id: imageToEdit.id
+                }
+              });
+            
+            if (transactionError) {
+              console.error('Error recording transaction:', transactionError);
+            }
+          }
         }
       }
     } catch (error) {
@@ -221,14 +305,28 @@ const Generate = () => {
               <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
               <span>Voltar ao Dashboard</span>
             </Link>
-            <motion.div 
-              className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Sparkles className="w-4 h-4 text-primary" />
-              <span className="text-sm font-semibold">{creditCost} crédito(s) por imagem</span>
-            </motion.div>
+            <div className="flex items-center gap-2">
+              <div className="flex gap-2">
+                <Button 
+                  variant={selectedModel === "Nano Banana" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedModel("Nano Banana")}
+                >
+                  Nano Banana
+                </Button>
+                <Button 
+                  variant={selectedModel === "Seedream 4.0" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedModel("Seedream 4.0")}
+                >
+                  Seedream 4.0
+                </Button>
+              </div>
+              <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full">
+                <Sparkles className="w-4 h-4 text-primary" />
+                <span className="text-sm font-semibold">{creditCost * quantity} crédito(s)</span>
+              </div>
+            </div>
           </div>
 
           <div className="flex-1 flex flex-col gap-6 min-h-0">

@@ -10,7 +10,6 @@ const navLinks = [
   { to: "/dashboard", icon: Home, label: "Home" },
   { to: "/models", icon: Grid3x3, label: "Modelos" },
   { to: "/gallery", icon: Image, label: "Galeria" },
-  { to: "/community", icon: Users, label: "Comunidade" },
   { to: "/credits", icon: CreditCard, label: "Créditos" },
   { to: "/statistics", icon: TrendingUp, label: "Estatísticas" },
 ];
