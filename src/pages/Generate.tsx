@@ -16,18 +16,18 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import CameraCaptureDialog from "@/components/CameraCaptureDialog";
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
 
 interface GeneratedImage {
   url: string;
   id: string;
 }
 
-const models = [
-  { value: "Conversio Studio — Persona", label: "Persona V.1.0" },
-  { value: "Conversio Studio — Pulse", label: "Pulse V.1.0" },
-  { value: "Conversio Studio — StyleAI", label: "StyleAI V.1.0" },
-  { value: "Conversio Studio — Vision", label: "Vision V.1.0" },
-];
+interface Model {
+  id: string;
+  name: string;
+  credit_cost: number;
+}
 
 const aspectRatios = [
   { value: "1:1", label: "1:1", icon: Square },
@@ -40,7 +40,9 @@ const Generate = () => {
   const [searchParams] = useSearchParams();
   const [quantity, setQuantity] = useState(1);
   const [aspectRatio, setAspectRatio] = useState("1:1");
-  const [modelo, setModelo] = useState(models[0].value);
+  const [modelo, setModelo] = useState("");
+  const [models, setModels] = useState<Model[]>([]);
+  const [creditCost, setCreditCost] = useState(1);
   
   const [description, setDescription] = useState("");
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
@@ -72,9 +74,34 @@ const Generate = () => {
   }, [isLoading]);
 
   useEffect(() => {
-    const modelParam = searchParams.get('model');
-    if (modelParam) setModelo(modelParam);
-  }, [searchParams]);
+    const fetchModels = async () => {
+      const { data, error } = await supabase
+        .from('models_and_tools')
+        .select('id, name, credit_cost')
+        .eq('is_active', true)
+        .eq('category', 'model')
+        .order('name');
+
+      if (error) {
+        toast.error("Erro ao carregar modelos.");
+      } else {
+        setModels(data || []);
+        if (data && data.length > 0) {
+          setModelo(data[0].name);
+          setCreditCost(data[0].credit_cost);
+        }
+      }
+    };
+
+    fetchModels();
+  }, []);
+
+  useEffect(() => {
+    const selectedModel = models.find(m => m.name === modelo);
+    if (selectedModel) {
+      setCreditCost(selectedModel.credit_cost);
+    }
+  }, [modelo, models]);
 
   const handleImageUpload = (file: File) => {
     setUploadedImage(file);
@@ -200,7 +227,7 @@ const Generate = () => {
               whileTap={{ scale: 0.95 }}
             >
               <Sparkles className="w-4 h-4 text-primary" />
-              <span className="text-sm font-semibold">1 crédito por imagem</span>
+              <span className="text-sm font-semibold">{creditCost} crédito(s) por imagem</span>
             </motion.div>
           </div>
 
@@ -363,7 +390,7 @@ const Generate = () => {
                   </motion.div>
                 )}
                 <Textarea id="description" placeholder={uploadedImageUrl ? "Descreva o que quer alterar ou adicionar..." : "Descreva a imagem que deseja criar..."} value={description} onChange={(e) => setDescription(e.target.value)} disabled={isLoading} className="flex-1 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 resize-none text-base py-2.5 mx-2" rows={1} />
-                <Popover><PopoverTrigger asChild><Button variant="ghost" size="icon" className="rounded-full" disabled={isLoading}><SlidersHorizontal className="w-6 h-6" /></Button></PopoverTrigger><PopoverContent className="w-80 mb-2"><div className="grid gap-4"><div className="space-y-2"><h4 className="font-medium">Configurações</h4><p className="text-sm text-muted-foreground">Ajuste os parâmetros da geração.</p></div><div className="grid gap-4"><div className="grid grid-cols-3 items-center gap-4"><Label htmlFor="modelo">Modelo</Label><Select value={modelo} onValueChange={setModelo}><SelectTrigger id="modelo" className="col-span-2 h-8"><SelectValue /></SelectTrigger><SelectContent>{models.map(m => (<SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>))}</SelectContent></Select></div><div className="grid grid-cols-3 items-center gap-4"><Label htmlFor="quantity">Quantidade</Label><Input id="quantity" type="number" min="1" max="4" value={quantity} onChange={(e) => setQuantity(Math.min(4, Math.max(1, parseInt(e.target.value) || 1)))} className="col-span-2 h-8" /></div><div><Label className="text-sm font-medium">Proporção</Label><div className="flex items-center gap-2 mt-2">{aspectRatios.map(ar => { const Icon = ar.icon; return (<Button key={ar.value} variant={aspectRatio === ar.value ? "default" : "outline"} size="icon" onClick={() => setAspectRatio(ar.value)} className="h-12 w-12 flex-col gap-1"><Icon className="w-5 h-5" /><span className="text-xs">{ar.value}</span></Button>);})}</div></div></div></div></PopoverContent></Popover>
+                <Popover><PopoverTrigger asChild><Button variant="ghost" size="icon" className="rounded-full" disabled={isLoading}><SlidersHorizontal className="w-6 h-6" /></Button></PopoverTrigger><PopoverContent className="w-80 mb-2"><div className="grid gap-4"><div className="space-y-2"><h4 className="font-medium">Configurações</h4><p className="text-sm text-muted-foreground">Ajuste os parâmetros da geração.</p></div><div className="grid gap-4"><div className="grid grid-cols-3 items-center gap-4"><Label htmlFor="modelo">Modelo</Label><Select value={modelo} onValueChange={setModelo}><SelectTrigger id="modelo" className="col-span-2 h-8"><SelectValue /></SelectTrigger><SelectContent>{models.map(m => (<SelectItem key={m.id} value={m.name}>{m.name}</SelectItem>))}</SelectContent></Select></div><div className="grid grid-cols-3 items-center gap-4"><Label htmlFor="quantity">Quantidade</Label><Input id="quantity" type="number" min="1" max="4" value={quantity} onChange={(e) => setQuantity(Math.min(4, Math.max(1, parseInt(e.target.value) || 1)))} className="col-span-2 h-8" /></div><div><Label className="text-sm font-medium">Proporção</Label><div className="flex items-center gap-2 mt-2">{aspectRatios.map(ar => { const Icon = ar.icon; return (<Button key={ar.value} variant={aspectRatio === ar.value ? "default" : "outline"} size="icon" onClick={() => setAspectRatio(ar.value)} className="h-12 w-12 flex-col gap-1"><Icon className="w-5 h-5" /><span className="text-xs">{ar.value}</span></Button>);})}</div></div></div></div></PopoverContent></Popover>
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Button size="icon" className="rounded-full w-10 h-10 gradient-primary glow-effect" onClick={handleGenerate} disabled={isLoading || (!uploadedImageUrl && !description)}>{isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}</Button>
                 </motion.div>

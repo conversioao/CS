@@ -38,7 +38,7 @@ const Models = () => {
         .from('models_and_tools')
         .select('*')
         .eq('is_active', true)
-        .eq('category', 'model') // Only fetch models, not tools
+        .eq('category', 'model')
         .order('name');
 
       if (error) {
@@ -50,7 +50,7 @@ const Models = () => {
     };
 
     fetchModels();
-  }, []);
+  }, []); // Empty dependency array to prevent infinite loop
 
   const getModelRoute = (model: ModelOrTool) => {
     switch (model.name) {

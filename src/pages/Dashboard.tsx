@@ -108,28 +108,6 @@ const Dashboard = () => {
             </Button>
           </div>
 
-          {/* Link to Statistics page */}
-          <div className="mb-8">
-            <Card className="bg-card/50 backdrop-blur-xl border-border/50 hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 overflow-hidden group">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                      <TrendingUp className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold">Estatísticas</h3>
-                      <p className="text-sm text-muted-foreground">Veja seu desempenho e uso</p>
-                    </div>
-                  </div>
-                  <Button variant="outline" size="sm" onClick={() => navigate('/statistics')}>
-                    Ver Detalhes
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
           {/* Ferramentas */}
           <div className="mb-8">
             <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">

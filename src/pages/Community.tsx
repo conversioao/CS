@@ -44,7 +44,7 @@ const Community = () => {
 
   useEffect(() => {
     fetchSubmissions();
-  }, []);
+  }, [user]); // Only re-run when user changes
 
   const fetchSubmissions = async () => {
     setLoading(true);

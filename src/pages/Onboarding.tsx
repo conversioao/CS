@@ -30,23 +30,23 @@ const Onboarding = () => {
     });
 
     // Redirect after all steps are complete
-    const redirectTimer = setTimeout(() => {
+    const redirectTimer = setTimeout(async () => {
       // Mark onboarding as completed in the database
       if (user) {
-        supabase
-          .from('profiles')
-          .update({ onboarding_completed: true })
-          .eq('id', user.id)
-          .then(() => {
-            navigate('/dashboard');
-          })
-          .catch((error) => {
+        try {
+          const { error } = await supabase
+            .from('profiles')
+            .update({ onboarding_completed: true })
+            .eq('id', user.id);
+          
+          if (error) {
             console.error('Error updating onboarding status:', error);
-            navigate('/dashboard');
-          });
-      } else {
-        navigate('/dashboard');
+          }
+        } catch (error) {
+          console.error('Error updating onboarding status:', error);
+        }
       }
+      navigate('/dashboard');
     }, totalDuration);
 
     return () => {

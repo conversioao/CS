@@ -72,7 +72,7 @@ const Gallery = () => {
     };
 
     fetchUserMedia();
-  }, [user, toast]);
+  }, [user]); // Only re-run when user changes
 
   const filteredMedia = userMedia.filter(item => {
     if (activeCategory === "Tudo") return true;
