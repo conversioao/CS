@@ -29,7 +29,7 @@ const Login = () => {
         // Check user profile for account type and status
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('account_type, status')
+          .select('account_type, status, onboarding_completed')
           .eq('id', loginData.user.id)
           .single();
 
@@ -49,7 +49,12 @@ const Login = () => {
           const isFirstLogin = localStorage.getItem('firstLoginAfterVerification') === 'true';
           if (isFirstLogin) {
             localStorage.removeItem('firstLoginAfterVerification');
-            navigate('/dashboard');
+            // Check if onboarding has been completed
+            if (profile.onboarding_completed === false) {
+              navigate('/onboarding');
+            } else {
+              navigate('/dashboard');
+            }
           } else {
             navigate('/dashboard');
           }

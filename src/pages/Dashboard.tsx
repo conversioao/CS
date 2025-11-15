@@ -63,11 +63,16 @@ const Dashboard = () => {
   useEffect(() => {
     const isFirstLogin = localStorage.getItem('firstLoginAfterVerification') === 'true';
     if (isFirstLogin) {
-      setShowTutorial(true);
-      setShowWelcomePopup(true);
-      localStorage.removeItem('firstLoginAfterVerification');
+      // Check if user has completed onboarding
+      if (profile?.onboarding_completed === false) {
+        navigate('/onboarding');
+      } else {
+        setShowTutorial(true);
+        setShowWelcomePopup(true);
+        localStorage.removeItem('firstLoginAfterVerification');
+      }
     }
-  }, []);
+  }, [profile, navigate]);
 
   const tools = [
     { id: 'generate', title: 'Gerar Imagens', description: 'Crie imagens únicas com IA', icon: Sparkles, color: 'from-purple-500 to-pink-500', link: '/generate' },

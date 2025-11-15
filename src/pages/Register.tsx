@@ -57,6 +57,7 @@ const Register = () => {
     setIsLoading(true);
 
     const formattedWhatsapp = `+244${whatsappDigits}`;
+    const whatsappWithoutPlus = whatsappDigits; // Save without the +
     const dummyEmail = `${formattedWhatsapp}@conversio.studio`;
     const verificationCode = generateVerificationCode();
 
@@ -75,6 +76,7 @@ const Register = () => {
             account_type: 'user',
             ref_code: refCode,
             verification_code: verificationCode,
+            onboarding_completed: false, // Flag to track onboarding status
           },
         },
       });
@@ -91,7 +93,11 @@ const Register = () => {
       console.log('✅ Usuário criado com sucesso:', signUpData.user.id);
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ verification_code: verificationCode })
+        .update({ 
+          verification_code: verificationCode,
+          whatsapp_number: whatsappWithoutPlus, // Save without the +
+          onboarding_completed: false // Initialize onboarding flag
+        })
         .eq('id', signUpData.user.id);
 
       if (updateError) {

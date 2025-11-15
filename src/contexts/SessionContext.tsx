@@ -12,7 +12,8 @@ export interface Profile {
   referral_code: string | null;
   status: string;
   whatsapp_number: string | null;
-  verification_code: string | null; // Adicionando o campo de código de verificação
+  verification_code: string | null;
+  onboarding_completed: boolean; // Add this property
 }
 
 interface SessionContextValue {

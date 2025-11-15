@@ -2,8 +2,11 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, Sparkles, ShieldCheck } from 'lucide-react';
 import logo from '@/assets/logo.png';
+import { supabase } from '@/integrations/supabase/client';
+import { useSession } from '@/contexts/SessionContext';
 
 const Onboarding = () => {
+  const { user } = useSession();
   const navigate = useNavigate();
   const [isVisible, setIsVisible] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
@@ -28,14 +31,29 @@ const Onboarding = () => {
 
     // Redirect after all steps are complete
     const redirectTimer = setTimeout(() => {
-      navigate('/dashboard');
+      // Mark onboarding as completed in the database
+      if (user) {
+        supabase
+          .from('profiles')
+          .update({ onboarding_completed: true })
+          .eq('id', user.id)
+          .then(() => {
+            navigate('/dashboard');
+          })
+          .catch((error) => {
+            console.error('Error updating onboarding status:', error);
+            navigate('/dashboard');
+          });
+      } else {
+        navigate('/dashboard');
+      }
     }, totalDuration);
 
     return () => {
       clearTimeout(stepTimer);
       clearTimeout(redirectTimer);
     };
-  }, [navigate]);
+  }, [navigate, user]);
 
   return (
     <div className={`fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
@@ -53,7 +71,6 @@ const Onboarding = () => {
         <h1 className="text-2xl md:text-3xl font-bold mb-3 gradient-text">
           Bem-vindo ao Conversio Studio!
         </h1>
-        
         <div className="space-y-4">
           <div className="flex justify-center">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-500/10 border border-green-500/20 rounded-full">
@@ -61,11 +78,9 @@ const Onboarding = () => {
               <span className="text-sm font-medium text-green-500">Conta Verificada</span>
             </div>
           </div>
-          
           <p className="text-lg font-medium text-muted-foreground">
             {currentStep < steps.length ? steps[currentStep].message : 'Preparando seu ambiente...'}
           </p>
-          
           <div className="flex justify-center">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
