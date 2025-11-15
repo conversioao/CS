@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShieldCheck, RefreshCw, Clock, Loader2, AlertCircle } from "lucide-react";
+import { ShieldCheck, Loader2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
 import { useNavigate } from "react-router-dom";
@@ -15,10 +15,7 @@ const Verify = () => {
   const navigate = useNavigate();
   const [verificationCode, setVerificationCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
-  const [isSendingCode, setIsSendingCode] = useState(false);
-  const [countdown, setCountdown] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [codeSent, setCodeSent] = useState(false);
   const [showLoginRedirect, setShowLoginRedirect] = useState(false);
 
   useEffect(() => {
@@ -27,54 +24,6 @@ const Verify = () => {
       navigate('/dashboard');
     }
   }, [profile, navigate]);
-
-  useEffect(() => {
-    if (countdown > 0) {
-      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [countdown]);
-
-  const generateAndSendCode = async () => {
-    if (!user || !profile) return;
-    setIsSendingCode(true);
-    try {
-      const newCode = Math.floor(100000 + Math.random() * 900000).toString();
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ verification_code: newCode })
-        .eq('id', user.id);
-
-      if (updateError) throw updateError;
-
-      // Enviar dados para o webhook de reenvio de código
-      const webhookResponse = await fetch('https://n8n.conversio.ao/webhook-test/reenviar_codigo', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: user.id,
-          full_name: profile.full_name,
-          whatsapp_number: profile.whatsapp_number,
-          verification_code: newCode,
-          created_at: new Date().toISOString(),
-        }),
-      });
-
-      if (!webhookResponse.ok) {
-        throw new Error('Erro ao enviar dados para o webhook');
-      }
-
-      toast.success('Código enviado!', {
-        description: 'Verifique seu WhatsApp para o código de 6 dígitos.',
-      });
-      setCountdown(60);
-      setCodeSent(true);
-    } catch (error: any) {
-      toast.error('Erro ao enviar código', { description: error.message });
-    } finally {
-      setIsSendingCode(false);
-    }
-  };
 
   const handleVerify = async () => {
     if (!user || verificationCode.length !== 6) {
@@ -134,7 +83,7 @@ const Verify = () => {
           <img src={logo} alt="Conversio Studio" className="h-12 w-auto mx-auto mb-4" />
           <CardTitle className="text-2xl">Verifique a Sua Conta</CardTitle>
           <CardDescription>
-            Clique no botão abaixo para enviar o código de verificação para o seu WhatsApp.
+            Insira o código de verificação que foi enviado para o seu WhatsApp.
           </CardDescription>
         </CardHeader>
 
@@ -173,17 +122,6 @@ const Verify = () => {
                   </div>
                 </div>
               )}
-              {codeSent && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <div className="flex items-center gap-3">
-                    <ShieldCheck className="w-5 h-5 text-green-500 flex-shrink-0" />
-                    <div>
-                      <p className="font-medium text-green-800">Código Enviado!</p>
-                      <p className="text-sm text-green-600">Verifique seu WhatsApp. O código é válido por 60 segundos.</p>
-                    </div>
-                  </div>
-                </div>
-              )}
 
               <div className="space-y-2">
                 <Label htmlFor="verification-code">Código de Verificação</Label>
@@ -204,15 +142,6 @@ const Verify = () => {
 
               <div className="flex flex-col sm:flex-row gap-2">
                 <Button
-                  variant="outline"
-                  onClick={generateAndSendCode}
-                  disabled={isSendingCode || countdown > 0}
-                  className="flex-1"
-                >
-                  {isSendingCode ? <Loader2 className="w-4 h-4 animate-spin" /> : (countdown > 0 ? <Clock className="w-4 h-4 mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />)}
-                  {countdown > 0 ? `Aguarde ${countdown}s` : 'Enviar Código'}
-                </Button>
-                <Button
                   onClick={handleVerify}
                   disabled={isVerifying || verificationCode.length !== 6}
                   className="flex-1 gradient-primary"
@@ -222,7 +151,7 @@ const Verify = () => {
                 </Button>
               </div>
               <div className="text-xs text-muted-foreground text-center pt-2">
-                O código é válido por 60 segundos. Clique em "Enviar Código" para reenviar.
+                O código foi enviado para o seu WhatsApp. Ele é válido por 60 segundos.
               </div>
             </>
           )}

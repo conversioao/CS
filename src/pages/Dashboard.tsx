@@ -21,6 +21,7 @@ const Dashboard = () => {
     totalCreations: 0,
   });
   const [showTutorial, setShowTutorial] = useState(false);
+  const [showWelcomePopup, setShowWelcomePopup] = useState(false);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -63,6 +64,7 @@ const Dashboard = () => {
     const isFirstLogin = localStorage.getItem('firstLoginAfterVerification') === 'true';
     if (isFirstLogin) {
       setShowTutorial(true);
+      setShowWelcomePopup(true);
       localStorage.removeItem('firstLoginAfterVerification');
     }
   }, []);
@@ -168,6 +170,47 @@ const Dashboard = () => {
       </div>
 
       {showTutorial && <DashboardTutorial onFinish={() => setShowTutorial(false)} />}
+      
+      {showWelcomePopup && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+          <div className="bg-card border border-primary/30 rounded-2xl shadow-2xl shadow-primary/20 p-8 max-w-md w-full text-center animate-scale-in">
+            <div className="mb-6 flex justify-center">
+              <div className="relative">
+                <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping"></div>
+                <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg">
+                  <Sparkles className="w-10 h-10 text-white" />
+                </div>
+              </div>
+            </div>
+            
+            <h1 className="text-2xl md:text-3xl font-bold mb-3 gradient-text">
+              Bem-vindo ao Conversio Studio!
+            </h1>
+            
+            <div className="space-y-4">
+              <div className="flex justify-center">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-500/10 border border-green-500/20 rounded-full">
+                  <Sparkles className="w-4 h-4 text-green-500" />
+                  <span className="text-sm font-medium text-green-500">100 Créditos Grátis</span>
+                </div>
+              </div>
+              
+              <p className="text-lg font-medium text-muted-foreground">
+                Você recebeu 100 créditos para experimentar todas as nossas ferramentas de IA.
+              </p>
+            </div>
+
+            <div className="mt-8">
+              <Button 
+                className="gradient-primary"
+                onClick={() => setShowWelcomePopup(false)}
+              >
+                Começar a Criar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -127,6 +127,9 @@ const Register = () => {
         // Não bloqueia o cadastro se o webhook falhar
       }
 
+      // Set flag for first login after verification
+      localStorage.setItem('firstLoginAfterVerification', 'true');
+      
       toast.success('Conta criada com sucesso! Por favor, verifique a sua conta.');
       navigate('/verify');
     } catch (error: any) {

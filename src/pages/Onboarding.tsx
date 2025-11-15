@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2, Sparkles, ShieldCheck } from 'lucide-react';
 import logo from '@/assets/logo.png';
 
 const Onboarding = () => {
@@ -55,6 +55,13 @@ const Onboarding = () => {
         </h1>
         
         <div className="space-y-4">
+          <div className="flex justify-center">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-500/10 border border-green-500/20 rounded-full">
+              <ShieldCheck className="w-4 h-4 text-green-500" />
+              <span className="text-sm font-medium text-green-500">Conta Verificada</span>
+            </div>
+          </div>
+          
           <p className="text-lg font-medium text-muted-foreground">
             {currentStep < steps.length ? steps[currentStep].message : 'Preparando seu ambiente...'}
           </p>
