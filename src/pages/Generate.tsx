@@ -78,16 +78,16 @@ const Generate = () => {
   useEffect(() => {
     const fetchModels = async () => {
       if (!user) return;
-      const { data, error } = await supabase
-        .from('models_and_tools')
-        .select('id, name, credit_cost')
-        .eq('is_active', true)
-        .eq('category', 'model')
-        .order('name');
+      try {
+        const { data, error } = await supabase
+          .from('models_and_tools')
+          .select('id, name, credit_cost')
+          .eq('is_active', true)
+          .eq('category', 'model')
+          .order('name');
 
-      if (error) {
-        toast.error("Erro ao carregar modelos.");
-      } else {
+        if (error) throw error;
+
         setModels(data || []);
         if (data && data.length > 0) {
           const initialModelName = searchParams.get('model') || data[0].name;
@@ -95,6 +95,11 @@ const Generate = () => {
           setModelo(initialModel.name);
           setCreditCost(initialModel.credit_cost);
         }
+      } catch (error) {
+        console.error("Failed to fetch models:", error);
+        toast.error("Falha ao carregar os modelos de IA.", {
+          description: "Por favor, tente recarregar a página."
+        });
       }
     };
 

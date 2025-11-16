@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -32,64 +32,76 @@ export const SessionContextProvider = ({ children }: { children: React.ReactNode
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfile = async (user: User) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single();
+  const fetchProfile = useCallback(async (userToFetch: User) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userToFetch.id)
+        .single();
 
-    if (error) {
-      console.error('Error fetching profile:', error);
+      if (error) {
+        console.error('Error fetching profile:', error);
+        setProfile(null);
+      } else {
+        setProfile(data);
+      }
+    } catch (e) {
+      console.error('Catastrophic error fetching profile:', e);
       setProfile(null);
-    } else {
-      setProfile(data);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    // Fetch the initial session only once
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-      if (currentUser) {
-        await fetchProfile(currentUser);
+    let isMounted = true;
+
+    const getInitialSession = async () => {
+      const { data: { session: initialSession } } = await supabase.auth.getSession();
+      if (isMounted) {
+        setSession(initialSession);
+        const currentUser = initialSession?.user ?? null;
+        setUser(currentUser);
+        if (currentUser) {
+          await fetchProfile(currentUser);
+        }
+        setLoading(false);
       }
-      setLoading(false); // Initial load is complete
-    });
+    };
 
-    // Listen for subsequent auth changes
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setSession(session);
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
+    getInitialSession();
 
-      if (currentUser) {
-        await fetchProfile(currentUser);
-      } else {
-        setProfile(null);
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+      if (isMounted) {
+        setSession(newSession);
+        const currentUser = newSession?.user ?? null;
+        setUser(currentUser);
+        if (currentUser) {
+          await fetchProfile(currentUser);
+        } else {
+          setProfile(null);
+        }
       }
     });
 
     return () => {
+      isMounted = false;
       authListener.subscription.unsubscribe();
     };
-  }, []);
+  }, [fetchProfile]);
 
-  const refetchProfile = async () => {
+  const refetchProfile = useCallback(async () => {
     if (user) {
       await fetchProfile(user);
     }
-  };
+  }, [user, fetchProfile]);
 
-  const value = {
+  const value = useMemo(() => ({
     session,
     user,
     profile,
     loading,
     refetchProfile,
-  };
+  }), [session, user, profile, loading, refetchProfile]);
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 };
