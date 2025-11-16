@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Link } from "react-router-dom";
 
 const monthlyRevenue = [
   { name: 'Jan', revenue: 4000 }, { name: 'Fev', revenue: 3000 },
@@ -88,7 +89,11 @@ const AdminDashboard = () => {
               <TableBody>
                 {recentTransactions.map(tx => (
                   <TableRow key={tx.id}>
-                    <TableCell>{tx.profiles?.full_name || 'N/A'}</TableCell>
+                    <TableCell>
+                      <Link to={`/admin/users/${tx.id}`} className="hover:text-primary transition-colors">
+                        {tx.profiles?.full_name || 'N/A'}
+                      </Link>
+                    </TableCell>
                     <TableCell><Badge variant={tx.status === 'approved' ? 'default' : tx.status === 'pending' ? 'secondary' : 'destructive'}>{tx.status}</Badge></TableCell>
                     <TableCell className="text-right">{tx.amount.toLocaleString('pt-AO')} Kzs</TableCell>
                   </TableRow>

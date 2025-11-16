@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Link } from "react-router-dom";
 
 interface Payment {
   id: string;
@@ -112,7 +113,11 @@ const AdminPayments = () => {
                 <TableBody>
                   {payments.map(p => (
                     <TableRow key={p.id} className="border-border/50 hover:bg-muted/20">
-                      <TableCell>{p.profiles?.full_name || 'N/A'}</TableCell>
+                      <TableCell>
+                        <Link to={`/admin/users/${p.user_id}`} className="hover:text-primary transition-colors">
+                          {p.profiles?.full_name || 'N/A'}
+                        </Link>
+                      </TableCell>
                       <TableCell>{p.credit_packages?.name || 'N/A'}</TableCell>
                       <TableCell>{p.amount.toLocaleString('pt-AO')} Kzs</TableCell>
                       <TableCell><Button variant="outline" size="sm" asChild><a href={p.proof_url} target="_blank" rel="noopener noreferrer"><FileText className="w-4 h-4 mr-2" />Ver</a></Button></TableCell>

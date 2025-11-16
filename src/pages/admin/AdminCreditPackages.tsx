@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { PlusCircle, Edit, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { Link } from "react-router-dom";
 
 interface CreditPackage {
   id?: string;

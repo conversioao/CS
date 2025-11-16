@@ -118,6 +118,13 @@ const Generate = () => {
       toast.error("Faltam dados", { description: "Por favor, envie uma imagem ou escreva uma descrição." });
       return;
     }
+    
+    // Check if user has enough credits
+    if (user && profile && profile.credits < creditCost * quantity) {
+      toast.error("Créditos insuficientes", { description: "Por favor, compre mais créditos para continuar." });
+      return;
+    }
+
     setIsLoading(true);
     try {
       let imageUrl = uploadedImageUrl || '';

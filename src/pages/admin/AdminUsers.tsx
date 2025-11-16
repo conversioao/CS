@@ -4,13 +4,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { MoreHorizontal, Search, Loader2, PlusCircle, Trash2, Edit } from "lucide-react";
+import { MoreHorizontal, Search, Loader2, PlusCircle, Trash2, Edit, Eye } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Link } from "react-router-dom";
 
 interface UserProfile {
   id: string;
@@ -115,17 +116,42 @@ const AdminUsers = () => {
                 <TableBody>
                   {users.map(user => (
                     <TableRow key={user.id} className="border-border/50 hover:bg-muted/20">
-                      <TableCell><div className="flex items-center gap-3"><img src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.full_name}`} alt={user.full_name} className="w-8 h-8 rounded-full" /><div><div className="font-medium">{user.full_name}</div><div className="text-sm text-muted-foreground">{user.whatsapp_number}</div></div></div></TableCell>
+                      <TableCell>
+                        <Link to={`/admin/users/${user.id}`} className="flex items-center gap-3 hover:text-primary transition-colors">
+                          <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.full_name}`} alt={user.full_name} className="w-8 h-8 rounded-full" />
+                          <div>
+                            <div className="font-medium">{user.full_name}</div>
+                            <div className="text-sm text-muted-foreground">{user.whatsapp_number}</div>
+                          </div>
+                        </Link>
+                      </TableCell>
                       <TableCell><Badge variant={user.status === "verified" ? "default" : "secondary"} className={user.status === "verified" ? "bg-green-500/20 text-green-400 border-green-500/30" : "border-border"}>{user.status}</Badge></TableCell>
                       <TableCell>{user.account_type}</TableCell>
                       <TableCell className="text-right font-mono">{user.credits}</TableCell>
                       <TableCell>{new Date(user.created_at).toLocaleDateString('pt-AO')}</TableCell>
                       <TableCell>
                         <DropdownMenu>
-                          <DropdownMenuTrigger asChild><Button aria-haspopup="true" size="icon" variant="ghost"><MoreHorizontal className="h-4 w-4" /><span className="sr-only">Toggle menu</span></Button></DropdownMenuTrigger>
+                          <DropdownMenuTrigger asChild>
+                            <Button aria-haspopup="true" size="icon" variant="ghost">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Toggle menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleOpenEditModal(user)}><Edit className="w-4 h-4 mr-2" />Editar</DropdownMenuItem>
-                            <DropdownMenuItem className="text-red-500 focus:bg-red-500/10 focus:text-red-500" onClick={() => handleOpenDeleteModal(user)}><Trash2 className="w-4 h-4 mr-2" />Eliminar</DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                              <Link to={`/admin/users/${user.id}`}>
+                                <Eye className="w-4 h-4 mr-2" />
+                                Ver Detalhes
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleOpenEditModal(user)}>
+                              <Edit className="w-4 h-4 mr-2" />
+                              Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="text-red-500 focus:bg-red-500/10 focus:text-red-500" onClick={() => handleOpenDeleteModal(user)}>
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Eliminar
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
