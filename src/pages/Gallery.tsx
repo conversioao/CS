@@ -51,7 +51,6 @@ const Gallery = () => {
             variant: "destructive",
           });
         } else {
-          // Ensure all items have a type
           const mediaWithTypes = (data || []).map(item => ({
             ...item,
             type: item.media_type as 'image' | 'video',
@@ -72,7 +71,7 @@ const Gallery = () => {
     };
 
     fetchUserMedia();
-  }, [user]);
+  }, [user?.id]);
 
   const filteredMedia = userMedia.filter(item => {
     if (activeCategory === "Tudo") return true;
@@ -117,7 +116,6 @@ const Gallery = () => {
         console.log('Sharing cancelled or failed');
       }
     } else {
-      // Fallback for browsers that don't support Web Share API
       try {
         await navigator.clipboard.writeText(url);
         toast({
@@ -134,25 +132,15 @@ const Gallery = () => {
     }
   };
 
-  const handleZoomIn = () => {
-    setZoomLevel(prev => Math.min(prev + 0.2, 3));
-  };
-
-  const handleZoomOut = () => {
-    setZoomLevel(prev => Math.max(prev - 0.2, 0.5));
-  };
-
-  const handleRotate = () => {
-    setRotation(prev => (prev + 90) % 360);
-  };
-
+  const handleZoomIn = () => setZoomLevel(prev => Math.min(prev + 0.2, 3));
+  const handleZoomOut = () => setZoomLevel(prev => Math.max(prev - 0.2, 0.5));
+  const handleRotate = () => setRotation(prev => (prev + 90) % 360);
   const handleReset = () => {
     setZoomLevel(1);
     setRotation(0);
   };
 
   const handleLike = async (id: string) => {
-    // This would be implemented with a proper like system
     toast({
       title: "Funcionalidade em desenvolvimento",
       description: "O sistema de curtidas estará disponível em breve",

@@ -67,7 +67,7 @@ const Credits = () => {
 
   useEffect(() => {
     fetchData();
-  }, [user]);
+  }, [user?.id]);
 
   const handlePurchase = (plan: CreditPackage) => {
     setSelectedPlan(plan);

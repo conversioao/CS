@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
+import { useSession } from "@/contexts/SessionContext";
 
 interface ModelOrTool {
   id: string;
@@ -31,9 +32,11 @@ const categoryLabels: { [key: string]: string } = {
 const Models = () => {
   const [models, setModels] = useState<ModelOrTool[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useSession();
 
   useEffect(() => {
     const fetchModels = async () => {
+      if (!user) return;
       try {
         const { data, error } = await supabase
           .from('models_and_tools')
@@ -55,21 +58,10 @@ const Models = () => {
     };
 
     fetchModels();
-  }, []);
+  }, [user?.id]);
 
   const getModelRoute = (model: ModelOrTool) => {
-    switch (model.name) {
-      case 'Conversio Studio — Persona':
-        return '/generate?model=Conversio%20Studio%20%E2%80%94%20Persona';
-      case 'Conversio Studio — Pulse':
-        return '/generate?model=Conversio%20Studio%20%E2%80%94%20Pulse';
-      case 'Conversio Studio — StyleAI':
-        return '/generate?model=Conversio%20Studio%20%E2%80%94%20StyleAI';
-      case 'Conversio Studio — Vision':
-        return '/generate?model=Conversio%20Studio%20%E2%80%94%20Vision';
-      default:
-        return '/generate';
-    }
+    return `/generate?model=${encodeURIComponent(model.name)}`;
   };
 
   if (loading) {

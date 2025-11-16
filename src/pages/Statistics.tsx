@@ -100,7 +100,7 @@ const Statistics = () => {
     };
 
     fetchStats();
-  }, [user]);
+  }, [user?.id]);
 
   const statsCards = [
     { label: 'Créditos Usados', value: stats.creditsUsed, icon: Zap, color: 'from-yellow-500 to-orange-500' },
@@ -189,7 +189,7 @@ const Statistics = () => {
                           backgroundColor: 'hsl(var(--card))', 
                           border: '1px solid hsl(var(--border))' 
                         }}
-                        formatter={(value, name) => {
+                        formatter={(value: number, name: string) => {
                           if (name === 'cumulativeCredits') return [value, 'Créditos Usados'];
                           if (name === 'cumulativeCreations') return [value, 'Criações Totais'];
                           return [value, name];
@@ -207,9 +207,9 @@ const Statistics = () => {
                       <Line 
                         type="monotone" 
                         dataKey="cumulativeCreations" 
-                        stroke="hsl(var(--secondary))" 
+                        stroke="hsl(var(--accent))" 
                         strokeWidth={2} 
-                        dot={{ r: 4, fill: 'hsl(var(--secondary))' }} 
+                        dot={{ r: 4, fill: 'hsl(var(--accent))' }} 
                         activeDot={{ r: 8 }} 
                         name="Criações Totais"
                       />

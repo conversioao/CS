@@ -115,6 +115,7 @@ const EditImage = () => {
     }
     setIsEditing(true);
     setIsLoading(true);
+    setEditedImages([]);
     try {
       toast.info("Editando imagem...", { description: "A processar a sua solicitação." });
       const response = await fetch('https://n8n.conversio.ao/webhook-test/editar_imagem', {
