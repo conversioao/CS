@@ -67,7 +67,7 @@ const Credits = () => {
 
   useEffect(() => {
     fetchData();
-  }, [user]); // Only re-run when user changes
+  }, [user]);
 
   const handlePurchase = (plan: CreditPackage) => {
     setSelectedPlan(plan);

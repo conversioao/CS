@@ -38,7 +38,7 @@ const DashboardSidebar = () => {
         <nav className="flex-1 px-3 py-6 space-y-2">
           {navLinks.map((link) => {
             const Icon = link.icon;
-            const isActive = location.pathname + location.search === link.to || (link.to === "/dashboard" && location.pathname === "/");
+            const isActive = location.pathname === link.to;
             return (
               <Tooltip key={link.to} delayDuration={0}>
                 <TooltipTrigger asChild>

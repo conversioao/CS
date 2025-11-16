@@ -148,58 +148,70 @@ const Generate = () => {
           quantidade: quantity.toString(), 
           proporcao: aspectRatio, 
           modelo,
-          model_type: selectedModel // Add the selected model type
+          model_type: selectedModel
         }) 
       });
+      
       if (!response.ok) throw new Error('Erro ao gerar imagem');
       const webhookResponse = await response.json();
+      
+      // Processar as URLs recebidas do webhook
+      let urls: string[] = [];
       if (webhookResponse && Array.isArray(webhookResponse)) {
-        const urls = webhookResponse.filter(item => item?.message?.content).map(item => item.message.content);
-        if (urls.length > 0) {
-          const storedUrls = await storeMediaInSupabase(urls, 'image');
-          const newImages: GeneratedImage[] = storedUrls.map((url, index) => ({ url, id: `${Date.now()}-${index}` }));
-          setGeneratedImages(prev => [...newImages, ...prev]);
-          toast.success("Sucesso!", { description: `${newImages.length} imagem(s) gerada(s) com sucesso.` });
+        urls = webhookResponse
+          .filter(item => item?.message?.content)
+          .map(item => item.message.content);
+      }
+      
+      if (urls.length > 0) {
+        // Armazenar as imagens no Supabase
+        const storedUrls = await storeMediaInSupabase(urls, 'image');
+        const newImages: GeneratedImage[] = storedUrls.map((url, index) => ({ url, id: `${Date.now()}-${index}` }));
+        setGeneratedImages(prev => [...newImages, ...prev]);
+        
+        // Deduzir créditos após geração bem-sucedida
+        const totalCost = creditCost * quantity;
+        if (user && profile) {
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ credits: profile.credits - totalCost })
+            .eq('id', user.id);
           
-          // Deduct credits from user's account
-          const totalCost = creditCost * quantity;
-          if (user && profile) {
-            const { error: updateError } = await supabase
-              .from('profiles')
-              .update({ credits: profile.credits - totalCost })
-              .eq('id', user.id);
-            
-            if (updateError) {
-              console.error('Error updating credits:', updateError);
-              toast.error("Erro ao atualizar créditos.");
-            } else {
-              // Update the local profile state
-              refetchProfile();
-            }
-            
-            // Record the transaction
-            const { error: transactionError } = await supabase
-              .from('credit_transactions')
-              .insert({
-                user_id: user.id,
-                transaction_type: 'generation',
-                amount: -totalCost,
-                description: `${quantity} imagem(ns) gerada(s) com ${modelo}`,
-                related_data: {
-                  modelo,
-                  quantidade: quantity,
-                  proporcao: aspectRatio,
-                  model_type: selectedModel
-                }
-              });
-            
-            if (transactionError) {
-              console.error('Error recording transaction:', transactionError);
-            }
+          if (updateError) {
+            console.error('Error updating credits:', updateError);
+            toast.error("Erro ao atualizar créditos.");
+          } else {
+            // Atualizar o perfil local
+            await refetchProfile();
+          }
+          
+          // Registrar a transação
+          const { error: transactionError } = await supabase
+            .from('credit_transactions')
+            .insert({
+              user_id: user.id,
+              transaction_type: 'generation',
+              amount: -totalCost,
+              description: `${quantity} imagem(ns) gerada(s) com ${modelo}`,
+              related_data: {
+                modelo,
+                quantidade: quantity,
+                proporcao: aspectRatio,
+                model_type: selectedModel
+              }
+            });
+          
+          if (transactionError) {
+            console.error('Error recording transaction:', transactionError);
           }
         }
+        
+        toast.success("Sucesso!", { description: `${newImages.length} imagem(s) gerada(s) com sucesso.` });
+      } else {
+        throw new Error('Nenhuma imagem foi gerada.');
       }
     } catch (error) {
+      console.error('Erro ao gerar imagem:', error);
       toast.error("Erro ao gerar imagem", { description: "Ocorreu um problema. Por favor, tente novamente em breve." });
     } finally {
       setIsLoading(false);
@@ -218,47 +230,52 @@ const Generate = () => {
       const response = await fetch('https://n8n.conversio.ao/webhook-test/editar_imagem', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image_url: imageToEdit.url, description: editPrompt }) });
       if (!response.ok) throw new Error('Erro ao editar imagem');
       const webhookResponse = await response.json();
+      
+      let editedUrls: string[] = [];
       if (webhookResponse && Array.isArray(webhookResponse)) {
-        const editedUrls = webhookResponse.filter(item => item?.message?.content).map(item => item.message.content);
-        if (editedUrls.length > 0) {
-          const storedUrls = await storeMediaInSupabase(editedUrls, 'image');
-          const newEditedImages: GeneratedImage[] = storedUrls.map((url, index) => ({ url, id: `edited-${Date.now()}-${index}` }));
-          setGeneratedImages(prev => [...newEditedImages, ...prev]);
-          toast.success("Sucesso!", { description: "Imagem editada com sucesso." });
-          setImageToEdit(null);
-          setEditPrompt('');
+        editedUrls = webhookResponse
+          .filter(item => item?.message?.content)
+          .map(item => item.message.content);
+      }
+      
+      if (editedUrls.length > 0) {
+        const storedUrls = await storeMediaInSupabase(editedUrls, 'image');
+        const newEditedImages: GeneratedImage[] = storedUrls.map((url, index) => ({ url, id: `edited-${Date.now()}-${index}` }));
+        setGeneratedImages(prev => [...newEditedImages, ...prev]);
+        toast.success("Sucesso!", { description: "Imagem editada com sucesso." });
+        setImageToEdit(null);
+        setEditPrompt('');
+        
+        // Deduzir créditos para edição (1 crédito por edição)
+        if (user && profile) {
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ credits: profile.credits - 1 })
+            .eq('id', user.id);
           
-          // Deduct credits for editing (1 credit per edit)
-          if (user && profile) {
-            const { error: updateError } = await supabase
-              .from('profiles')
-              .update({ credits: profile.credits - 1 })
-              .eq('id', user.id);
-            
-            if (updateError) {
-              console.error('Error updating credits:', updateError);
-              toast.error("Erro ao atualizar créditos.");
-            } else {
-              // Update the local profile state
-              refetchProfile();
-            }
-            
-            // Record the transaction
-            const { error: transactionError } = await supabase
-              .from('credit_transactions')
-              .insert({
-                user_id: user.id,
-                transaction_type: 'edit',
-                amount: -1,
-                description: 'Edição de imagem',
-                related_data: {
-                  original_image_id: imageToEdit.id
-                }
-              });
-            
-            if (transactionError) {
-              console.error('Error recording transaction:', transactionError);
-            }
+          if (updateError) {
+            console.error('Error updating credits:', updateError);
+            toast.error("Erro ao atualizar créditos.");
+          } else {
+            // Atualizar o perfil local
+            await refetchProfile();
+          }
+          
+          // Registrar a transação
+          const { error: transactionError } = await supabase
+            .from('credit_transactions')
+            .insert({
+              user_id: user.id,
+              transaction_type: 'edit',
+              amount: -1,
+              description: 'Edição de imagem',
+              related_data: {
+                original_image_id: imageToEdit.id
+              }
+            });
+          
+          if (transactionError) {
+            console.error('Error recording transaction:', transactionError);
           }
         }
       }

@@ -55,7 +55,7 @@ const Models = () => {
     };
 
     fetchModels();
-  }, []); // Empty dependency array to prevent infinite loop
+  }, []);
 
   const getModelRoute = (model: ModelOrTool) => {
     switch (model.name) {
