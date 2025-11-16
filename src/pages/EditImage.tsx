@@ -50,7 +50,7 @@ const EditImage = () => {
       return;
     }
     setIsLoading(true);
-    setEditedImages([]); // Limpa as imagens anteriores
+    setEditedImages([]);
     try {
       toast.info("A fazer upload da imagem...");
       const formData = new FormData();
@@ -67,9 +67,9 @@ const EditImage = () => {
       
       let urls: string[] = [];
       if (Array.isArray(webhookData)) {
-          urls = webhookData.map(item => item?.url || item?.message?.content).filter(Boolean);
-      } else if (webhookData && webhookData.url) {
-          urls.push(webhookData.url);
+          urls = webhookData.map(item => item?.message?.content).filter(Boolean);
+      } else if (webhookData?.message?.content) {
+          urls.push(webhookData.message.content);
       }
 
       if (urls.length > 0) {
@@ -119,9 +119,9 @@ const EditImage = () => {
       const webhookData = await response.json();
       let urls: string[] = [];
       if (Array.isArray(webhookData)) {
-          urls = webhookData.map(item => item?.url || item?.message?.content).filter(Boolean);
-      } else if (webhookData && webhookData.url) {
-          urls.push(webhookData.url);
+          urls = webhookData.map(item => item?.message?.content).filter(Boolean);
+      } else if (webhookData?.message?.content) {
+          urls.push(webhookData.message.content);
       }
 
       if (urls.length > 0) {

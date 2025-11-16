@@ -95,10 +95,10 @@ const Generate = () => {
           setModelo(initialModel.name);
           setCreditCost(initialModel.credit_cost);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Failed to fetch models:", error);
         toast.error("Falha ao carregar os modelos de IA.", {
-          description: "Por favor, tente recarregar a página."
+          description: error.message || "Por favor, tente recarregar a página."
         });
       }
     };
@@ -132,7 +132,7 @@ const Generate = () => {
     }
 
     setIsLoading(true);
-    setGeneratedImages([]); // Limpa as imagens anteriores
+    setGeneratedImages([]);
     try {
       let imageUrl = uploadedImageUrl || '';
       if (uploadedImage) {
@@ -165,12 +165,10 @@ const Generate = () => {
       let urls: string[] = [];
       if (Array.isArray(webhookResponse)) {
           urls = webhookResponse
-              .map(item => item?.url || (item?.message?.content))
+              .map(item => item?.message?.content)
               .filter(Boolean);
-      } else if (webhookResponse && typeof webhookResponse === 'object') {
-          if (webhookResponse.url) urls.push(webhookResponse.url);
-          else if (webhookResponse.message && webhookResponse.message.content) urls.push(webhookResponse.message.content);
-          else if (webhookResponse.urls && Array.isArray(webhookResponse.urls)) urls = webhookResponse.urls;
+      } else if (webhookResponse?.message?.content) {
+          urls.push(webhookResponse.message.content);
       }
 
       if (urls.length > 0) {
@@ -229,11 +227,10 @@ const Generate = () => {
       let editedUrls: string[] = [];
       if (Array.isArray(webhookResponse)) {
           editedUrls = webhookResponse
-              .map(item => item?.url || (item?.message?.content))
+              .map(item => item?.message?.content)
               .filter(Boolean);
-      } else if (webhookResponse && typeof webhookResponse === 'object') {
-          if (webhookResponse.url) editedUrls.push(webhookResponse.url);
-          else if (webhookResponse.message && webhookResponse.message.content) editedUrls.push(webhookResponse.message.content);
+      } else if (webhookResponse?.message?.content) {
+          editedUrls.push(webhookResponse.message.content);
       }
       
       if (editedUrls.length > 0) {

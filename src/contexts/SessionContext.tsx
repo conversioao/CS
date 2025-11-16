@@ -76,8 +76,9 @@ export const SessionContextProvider = ({ children }: { children: React.ReactNode
   }, [fetchProfile]);
 
   const refetchProfile = useCallback(async () => {
-    await fetchProfile(session?.user ?? null);
-  }, [session?.user, fetchProfile]);
+    const { data: { user } } = await supabase.auth.getUser();
+    await fetchProfile(user);
+  }, [fetchProfile]);
 
   const value = {
     session,
