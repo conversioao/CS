@@ -50,6 +50,7 @@ const EditImage = () => {
       return;
     }
     setIsLoading(true);
+    setEditedImages([]); // Limpa as imagens anteriores
     try {
       toast.info("A fazer upload da imagem...");
       const formData = new FormData();
@@ -68,10 +69,9 @@ const EditImage = () => {
       toast.info("A salvar a sua imagem...");
       const [permanentUrl] = await storeMediaInSupabase([temporaryUrl], 'image');
       const newImage: EditedImage = { url: permanentUrl, id: `${Date.now()}` };
-      setEditedImages(prev => [newImage, ...prev]);
+      setEditedImages([newImage]);
       toast.success("Sucesso!", { description: "Imagem editada e armazenada com sucesso." });
       
-      // Deduct 1 credit for editing
       if (user && profile) {
         const { error: updateError } = await supabase
           .from('profiles')
@@ -82,11 +82,9 @@ const EditImage = () => {
           console.error('Error updating credits:', updateError);
           toast.error("Erro ao atualizar créditos.");
         } else {
-          // Update the local profile state
           await refetchProfile();
         }
         
-        // Record the transaction
         const { error: transactionError } = await supabase
           .from('credit_transactions')
           .insert({
@@ -133,12 +131,11 @@ const EditImage = () => {
       const [permanentUrl] = await storeMediaInSupabase([temporaryUrl], 'image');
       const newImage: EditedImage = { url: permanentUrl, id: `edited-${Date.now()}` };
       
-      setEditedImages(prev => [newImage, ...prev]);
+      setEditedImages([newImage]);
       toast.success("Sucesso!", { description: "Imagem editada com sucesso." });
       setImageToEdit(null);
       setEditPrompt('');
       
-      // Deduct 1 credit for editing
       if (user && profile) {
         const { error: updateError } = await supabase
           .from('profiles')
@@ -149,11 +146,9 @@ const EditImage = () => {
           console.error('Error updating credits:', updateError);
           toast.error("Erro ao atualizar créditos.");
         } else {
-          // Update the local profile state
           await refetchProfile();
         }
         
-        // Record the transaction
         const { error: transactionError } = await supabase
           .from('credit_transactions')
           .insert({
@@ -205,53 +200,52 @@ const EditImage = () => {
           <div className="flex-1 flex flex-col gap-6 min-h-0">
             <div className="bg-card/50 backdrop-blur-xl rounded-xl shadow-lg p-6 flex-1 flex flex-col">
               <h2 className="text-2xl font-bold mb-6 flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center"><Wand2 className="w-5 h-5 text-primary" /></div>Resultado da Edição</h2>
-              {editedImages.length === 0 && !isLoading ? (
-                <div className="flex-1 flex flex-col items-center justify-center text-center">
-                  <div className="w-20 h-20 rounded-lg bg-muted/50 flex items-center justify-center mb-4"><Wand2 className="w-10 h-10 text-muted-foreground" /></div>
-                  <h3 className="text-xl font-bold">Pronto para editar?</h3>
-                  <p className="text-muted-foreground max-w-md text-sm">Faça upload de uma imagem e descreva as alterações.</p>
-                </div>
-              ) : (
-                <div className="flex-1 overflow-y-auto -mr-4 pr-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {isLoading && (
-                      <div className="relative overflow-hidden rounded-lg bg-muted/30 aspect-square">
-                        <img src={isEditing ? imageToEdit?.url : uploadedImageUrl || ''} alt="A editar" className="w-full h-full object-cover filter blur-sm brightness-50" />
-                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-white">
-                          <Loader2 className="w-10 h-10 animate-spin text-primary" />
-                          <p>A editar...</p>
-                        </div>
+              <div className="flex-1 overflow-y-auto -mr-4 pr-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {isLoading && (
+                    <div className="relative overflow-hidden rounded-lg bg-muted/30 aspect-square">
+                      <img src={isEditing ? imageToEdit?.url : uploadedImageUrl || ''} alt="A editar" className="w-full h-full object-cover filter blur-sm brightness-50" />
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-white">
+                        <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                        <p>A editar...</p>
                       </div>
-                    )}
-                    {editedImages.map((image) => (
-                      <Card key={image.id} className="overflow-hidden group">
-                        <CardContent className="p-0">
-                          <div className="relative aspect-square">
-                            <img src={image.url} alt="Imagem editada" className="w-full h-full object-cover" />
-                            <div className="absolute bottom-2 right-2 flex gap-1.5">
-                              <Dialog onOpenChange={(isOpen) => !isOpen && setZoomLevel(1)}>
-                                <DialogTrigger asChild><Button variant="outline" size="icon" className="h-8 w-8"><Maximize2 className="w-4 h-4" /></Button></DialogTrigger>
-                                <DialogContent className="max-w-[95vw] max-h-[95vh] p-2 flex flex-col">
-                                  <div className="flex-1 relative overflow-auto">
-                                    <img src={image.url} alt="Imagem editada" className="max-w-none max-h-none" style={{ transform: `scale(${zoomLevel})` }} />
-                                  </div>
-                                  <div className="flex items-center justify-center gap-2 pt-2">
-                                    <Button variant="outline" size="icon" onClick={() => setZoomLevel(p => Math.max(p - 0.2, 0.2))}><ZoomOut className="w-4 h-4" /></Button>
-                                    <Button variant="outline" onClick={() => setZoomLevel(1)}>Reset</Button>
-                                    <Button variant="outline" size="icon" onClick={() => setZoomLevel(p => Math.min(p + 0.2, 5))}><ZoomIn className="w-4 h-4" /></Button>
-                                  </div>
-                                </DialogContent>
-                              </Dialog>
-                              <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleDownload(image.url)}><Download className="w-4 h-4" /></Button>
-                              <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setImageToEdit(image)}><Edit className="w-4 h-4" /></Button>
-                            </div>
+                    </div>
+                  )}
+                  {!isLoading && editedImages.length === 0 && (
+                    <div className="col-span-full flex-1 flex flex-col items-center justify-center text-center">
+                      <div className="w-20 h-20 rounded-lg bg-muted/50 flex items-center justify-center mb-4"><Wand2 className="w-10 h-10 text-muted-foreground" /></div>
+                      <h3 className="text-xl font-bold">Pronto para editar?</h3>
+                      <p className="text-muted-foreground max-w-md text-sm">Faça upload de uma imagem e descreva as alterações.</p>
+                    </div>
+                  )}
+                  {editedImages.map((image) => (
+                    <Card key={image.id} className="overflow-hidden group">
+                      <CardContent className="p-0">
+                        <div className="relative aspect-square">
+                          <img src={image.url} alt="Imagem editada" className="w-full h-full object-cover" />
+                          <div className="absolute bottom-2 right-2 flex gap-1.5">
+                            <Dialog onOpenChange={(isOpen) => !isOpen && setZoomLevel(1)}>
+                              <DialogTrigger asChild><Button variant="outline" size="icon" className="h-8 w-8"><Maximize2 className="w-4 h-4" /></Button></DialogTrigger>
+                              <DialogContent className="max-w-[95vw] max-h-[95vh] p-2 flex flex-col">
+                                <div className="flex-1 relative overflow-auto">
+                                  <img src={image.url} alt="Imagem editada" className="max-w-none max-h-none" style={{ transform: `scale(${zoomLevel})` }} />
+                                </div>
+                                <div className="flex items-center justify-center gap-2 pt-2">
+                                  <Button variant="outline" size="icon" onClick={() => setZoomLevel(p => Math.max(p - 0.2, 0.2))}><ZoomOut className="w-4 h-4" /></Button>
+                                  <Button variant="outline" onClick={() => setZoomLevel(1)}>Reset</Button>
+                                  <Button variant="outline" size="icon" onClick={() => setZoomLevel(p => Math.min(p + 0.2, 5))}><ZoomIn className="w-4 h-4" /></Button>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleDownload(image.url)}><Download className="w-4 h-4" /></Button>
+                            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setImageToEdit(image)}><Edit className="w-4 h-4" /></Button>
                           </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
-              )}
+              </div>
             </div>
           </div>
           <div className="w-full max-w-4xl mx-auto pt-8 sticky bottom-0 pb-6 bg-background">

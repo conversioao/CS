@@ -95,8 +95,10 @@ const Generate = () => {
       }
     };
 
-    fetchModels();
-  }, []);
+    if (user) {
+      fetchModels();
+    }
+  }, [user]);
 
   useEffect(() => {
     const selectedModel = models.find(m => m.name === modelo);
@@ -118,13 +120,13 @@ const Generate = () => {
       return;
     }
     
-    // Check if user has enough credits
     if (user && profile && profile.credits < creditCost * quantity) {
       toast.error("Créditos insuficientes", { description: "Por favor, compre mais créditos para continuar." });
       return;
     }
 
     setIsLoading(true);
+    setGeneratedImages([]); // Limpa as imagens anteriores
     try {
       let imageUrl = uploadedImageUrl || '';
       if (uploadedImage) {
@@ -154,7 +156,6 @@ const Generate = () => {
       if (!response.ok) throw new Error('Erro ao gerar imagem');
       const webhookResponse = await response.json();
       
-      // Processar as URLs recebidas do webhook
       let urls: string[] = [];
       if (webhookResponse && Array.isArray(webhookResponse)) {
         urls = webhookResponse
@@ -163,14 +164,11 @@ const Generate = () => {
       }
       
       if (urls.length > 0) {
-        // Limitar o número de URLs ao número solicitado
         const limitedUrls = urls.slice(0, quantity);
-        // Armazenar as imagens no Supabase
         const storedUrls = await storeMediaInSupabase(limitedUrls, 'image');
         const newImages: GeneratedImage[] = storedUrls.map((url, index) => ({ url, id: `${Date.now()}-${index}` }));
-        setGeneratedImages(prev => [...newImages, ...prev]);
+        setGeneratedImages(newImages);
         
-        // Deduzir créditos após geração bem-sucedida
         const totalCost = creditCost * quantity;
         if (user && profile) {
           const { error: updateError } = await supabase
@@ -182,11 +180,9 @@ const Generate = () => {
             console.error('Error updating credits:', updateError);
             toast.error("Erro ao atualizar créditos.");
           } else {
-            // Atualizar o perfil local
             await refetchProfile();
           }
           
-          // Registrar a transação
           const { error: transactionError } = await supabase
             .from('credit_transactions')
             .insert({
@@ -242,12 +238,11 @@ const Generate = () => {
       if (editedUrls.length > 0) {
         const storedUrls = await storeMediaInSupabase(editedUrls, 'image');
         const newEditedImages: GeneratedImage[] = storedUrls.map((url, index) => ({ url, id: `edited-${Date.now()}-${index}` }));
-        setGeneratedImages(prev => [...newEditedImages, ...prev]);
+        setGeneratedImages(newEditedImages);
         toast.success("Sucesso!", { description: "Imagem editada com sucesso." });
         setImageToEdit(null);
         setEditPrompt('');
         
-        // Deduzir créditos para edição (1 crédito por edição)
         if (user && profile) {
           const { error: updateError } = await supabase
             .from('profiles')
@@ -258,11 +253,9 @@ const Generate = () => {
             console.error('Error updating credits:', updateError);
             toast.error("Erro ao atualizar créditos.");
           } else {
-            // Atualizar o perfil local
             await refetchProfile();
           }
           
-          // Registrar a transação
           const { error: transactionError } = await supabase
             .from('credit_transactions')
             .insert({
@@ -363,94 +356,93 @@ const Generate = () => {
                 Resultado da Geração
               </h2>
               
-              {generatedImages.length === 0 && !isLoading ? (
-                <motion.div 
-                  className="flex-1 flex flex-col items-center justify-center text-center"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  <motion.div 
-                    className="w-20 h-20 rounded-lg bg-muted/50 flex items-center justify-center mb-4"
-                    animate={{ 
-                      rotate: [0, 5, -5, 0],
-                      scale: [1, 1.05, 1]
-                    }}
-                    transition={{ duration: 3, repeat: Infinity }}
-                  >
-                    <Image className="w-10 h-10 text-muted-foreground" />
-                  </motion.div>
-                  <h3 className="text-xl font-bold">Pronto para criar?</h3>
-                  <p className="text-muted-foreground max-w-md text-sm">Configure as opções abaixo para gerar a sua imagem.</p>
-                </motion.div>
-              ) : (
-                <div className="flex-1 overflow-y-auto -mr-4 pr-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <AnimatePresence>
-                      {isLoading && !isEditing && (
-                        Array.from({ length: quantity }).map((_, i) => (
-                          <motion.div
-                            key={`loader-${i}`}
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.8 }}
-                            className="relative overflow-hidden rounded-lg bg-muted/30 aspect-square"
-                          >
-                            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent animate-pulse" />
-                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-center p-4">
-                              <motion.div
-                                animate={{ rotate: 360 }}
-                                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                              >
-                                <Sparkles className="w-10 h-10 text-primary" />
-                              </motion.div>
-                              <p className="text-sm font-semibold">A gerar imagem {i + 1}...</p>
-                              <div className="text-lg font-mono text-primary tabular-nums">{String(Math.floor(timer / 60)).padStart(2, '0')}:{String(timer % 60).padStart(2, '0')}</div>
-                            </div>
-                          </motion.div>
-                        ))
-                      )}
-                      {generatedImages.map((image, index) => (
+              <div className="flex-1 overflow-y-auto -mr-4 pr-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <AnimatePresence>
+                    {isLoading && (
+                      Array.from({ length: quantity }).map((_, i) => (
                         <motion.div
-                          key={image.id}
-                          initial={{ opacity: 0, scale: 0.8, y: 20 }}
-                          animate={{ opacity: 1, scale: 1, y: 0 }}
-                          transition={{ delay: index * 0.1 }}
+                          key={`loader-${i}`}
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          className="relative overflow-hidden rounded-lg bg-muted/30 aspect-square"
                         >
-                          <Card className="overflow-hidden group hover:shadow-xl hover:shadow-primary/20 transition-all duration-300">
-                            <CardContent className="p-0">
-                              <div className="relative aspect-square">
-                                <img src={image.url} alt="Imagem gerada" className="w-full h-full object-cover" />
-                                <div className="absolute bottom-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <Dialog onOpenChange={(isOpen) => !isOpen && setZoomLevel(1)}>
-                                    <DialogTrigger asChild>
-                                      <Button variant="outline" size="icon" className="h-8 w-8 bg-card/80 backdrop-blur-sm">
-                                        <Maximize2 className="w-4 h-4" />
-                                      </Button>
-                                    </DialogTrigger>
-                                    <DialogContent className="max-w-[95vw] max-h-[95vh] p-2 flex flex-col">
-                                      <div className="flex-1 relative overflow-auto">
-                                        <img src={image.url} alt="Imagem gerada" className="max-w-none max-h-none" style={{ transform: `scale(${zoomLevel})` }} />
-                                      </div>
-                                      <div className="flex items-center justify-center gap-2 pt-2">
-                                        <Button variant="outline" size="icon" onClick={() => setZoomLevel(p => Math.max(p - 0.2, 0.2))}><ZoomOut className="w-4 h-4" /></Button>
-                                        <Button variant="outline" onClick={() => setZoomLevel(1)}>Reset</Button>
-                                        <Button variant="outline" size="icon" onClick={() => setZoomLevel(p => Math.min(p + 0.2, 5))}><ZoomIn className="w-4 h-4" /></Button>
-                                      </div>
-                                    </DialogContent>
-                                  </Dialog>
-                                  <Button variant="outline" size="icon" className="h-8 w-8 bg-card/80 backdrop-blur-sm" onClick={() => handleDownload(image.url)}><Download className="w-4 h-4" /></Button>
-                                  <Button variant="outline" size="icon" className="h-8 w-8 bg-card/80 backdrop-blur-sm" onClick={() => setImageToEdit(image)}><Edit className="w-4 h-4" /></Button>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
+                          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent animate-pulse" />
+                          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-center p-4">
+                            <motion.div
+                              animate={{ rotate: 360 }}
+                              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                            >
+                              <Sparkles className="w-10 h-10 text-primary" />
+                            </motion.div>
+                            <p className="text-sm font-semibold">A gerar imagem {i + 1}...</p>
+                            <div className="text-lg font-mono text-primary tabular-nums">{String(Math.floor(timer / 60)).padStart(2, '0')}:{String(timer % 60).padStart(2, '0')}</div>
+                          </div>
                         </motion.div>
-                      ))}
-                    </AnimatePresence>
-                  </div>
+                      ))
+                    )}
+                  </AnimatePresence>
+                  {generatedImages.length === 0 && !isLoading && (
+                    <motion.div 
+                      className="col-span-full flex-1 flex flex-col items-center justify-center text-center"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5 }}
+                    >
+                      <motion.div 
+                        className="w-20 h-20 rounded-lg bg-muted/50 flex items-center justify-center mb-4"
+                        animate={{ 
+                          rotate: [0, 5, -5, 0],
+                          scale: [1, 1.05, 1]
+                        }}
+                        transition={{ duration: 3, repeat: Infinity }}
+                      >
+                        <Image className="w-10 h-10 text-muted-foreground" />
+                      </motion.div>
+                      <h3 className="text-xl font-bold">Pronto para criar?</h3>
+                      <p className="text-muted-foreground max-w-md text-sm">Configure as opções abaixo para gerar a sua imagem.</p>
+                    </motion.div>
+                  )}
+                  {generatedImages.map((image, index) => (
+                    <motion.div
+                      key={image.id}
+                      initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <Card className="overflow-hidden group hover:shadow-xl hover:shadow-primary/20 transition-all duration-300">
+                        <CardContent className="p-0">
+                          <div className="relative aspect-square">
+                            <img src={image.url} alt="Imagem gerada" className="w-full h-full object-cover" />
+                            <div className="absolute bottom-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Dialog onOpenChange={(isOpen) => !isOpen && setZoomLevel(1)}>
+                                <DialogTrigger asChild>
+                                  <Button variant="outline" size="icon" className="h-8 w-8 bg-card/80 backdrop-blur-sm">
+                                    <Maximize2 className="w-4 h-4" />
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-[95vw] max-h-[95vh] p-2 flex flex-col">
+                                  <div className="flex-1 relative overflow-auto">
+                                    <img src={image.url} alt="Imagem gerada" className="max-w-none max-h-none" style={{ transform: `scale(${zoomLevel})` }} />
+                                  </div>
+                                  <div className="flex items-center justify-center gap-2 pt-2">
+                                    <Button variant="outline" size="icon" onClick={() => setZoomLevel(p => Math.max(p - 0.2, 0.2))}><ZoomOut className="w-4 h-4" /></Button>
+                                    <Button variant="outline" onClick={() => setZoomLevel(1)}>Reset</Button>
+                                    <Button variant="outline" size="icon" onClick={() => setZoomLevel(p => Math.min(p + 0.2, 5))}><ZoomIn className="w-4 h-4" /></Button>
+                                  </div>
+                                </DialogContent>
+                              </Dialog>
+                              <Button variant="outline" size="icon" className="h-8 w-8 bg-card/80 backdrop-blur-sm" onClick={() => handleDownload(image.url)}><Download className="w-4 h-4" /></Button>
+                              <Button variant="outline" size="icon" className="h-8 w-8 bg-card/80 backdrop-blur-sm" onClick={() => setImageToEdit(image)}><Edit className="w-4 h-4" /></Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  ))}
                 </div>
-              )}
+              </div>
             </div>
           </div>
 
