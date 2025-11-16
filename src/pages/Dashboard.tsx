@@ -111,14 +111,13 @@ const Dashboard = () => {
           </div>
 
           <div id="tools-section" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-            {tools.map((tool, index) => {
+            {tools.map((tool) => {
               const Icon = tool.icon;
               return (
                 <Card
                   key={tool.id}
                   className="group cursor-pointer bg-card/50 backdrop-blur-xl border border-border/50 hover:border-primary/50 transition-all duration-300 overflow-hidden hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1"
                   onClick={() => navigate(tool.link)}
-                  style={{ animationDelay: `${index * 0.1}s` }}
                 >
                   <CardContent className="p-0">
                     <div className="relative h-40 overflow-hidden">
