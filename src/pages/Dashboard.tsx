@@ -89,12 +89,6 @@ const Dashboard = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
         <DashboardHeader />
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 relative">
-          <div className="absolute inset-0 pointer-events-none z-[-1] overflow-hidden">
-            <div className="absolute inset-0 bg-dot-pattern opacity-20" />
-            <div className="absolute top-[-20%] left-[-10%] w-[40rem] h-[40rem] bg-primary/10 rounded-full blur-3xl animate-pulse" />
-            <div className="absolute bottom-[-30%] right-[-15%] w-[50rem] h-[50rem] bg-secondary/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
-          </div>
-
           <div className="mb-12 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <h1 className="text-4xl font-bold mb-2">
@@ -155,11 +149,10 @@ const Dashboard = () => {
       {showTutorial && <DashboardTutorial onFinish={() => setShowTutorial(false)} />}
       
       {showWelcomePopup && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-card border border-primary/30 rounded-2xl shadow-2xl shadow-primary/20 p-8 max-w-md w-full text-center animate-scale-in">
             <div className="mb-6 flex justify-center">
               <div className="relative">
-                <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping"></div>
                 <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg">
                   <Sparkles className="w-10 h-10 text-white" />
                 </div>
