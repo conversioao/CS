@@ -163,12 +163,16 @@ const Generate = () => {
       const webhookResponse = await response.json();
       
       let urls: string[] = [];
-      if (webhookResponse && Array.isArray(webhookResponse)) {
-        urls = webhookResponse
-          .filter(item => item?.message?.content)
-          .map(item => item.message.content);
+      if (Array.isArray(webhookResponse)) {
+          urls = webhookResponse
+              .map(item => item?.url || (item?.message?.content))
+              .filter(Boolean);
+      } else if (webhookResponse && typeof webhookResponse === 'object') {
+          if (webhookResponse.url) urls.push(webhookResponse.url);
+          else if (webhookResponse.message && webhookResponse.message.content) urls.push(webhookResponse.message.content);
+          else if (webhookResponse.urls && Array.isArray(webhookResponse.urls)) urls = webhookResponse.urls;
       }
-      
+
       if (urls.length > 0) {
         const limitedUrls = urls.slice(0, quantity);
         const storedUrls = await storeMediaInSupabase(limitedUrls, 'image');
@@ -177,45 +181,32 @@ const Generate = () => {
         
         const totalCost = creditCost * quantity;
         if (user && profile) {
-          const { error: updateError } = await supabase
+          await supabase
             .from('profiles')
             .update({ credits: profile.credits - totalCost })
             .eq('id', user.id);
           
-          if (updateError) {
-            console.error('Error updating credits:', updateError);
-            toast.error("Erro ao atualizar créditos.");
-          } else {
-            await refetchProfile();
-          }
+          await refetchProfile();
           
-          const { error: transactionError } = await supabase
+          await supabase
             .from('credit_transactions')
             .insert({
               user_id: user.id,
               transaction_type: 'generation',
               amount: -totalCost,
               description: `${quantity} imagem(ns) gerada(s) com ${modelo}`,
-              related_data: {
-                modelo,
-                quantidade: quantity,
-                proporcao: aspectRatio,
-                model_type: selectedModel
-              }
+              related_data: { modelo, quantidade: quantity, proporcao: aspectRatio, model_type: selectedModel }
             });
-          
-          if (transactionError) {
-            console.error('Error recording transaction:', transactionError);
-          }
         }
         
         toast.success("Sucesso!", { description: `${newImages.length} imagem(s) gerada(s) com sucesso.` });
       } else {
-        throw new Error('Nenhuma imagem foi gerada.');
+        console.error("Unexpected webhook response format:", webhookResponse);
+        throw new Error('Nenhuma imagem foi gerada. Formato de resposta inesperado.');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao gerar imagem:', error);
-      toast.error("Erro ao gerar imagem", { description: "Ocorreu um problema. Por favor, tente novamente em breve." });
+      toast.error("Erro ao gerar imagem", { description: error.message || "Ocorreu um problema. Por favor, tente novamente em breve." });
     } finally {
       setIsLoading(false);
     }
@@ -236,10 +227,13 @@ const Generate = () => {
       const webhookResponse = await response.json();
       
       let editedUrls: string[] = [];
-      if (webhookResponse && Array.isArray(webhookResponse)) {
-        editedUrls = webhookResponse
-          .filter(item => item?.message?.content)
-          .map(item => item.message.content);
+      if (Array.isArray(webhookResponse)) {
+          editedUrls = webhookResponse
+              .map(item => item?.url || (item?.message?.content))
+              .filter(Boolean);
+      } else if (webhookResponse && typeof webhookResponse === 'object') {
+          if (webhookResponse.url) editedUrls.push(webhookResponse.url);
+          else if (webhookResponse.message && webhookResponse.message.content) editedUrls.push(webhookResponse.message.content);
       }
       
       if (editedUrls.length > 0) {
@@ -251,38 +245,29 @@ const Generate = () => {
         setEditPrompt('');
         
         if (user && profile) {
-          const { error: updateError } = await supabase
+          await supabase
             .from('profiles')
             .update({ credits: profile.credits - 1 })
             .eq('id', user.id);
           
-          if (updateError) {
-            console.error('Error updating credits:', updateError);
-            toast.error("Erro ao atualizar créditos.");
-          } else {
-            await refetchProfile();
-          }
+          await refetchProfile();
           
-          const { error: transactionError } = await supabase
+          await supabase
             .from('credit_transactions')
             .insert({
               user_id: user.id,
               transaction_type: 'edit',
               amount: -1,
               description: 'Edição de imagem',
-              related_data: {
-                original_image_id: imageToEdit.id
-              }
+              related_data: { original_image_id: imageToEdit.id }
             });
-          
-          if (transactionError) {
-            console.error('Error recording transaction:', transactionError);
-          }
         }
+      } else {
+        throw new Error('Nenhuma imagem foi retornada após a edição.');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao editar imagem:', error);
-      toast.error("Ocorreu um erro ao editar a imagem.", { description: "Por favor, tente novamente dentro de instantes." });
+      toast.error("Ocorreu um erro ao editar a imagem.", { description: error.message || "Por favor, tente novamente dentro de instantes." });
     } finally {
       setIsEditing(false);
       setIsLoading(false);

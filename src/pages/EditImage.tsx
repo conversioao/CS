@@ -64,45 +64,36 @@ const EditImage = () => {
       const webhookResponse = await fetch('https://n8n.conversio.ao/webhook-test/editar_imagem', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image_url: imageUrl, description }) });
       if (!webhookResponse.ok) throw new Error('Erro ao processar edição');
       const webhookData = await webhookResponse.json();
-      const temporaryUrl = webhookData.url || webhookData[0]?.message?.content || imageUrl;
-
-      toast.info("A salvar a sua imagem...");
-      const [permanentUrl] = await storeMediaInSupabase([temporaryUrl], 'image');
-      const newImage: EditedImage = { url: permanentUrl, id: `${Date.now()}` };
-      setEditedImages([newImage]);
-      toast.success("Sucesso!", { description: "Imagem editada e armazenada com sucesso." });
       
-      if (user && profile) {
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ credits: profile.credits - 1 })
-          .eq('id', user.id);
+      let urls: string[] = [];
+      if (Array.isArray(webhookData)) {
+          urls = webhookData.map(item => item?.url || item?.message?.content).filter(Boolean);
+      } else if (webhookData && webhookData.url) {
+          urls.push(webhookData.url);
+      }
+
+      if (urls.length > 0) {
+        const [permanentUrl] = await storeMediaInSupabase(urls, 'image');
+        const newImage: EditedImage = { url: permanentUrl, id: `${Date.now()}` };
+        setEditedImages([newImage]);
+        toast.success("Sucesso!", { description: "Imagem editada e armazenada com sucesso." });
         
-        if (updateError) {
-          console.error('Error updating credits:', updateError);
-          toast.error("Erro ao atualizar créditos.");
-        } else {
+        if (user && profile) {
+          await supabase.from('profiles').update({ credits: profile.credits - 1 }).eq('id', user.id);
           await refetchProfile();
-        }
-        
-        const { error: transactionError } = await supabase
-          .from('credit_transactions')
-          .insert({
+          await supabase.from('credit_transactions').insert({
             user_id: user.id,
             transaction_type: 'edit',
             amount: -1,
             description: 'Edição de imagem',
-            related_data: {
-              original_image_url: imageUrl
-            }
+            related_data: { original_image_url: imageUrl }
           });
-        
-        if (transactionError) {
-          console.error('Error recording transaction:', transactionError);
         }
+      } else {
+        throw new Error("Nenhuma imagem retornada pelo serviço de edição.");
       }
-    } catch (error) {
-      toast.error("Erro ao editar imagem", { description: "Ocorreu um problema. Por favor, tente novamente em breve." });
+    } catch (error: any) {
+      toast.error("Erro ao editar imagem", { description: error.message || "Ocorreu um problema. Por favor, tente novamente em breve." });
     } finally {
       setIsLoading(false);
     }
@@ -126,49 +117,39 @@ const EditImage = () => {
       if (!response.ok) throw new Error('Erro ao editar imagem');
       
       const webhookData = await response.json();
-      const temporaryUrl = webhookData.url || webhookData[0]?.message?.content || imageToEdit.url;
+      let urls: string[] = [];
+      if (Array.isArray(webhookData)) {
+          urls = webhookData.map(item => item?.url || item?.message?.content).filter(Boolean);
+      } else if (webhookData && webhookData.url) {
+          urls.push(webhookData.url);
+      }
 
-      toast.info("A salvar a sua imagem...");
-      const [permanentUrl] = await storeMediaInSupabase([temporaryUrl], 'image');
-      const newImage: EditedImage = { url: permanentUrl, id: `edited-${Date.now()}` };
-      
-      setEditedImages([newImage]);
-      toast.success("Sucesso!", { description: "Imagem editada com sucesso." });
-      setImageToEdit(null);
-      setEditPrompt('');
-      
-      if (user && profile) {
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ credits: profile.credits - 1 })
-          .eq('id', user.id);
+      if (urls.length > 0) {
+        const [permanentUrl] = await storeMediaInSupabase(urls, 'image');
+        const newImage: EditedImage = { url: permanentUrl, id: `edited-${Date.now()}` };
         
-        if (updateError) {
-          console.error('Error updating credits:', updateError);
-          toast.error("Erro ao atualizar créditos.");
-        } else {
+        setEditedImages([newImage]);
+        toast.success("Sucesso!", { description: "Imagem editada com sucesso." });
+        setImageToEdit(null);
+        setEditPrompt('');
+        
+        if (user && profile) {
+          await supabase.from('profiles').update({ credits: profile.credits - 1 }).eq('id', user.id);
           await refetchProfile();
-        }
-        
-        const { error: transactionError } = await supabase
-          .from('credit_transactions')
-          .insert({
+          await supabase.from('credit_transactions').insert({
             user_id: user.id,
             transaction_type: 'edit',
             amount: -1,
             description: 'Edição de imagem',
-            related_data: {
-              original_image_id: imageToEdit.id
-            }
+            related_data: { original_image_id: imageToEdit.id }
           });
-        
-        if (transactionError) {
-          console.error('Error recording transaction:', transactionError);
         }
+      } else {
+        throw new Error("Nenhuma imagem retornada após a edição.");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao editar imagem:', error);
-      toast.error("Ocorreu um erro ao editar a imagem.", { description: "Por favor, tente novamente dentro de instantes." });
+      toast.error("Ocorreu um erro ao editar a imagem.", { description: error.message || "Por favor, tente novamente dentro de instantes." });
     } finally {
       setIsEditing(false);
       setIsLoading(false);
