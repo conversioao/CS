@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { storeMediaInSupabase } from "@/lib/supabase-storage";
 import CameraCaptureDialog from "@/components/CameraCaptureDialog";
+import { useSession } from "@/contexts/SessionContext";
+import { supabase } from "@/integrations/supabase/client";
 
 interface EditedImage {
   url: string;
@@ -28,6 +30,7 @@ const EditImage = () => {
   const [imageToEdit, setImageToEdit] = useState<EditedImage | null>(null);
   const [editPrompt, setEditPrompt] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const { user, profile, refetchProfile } = useSession();
 
   const handleImageUpload = (file: File) => {
     const validFormats = ['image/jpeg', 'image/jpg', 'image/png'];
@@ -67,6 +70,39 @@ const EditImage = () => {
       const newImage: EditedImage = { url: permanentUrl, id: `${Date.now()}` };
       setEditedImages(prev => [newImage, ...prev]);
       toast.success("Sucesso!", { description: "Imagem editada e armazenada com sucesso." });
+      
+      // Deduct 1 credit for editing
+      if (user && profile) {
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ credits: profile.credits - 1 })
+          .eq('id', user.id);
+        
+        if (updateError) {
+          console.error('Error updating credits:', updateError);
+          toast.error("Erro ao atualizar créditos.");
+        } else {
+          // Update the local profile state
+          await refetchProfile();
+        }
+        
+        // Record the transaction
+        const { error: transactionError } = await supabase
+          .from('credit_transactions')
+          .insert({
+            user_id: user.id,
+            transaction_type: 'edit',
+            amount: -1,
+            description: 'Edição de imagem',
+            related_data: {
+              original_image_url: imageUrl
+            }
+          });
+        
+        if (transactionError) {
+          console.error('Error recording transaction:', transactionError);
+        }
+      }
     } catch (error) {
       toast.error("Erro ao editar imagem", { description: "Ocorreu um problema. Por favor, tente novamente em breve." });
     } finally {
@@ -101,6 +137,39 @@ const EditImage = () => {
       toast.success("Sucesso!", { description: "Imagem editada com sucesso." });
       setImageToEdit(null);
       setEditPrompt('');
+      
+      // Deduct 1 credit for editing
+      if (user && profile) {
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ credits: profile.credits - 1 })
+          .eq('id', user.id);
+        
+        if (updateError) {
+          console.error('Error updating credits:', updateError);
+          toast.error("Erro ao atualizar créditos.");
+        } else {
+          // Update the local profile state
+          await refetchProfile();
+        }
+        
+        // Record the transaction
+        const { error: transactionError } = await supabase
+          .from('credit_transactions')
+          .insert({
+            user_id: user.id,
+            transaction_type: 'edit',
+            amount: -1,
+            description: 'Edição de imagem',
+            related_data: {
+              original_image_id: imageToEdit.id
+            }
+          });
+        
+        if (transactionError) {
+          console.error('Error recording transaction:', transactionError);
+        }
+      }
     } catch (error) {
       console.error('Erro ao editar imagem:', error);
       toast.error("Ocorreu um erro ao editar a imagem.", { description: "Por favor, tente novamente dentro de instantes." });
@@ -130,7 +199,7 @@ const EditImage = () => {
           <div className="mb-8 flex items-center justify-between">
             <Link to="/dashboard" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"><ArrowLeft className="w-4 h-4" /><span>Voltar ao Dashboard</span></Link>
             <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full"><Sparkles className="w-4 h-4 text-primary" />
-              <span className="text-sm font-semibold">1 crédito por edição</span>
+            <span className="text-sm font-semibold">1 crédito por edição</span>
             </div>
           </div>
           <div className="flex-1 flex flex-col gap-6 min-h-0">
