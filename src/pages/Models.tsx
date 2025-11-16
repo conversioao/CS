@@ -2,7 +2,7 @@ import DashboardHeader from "@/components/DashboardHeader";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Palette, Zap, Rocket, Wand2, Video, AudioLines, Combine } from "lucide-react";
+import { Sparkles, Palette, Zap, Rocket, Wand2, Video, Music, AudioLines, Combine } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,19 +34,24 @@ const Models = () => {
 
   useEffect(() => {
     const fetchModels = async () => {
-      const { data, error } = await supabase
-        .from('models_and_tools')
-        .select('*')
-        .eq('is_active', true)
-        .eq('category', 'model')
-        .order('name');
+      try {
+        const { data, error } = await supabase
+          .from('models_and_tools')
+          .select('*')
+          .eq('is_active', true)
+          .eq('category', 'model')
+          .order('name');
 
-      if (error) {
-        console.error('Error fetching models:', error);
-      } else {
-        setModels(data || []);
+        if (error) {
+          console.error('Error fetching models:', error);
+        } else {
+          setModels(data || []);
+        }
+      } catch (error) {
+        console.error('Unexpected error fetching models:', error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     fetchModels();

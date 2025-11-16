@@ -41,18 +41,28 @@ const Credits = () => {
     if (!user) return;
     setLoading(true);
 
-    const fetchPlans = supabase.from('credit_packages').select('*').eq('is_active', true).order('price', { ascending: true });
-    const fetchTransactions = supabase.from('credit_transactions').select('*, payments(status)').eq('user_id', user.id).order('created_at', { ascending: false }).limit(10);
+    try {
+      const [plansResult, transactionsResult] = await Promise.all([
+        supabase.from('credit_packages').select('*').eq('is_active', true).order('price', { ascending: true }),
+        supabase.from('credit_transactions').select('*, payments(status)').eq('user_id', user.id).order('created_at', { ascending: false }).limit(10)
+      ]);
 
-    const [plansResult, transactionsResult] = await Promise.all([fetchPlans, fetchTransactions]);
+      if (plansResult.error) {
+        toast.error("Erro ao carregar pacotes de créditos.");
+      } else {
+        setPlans(plansResult.data);
+      }
 
-    if (plansResult.error) toast.error("Erro ao carregar pacotes de créditos.");
-    else setPlans(plansResult.data);
-
-    if (transactionsResult.error) toast.error("Erro ao carregar histórico de transações.");
-    else setTransactions(transactionsResult.data as any);
-
-    setLoading(false);
+      if (transactionsResult.error) {
+        toast.error("Erro ao carregar histórico de transações.");
+      } else {
+        setTransactions(transactionsResult.data as any);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
